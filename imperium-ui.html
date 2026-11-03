@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norse Imperium</title>
+<link rel="icon" type="image/x-icon" href="/app-icon.ico">
+<link rel="alternate icon" type="image/png" href="/mascot/mascot-open.png">
+<style>
+/* ── Reset & Variables ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0c0b08;
+  --bg2:     #121009;
+  --bg3:     #181410;
+  --border:  #2e2518;
+  --border2: #3d3220;
+  --gold:    #c8962a;
+  --gold2:   #e8b84b;
+  --gold3:   #8a6318;
+  --stone:   #7a6a50;
+  --stone2:  #4a3e2c;
+  --text:    #d4c49a;
+  --text2:   #8a7a58;
+  --text3:   #4a3e2c;
+  --green:   #4a8a5a;
+  --green2:  #2a5a3a;
+  --blue:    #4a6a9a;
+  --purple:  #6a4a8a;
+  --red:     #8a3a2a;
+  --amber:   #ba7517;
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: Georgia, serif; font-size: 13px; }
+a { color: var(--gold); text-decoration: none; }
+button { cursor: pointer; font-family: Georgia, serif; }
+input, textarea { font-family: Georgia, serif; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Corner Ornaments ───────────────────────────────────────────── */
+.corner-ornament { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 1000; }
+.corner-ornament::before, .corner-ornament::after { content: ''; position: absolute; background: var(--border2); }
+.corner-tl { top: 0; left: 0; }
+.corner-tl::before { top: 8px; left: 8px; width: 40px; height: 3px; }
+.corner-tl::after  { top: 8px; left: 8px; width: 3px; height: 40px; }
+.corner-tr { top: 0; right: 0; }
+.corner-tr::before { top: 8px; right: 8px; width: 40px; height: 3px; }
+.corner-tr::after  { top: 8px; right: 8px; width: 3px; height: 40px; }
+.corner-bl { bottom: 0; left: 0; }
+.corner-bl::before { bottom: 8px; left: 8px; width: 40px; height: 3px; }
+.corner-bl::after  { bottom: 8px; left: 8px; width: 3px; height: 40px; }
+.corner-br { bottom: 0; right: 0; }
+.corner-br::before { bottom: 8px; right: 8px; width: 40px; height: 3px; }
+.corner-br::after  { bottom: 8px; right: 8px; width: 3px; height: 40px; }
+/* inner accent */
+.corner-ornament .inner { position: absolute; pointer-events: none; }
+.corner-ornament .inner::before, .corner-ornament .inner::after { content: ''; position: absolute; background: rgba(200,150,42,0.4); }
+.corner-tl .inner::before { top: 14px; left: 14px; width: 28px; height: 2px; }
+.corner-tl .inner::after  { top: 14px; left: 14px; width: 2px; height: 28px; }
+.corner-tr .inner::before { top: 14px; right: 14px; width: 28px; height: 2px; }
+.corner-tr .inner::after  { top: 14px; right: 14px; width: 2px; height: 28px; }
+.corner-bl .inner::before { bottom: 14px; left: 14px; width: 28px; height: 2px; }
+.corner-bl .inner::after  { bottom: 14px; left: 14px; width: 2px; height: 28px; }
+.corner-br .inner::before { bottom: 14px; right: 14px; width: 28px; height: 2px; }
+.corner-br .inner::after  { bottom: 14px; right: 14px; width: 2px; height: 28px; }
+
+/* ── Vine Decoration ────────────────────────────────────────────── */
+.vine-left, .vine-right { position: fixed; top: 0; width: 30px; height: 100%; pointer-events: none; z-index: 999; opacity: 0.15; }
+.vine-left { left: 0; }
+.vine-right { right: 0; }
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── Topbar ─────────────────────────────────────────────────────── */
+#topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); min-height: 44px; flex-shrink: 0; }
+#topbar .left { display: flex; align-items: center; gap: 14px; }
+/* Mascot (2026-11-01) — blinks every few seconds */
+.mascot { position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%;
+  border: 1px solid var(--gold3); background: radial-gradient(circle at 50% 40%, #2a2014, var(--bg2));
+  overflow: hidden; margin: -6px 0 -14px 12px; cursor: default; z-index: 2; }
+.mascot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mascot .shut { opacity: 0; }
+.mascot.blink .shut { opacity: 1; }
+/* Emotes (2026-11-01) */
+.mascot-wrap { position: relative; flex-shrink: 0; }
+.mascot { transition: box-shadow .4s, border-color .4s, filter .4s; }
+.mascot-bubble { position: absolute; left: 4px; top: 62px; z-index: 50; white-space: nowrap;
+  background: #f3e6c4; color: #2a1a0c; font-size: 13px; letter-spacing: .5px; padding: 6px 11px;
+  border-radius: 10px; border: 1px solid var(--gold3); box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  opacity: 0; transform: translateY(-6px) scale(.9); transform-origin: 20px 0; pointer-events: none;
+  transition: opacity .25s, transform .25s; }
+.mascot-bubble::before { content: ""; position: absolute; left: 22px; top: -7px; border: 7px solid transparent;
+  border-top: 0; border-bottom-color: #f3e6c4; }
+.mascot-bubble.show { opacity: 1; transform: none; }
+.mascot-fx { position: absolute; inset: -14px; pointer-events: none; z-index: 3; font-size: 15px; }
+.mascot-fx span { position: absolute; animation: fxRise 1.4s ease-out forwards; }
+@keyframes fxRise { 0% { opacity: 0; transform: translateY(8px) scale(.6); } 25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-26px) scale(1.15); } }
+/* moods */
+.mood-cheer .mascot { animation: mBounce .45s ease-in-out 4; border-color: var(--gold2); box-shadow: 0 0 16px rgba(230,180,60,.75); }
+@keyframes mBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px) rotate(-4deg); } }
+.mood-nod .mascot { animation: mNod .5s ease-in-out 2; }
+@keyframes mNod { 0%,100% { transform: rotate(0); } 50% { transform: translateY(3px) rotate(2deg); } }
+.mood-grumble .mascot { animation: mShake .12s linear 8; border-color: var(--amber); box-shadow: 0 0 12px rgba(220,140,40,.6); }
+.mood-fail .mascot { animation: mShake .1s linear 10; border-color: var(--red); box-shadow: 0 0 16px rgba(200,50,40,.7);
+  filter: saturate(.55) sepia(.35) hue-rotate(-20deg); }
+@keyframes mShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px) rotate(-3deg); } 75% { transform: translateX(3px) rotate(3deg); } }
+.mood-work .mascot { animation: mSway 2.2s ease-in-out infinite; }
+@keyframes mSway { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.mood-worry .mascot { border-color: var(--amber); }
+.mood-sleep .mascot { filter: brightness(.6) saturate(.6); }
+.mood-sleep .mascot .shut { opacity: 1; }
+.rune-text { color: var(--gold3); font-size: 11px; letter-spacing: 3px; }
+.title { color: var(--gold2); font-size: 18px; letter-spacing: 3px; }
+#topbar .right { display: flex; align-items: center; gap: 16px; }
+.emperor-label { color: var(--stone2); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+.warden-pill { display: flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 11px; letter-spacing: 1px; border: 1px solid var(--border); }
+.warden-pill.online { border-color: var(--green); color: var(--green); }
+.warden-pill.offline { border-color: var(--red); color: var(--red); }
+.gem { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.gem.green { background: var(--green); }
+.gem.red { background: var(--red); }
+.gem.amber { background: var(--amber); }
+.gem.dark { background: var(--stone2); }
+.gem.pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; } 50% { opacity: 0.5; box-shadow: 0 0 8px currentColor; } }
+
+/* ── Status Strip ───────────────────────────────────────────────── */
+#status-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.stat-panel { background: var(--bg2); padding: 8px 12px; text-align: center; }
+.stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); margin-bottom: 3px; }
+.stat-value { font-size: 15px; color: var(--gold2); }
+#budget-bar-wrap { height: 3px; background: var(--bg3); flex-shrink: 0; }
+#budget-bar { height: 100%; background: var(--gold3); transition: width 0.5s, background 0.5s; width: 0%; }
+
+/* ── Main Content ───────────────────────────────────────────────── */
+#main { display: flex; flex: 1; min-height: 0; }
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+#sidebar { width: 190px; background: var(--bg2); border-right: 1px solid var(--border); padding: 10px 0; overflow-y: auto; flex-shrink: 0; }
+.nav-group { margin-bottom: 12px; }
+.nav-group-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold3); padding: 4px 14px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 5px 14px; cursor: pointer; color: var(--text2); font-size: 12px; transition: background 0.15s, color 0.15s; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--bg3); color: var(--gold2); border-right: 2px solid var(--gold); }
+.nav-item .gem { flex-shrink: 0; }
+.nav-sep { height: 1px; background: var(--border); margin: 8px 14px; }
+
+/* ── Center Feed ────────────────────────────────────────────────── */
+#center { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#scroll-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#scroll-header .left { color: var(--gold3); font-size: 12px; letter-spacing: 1px; }
+#scroll-header .right { color: var(--text2); font-size: 11px; }
+#feed { flex: 1; overflow-y: auto; padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; }
+#feed:empty::after { content: 'The Great Hall awaits your first decree...'; color: var(--text3); font-style: italic; display: block; text-align: center; margin-top: 40px; }
+
+/* Messages */
+.msg { padding: 8px 12px; border-left: 3px solid var(--border); background: var(--bg3); border-radius: 0 4px 4px 0; }
+.msg.emperor { border-left-color: var(--gold); }
+.msg.imperial-chancellor { border-left-color: var(--purple); }
+.msg.ministry-of-engineering { border-left-color: var(--blue); }
+.msg.ministry-of-intelligence { border-left-color: var(--green); }
+.msg.ministry-of-works { border-left-color: var(--stone); }
+.msg.ministry-of-protocol { border-left-color: var(--text3); }
+.msg-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.msg-from { font-size: 11px; font-weight: bold; color: var(--gold2); }
+.msg-time { font-size: 10px; color: var(--text3); }
+.msg-badge { font-size: 9px; color: var(--text3); background: var(--bg); padding: 1px 5px; border-radius: 3px; }
+.msg-body { font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.msg-body .verified { color: var(--green); font-weight: bold; }
+.msg-body .failed { color: var(--red); font-weight: bold; }
+.msg-body .cannot-complete { color: var(--amber); font-weight: bold; }
+.msg-body .dispatch-block { color: var(--text3); font-size: 11px; padding: 4px 8px; margin: 4px 0; border-left: 2px solid var(--border); background: var(--bg); }
+.task-divider { display: flex; align-items: center; gap: 8px; color: var(--border2); font-size: 10px; padding: 2px 0; }
+.task-divider::before, .task-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Command dock */
+#command-dock { border-top: 1px solid var(--border); padding: 8px 16px; background: var(--bg2); flex-shrink: 0; }
+#quick-buttons { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+#quick-buttons button { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 4px 10px; font-size: 10px; border-radius: 3px; transition: all 0.15s; }
+#quick-buttons button:hover { border-color: var(--gold3); color: var(--gold2); }
+#decree-row { display: flex; gap: 8px; }
+#decree-input { flex: 1; background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 8px 10px; font-size: 12px; resize: none; border-radius: 3px; min-height: 38px; max-height: 120px; }
+#decree-input::placeholder { color: var(--text3); font-style: italic; }
+#decree-input:focus { outline: none; border-color: var(--gold3); }
+#decree-btn { background: var(--gold3); color: var(--bg); border: none; padding: 8px 18px; font-size: 12px; letter-spacing: 1px; border-radius: 3px; transition: background 0.15s; white-space: nowrap; }
+#decree-btn:hover { background: var(--gold); }
+#decree-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Right Panel ────────────────────────────────────────────────── */
+#right-panel { width: 210px; background: var(--bg2); border-left: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.panel-section-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold3); margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+/* Guild cards */
+.guild-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; }
+.guild-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.guild-card-name { font-size: 11px; color: var(--text); }
+.guild-card-model { font-size: 9px; color: var(--text3); }
+.guild-card-status { font-size: 10px; margin-bottom: 2px; }
+.guild-card-stats { font-size: 10px; color: var(--text2); }
+.status-idle { color: var(--stone); }
+.status-conjuring { color: var(--amber); }
+.status-standby { color: var(--text3); }
+
+/* Relic vault */
+.relic-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.relic-name { font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+.relic-size { font-size: 10px; color: var(--text2); white-space: nowrap; }
+.relic-copy { background: none; border: 1px solid var(--border); color: var(--text3); font-size: 9px; padding: 1px 5px; border-radius: 2px; cursor: pointer; }
+.relic-copy:hover { border-color: var(--gold3); color: var(--gold2); }
+.empty-note { color: var(--text3); font-style: italic; font-size: 11px; padding: 8px 0; }
+
+/* Magicka bar */
+.magicka-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; display: flex; margin: 6px 0 4px; }
+.magicka-local { background: var(--blue); }
+.magicka-api { background: var(--purple); }
+.magicka-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text2); }
+
+/* ── Settings Panel (slide-in) ──────────────────────────────────── */
+#settings-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+#settings-overlay.open { opacity: 1; pointer-events: all; }
+#settings-panel { position: fixed; top: 0; right: -340px; width: 340px; height: 100%; background: var(--bg2); border-left: 1px solid var(--border2); z-index: 2001; transition: right 0.3s; padding: 16px; overflow-y: auto; }
+#settings-panel.open { right: 0; }
+#settings-panel h2 { color: var(--gold2); font-size: 15px; letter-spacing: 2px; margin-bottom: 16px; }
+.settings-group { margin-bottom: 18px; }
+.settings-group h3 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold3); margin-bottom: 8px; }
+.settings-group label { display: block; color: var(--text2); font-size: 11px; margin-bottom: 4px; }
+.settings-group input { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; font-size: 12px; border-radius: 3px; margin-bottom: 8px; }
+.settings-group input:focus { outline: none; border-color: var(--gold3); }
+.settings-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 6px 14px; font-size: 11px; border-radius: 3px; margin-right: 6px; cursor: pointer; }
+.settings-btn:hover { border-color: var(--gold3); color: var(--gold2); }
+.settings-btn.primary { background: var(--gold3); color: var(--bg); border-color: var(--gold3); }
+.settings-btn.primary:hover { background: var(--gold); }
+#settings-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; }
+#settings-close:hover { color: var(--gold2); }
+#octoprint-status { font-size: 11px; margin-top: 4px; }
+.treasury-btn { background: none; border: 1px solid var(--gold3); color: var(--gold2); font-family: inherit;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 12px; cursor: pointer; }
+.treasury-btn:hover { background: rgba(200,150,42,.12); }
+.treasury-btn:disabled { opacity: .5; cursor: wait; }
+.settings-gear { background: none; border: none; color: var(--stone2); font-size: 14px; cursor: pointer; padding: 2px; }
+.settings-gear:hover { color: var(--gold2); }
+
+/* ── Overlay panels (library, blender, print) ───────────────────── */
+/* ── The Ravens: Huginn (Thought) & Muninn (Memory) (2026-11-02) ── */
+.raven-roost { display: flex; flex-direction: column; gap: 6px; }
+.raven-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; cursor: pointer; transition: border-color .3s; }
+.raven-card:hover { border-color: var(--gold3); }
+.raven-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.raven-head svg { width: 38px; height: 38px; flex-shrink: 0; overflow: visible; }
+.raven-head .raven-name { font-size: 11px; color: var(--gold2); letter-spacing: 1px; }
+.raven-head .raven-sub { font-size: 9px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.raven-line { font-size: 10px; color: var(--text2); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.raven-line b { color: var(--text); font-weight: normal; }
+.raven-line .ok { color: var(--green); } .raven-line .warn { color: var(--amber); } .raven-line .bad { color: #c0584a; }
+.raven-svg .wing { transform-origin: 14px 15px; }
+.raven-svg .body { transform-origin: 16px 22px; }
+.raven-card.flap .raven-svg .wing { animation: rFlap .18s ease-in-out 6 alternate; }
+.raven-card.flap .raven-svg .body { animation: rHop .54s ease-in-out 2; }
+.raven-card.watch .raven-svg .body { animation: rTilt 3.5s ease-in-out infinite; }
+@keyframes rFlap { from { transform: rotate(0deg); } to { transform: rotate(-38deg) translateY(-2px); } }
+@keyframes rHop  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes rTilt { 0%,70%,100% { transform: rotate(0deg); } 80% { transform: rotate(-8deg); } 90% { transform: rotate(4deg); } }
+.raven-eye { fill: var(--gold2); }
+.raven-card.muninn .raven-eye { fill: #8fb0d8; }
+#ravens-report-pre { font-family: Consolas, monospace; font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+#overlay-panel { display: none; }
+#overlay-panel.open { display: flex; flex-direction: column; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg2); z-index: 10; padding: 12px; overflow-y: auto; }
+#overlay-panel .panel-close { align-self: flex-end; background: none; border: 1px solid var(--border); color: var(--text2); font-size: 10px; padding: 3px 10px; border-radius: 3px; cursor: pointer; margin-bottom: 8px; }
+#overlay-panel .panel-close:hover { border-color: var(--gold3); color: var(--gold2); }
+#overlay-panel h3 { color: var(--gold2); font-size: 14px; letter-spacing: 1px; margin-bottom: 10px; }
+#overlay-panel .panel-content { font-size: 12px; color: var(--text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+#overlay-panel input, #overlay-panel textarea { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; font-size: 12px; border-radius: 3px; margin-bottom: 8px; }
+#overlay-panel textarea { resize: vertical; min-height: 60px; }
+#overlay-panel .panel-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 5px 12px; font-size: 11px; border-radius: 3px; cursor: pointer; }
+#overlay-panel .panel-btn:hover { border-color: var(--gold3); color: var(--gold2); }
+.script-list-item { padding: 4px 0; cursor: pointer; color: var(--blue); font-size: 11px; }
+.script-list-item:hover { color: var(--gold2); }
+
+/* ── App feel (2026-11-01): no text-select highlighting on controls; reading areas stay selectable ── */
+body { -webkit-user-select: none; user-select: none; }
+input, textarea, #rd-body, #feed, .msg, .panel-content, #overlay-content pre, #overlay-content code { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }
+/* ── Petitions bar (2026-11-01) ── */
+#petitions { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 2500; display: none; flex-direction: column; gap: 6px; width: min(760px, 90vw); }
+#petitions.open { display: flex; }
+.petition { background: var(--bg2); border: 1px solid var(--gold3); border-left: 3px solid var(--gold2); border-radius: 4px; padding: 8px 12px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+.petition .pt-text { flex: 1; font-size: 12px; color: var(--text); line-height: 1.4; }
+.petition .pt-text b { color: var(--gold2); font-weight: normal; }
+.petition button { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; font-family: inherit; }
+.petition button.ok:hover { border-color: var(--green); color: #8fd19e; }
+.petition button.no:hover { border-color: var(--red); color: #e09a8a; }
+/* ── Relic Reader (2026-11-01) ── */
+#reader { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 3000; display: none; align-items: center; justify-content: center; }
+#reader.open { display: flex; }
+#reader .rd-box { width: min(1100px, 94vw); height: 90vh; background: var(--bg2); border: 1px solid var(--gold3); border-radius: 6px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+#reader .rd-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border2); }
+#reader .rd-title { color: var(--gold2); font-size: 15px; letter-spacing: .5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#reader .rd-meta { color: var(--text3); font-size: 10px; }
+#reader .rd-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; font-family: inherit; }
+#reader .rd-btn:hover { border-color: var(--gold3); color: var(--gold2); }
+#reader .rd-body { flex: 1; overflow: auto; padding: 18px 26px; font-size: 13px; line-height: 1.65; color: var(--text); user-select: text; }
+#reader .rd-body h1, #reader .rd-body h2, #reader .rd-body h3, #reader .rd-body h4 { color: var(--gold2); margin: 16px 0 8px; font-weight: normal; letter-spacing: .5px; }
+#reader .rd-body h1 { font-size: 22px; border-bottom: 1px solid var(--border2); padding-bottom: 6px; }
+#reader .rd-body h2 { font-size: 18px; } #reader .rd-body h3 { font-size: 15px; } #reader .rd-body h4 { font-size: 13px; }
+#reader .rd-body p { margin: 8px 0; } #reader .rd-body ul, #reader .rd-body ol { margin: 6px 0 6px 22px; }
+#reader .rd-body code { font-family: Consolas, 'Cascadia Mono', monospace; background: var(--bg3); padding: 1px 4px; border-radius: 3px; font-size: 12px; color: #e8d6a8; }
+#reader .rd-body pre { background: #0a0906; border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; overflow: auto; margin: 10px 0; }
+#reader .rd-body pre code { background: none; padding: 0; white-space: pre; }
+#reader .rd-body pre.code { counter-reset: ln; }
+#reader .rd-body blockquote { border-left: 3px solid var(--gold3); margin: 8px 0; padding: 2px 12px; color: var(--text2); }
+#reader .rd-body table { border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+#reader .rd-body th, #reader .rd-body td { border: 1px solid var(--border2); padding: 4px 10px; text-align: left; vertical-align: top; }
+#reader .rd-body th { background: var(--bg3); color: var(--gold2); font-weight: normal; }
+#reader .rd-body hr { border: none; border-top: 1px solid var(--border2); margin: 14px 0; }
+#reader .rd-body img { max-width: 100%; border: 1px solid var(--border); }
+#reader .rd-note { color: var(--text3); font-style: italic; }
+.relic-name.clickable, .relic-open { cursor: pointer; }
+.relic-name.clickable:hover { color: var(--gold2); text-decoration: underline; }
+.relic-open { color: var(--gold); font-size: 10px; margin-left: 6px; }
+.vault-search { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; font-size: 12px; border-radius: 3px; margin-bottom: 8px; font-family: inherit; }
+.vault-folder { color: var(--text3); font-size: 9px; }
+</style>
+</head>
+<body>
+
+<!-- Corner Ornaments -->
+<div class="corner-ornament corner-tl"><div class="inner"></div></div>
+<div class="corner-ornament corner-tr"><div class="inner"></div></div>
+<div class="corner-ornament corner-bl"><div class="inner"></div></div>
+<div class="corner-ornament corner-br"><div class="inner"></div></div>
+
+<!-- Vine Decorations -->
+<svg class="vine-left" viewBox="0 0 30 800" preserveAspectRatio="none">
+  <path d="M15 0 Q8 80 15 160 Q22 240 15 320 Q8 400 15 480 Q22 560 15 640 Q8 720 15 800" fill="none" stroke="#3a2818" stroke-width="1.5"/>
+  <circle cx="15" cy="160" r="3" fill="#3a2818"/><circle cx="15" cy="320" r="3" fill="#3a2818"/>
+  <circle cx="15" cy="480" r="3" fill="#3a2818"/><circle cx="15" cy="640" r="3" fill="#3a2818"/>
+  <path d="M15 80 Q5 80 8 70 M15 240 Q25 240 22 230 M15 400 Q5 400 8 390 M15 560 Q25 560 22 550" fill="none" stroke="#3a2818" stroke-width="1"/>
+</svg>
+<svg class="vine-right" viewBox="0 0 30 800" preserveAspectRatio="none">
+  <path d="M15 0 Q22 80 15 160 Q8 240 15 320 Q22 400 15 480 Q8 560 15 640 Q22 720 15 800" fill="none" stroke="#3a2818" stroke-width="1.5"/>
+  <circle cx="15" cy="160" r="3" fill="#3a2818"/><circle cx="15" cy="320" r="3" fill="#3a2818"/>
+  <circle cx="15" cy="480" r="3" fill="#3a2818"/><circle cx="15" cy="640" r="3" fill="#3a2818"/>
+  <path d="M15 80 Q25 80 22 70 M15 240 Q5 240 8 230 M15 400 Q25 400 22 390 M15 560 Q5 560 8 550" fill="none" stroke="#3a2818" stroke-width="1"/>
+</svg>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="left">
+      <div class="mascot-wrap" id="mascotWrap">
+        <div class="mascot" id="mascot" title="Skål!"><img src="/mascot/mascot-open.png" alt=""><img class="shut" src="/mascot/mascot-closed.png" alt=""></div>
+        <div class="mascot-fx" id="mascotFx"></div>
+        <div class="mascot-bubble" id="mascotBubble"></div>
+      </div>
+      <span class="rune-text">&runes;</span>
+      <span class="title">Norse Imperium</span>
+    </div>
+    <div class="right">
+      <button class="treasury-btn" id="skaldBtn" onclick="runSkald()" title="Skald: read today's market mood from the news (about 7 cents)">&#5809; Skald</button>
+      <button class="treasury-btn" id="treasuryBtn" onclick="runTreasury()" title="Refresh prices and both fear gauges, show Thesis C progress (no AI, no tokens)">&#9878; Treasury</button>
+      <button class="settings-gear" onclick="openSettings()" title="Settings">&#9881;</button>
+      <span class="emperor-label">Dovahkiin: Chris</span>
+      <div id="warden-pill" class="warden-pill offline">
+        <span class="gem red" id="warden-gem"></span>
+        <span id="warden-text">Checking...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS STRIP -->
+  <div id="status-strip">
+    <div class="stat-panel"><div class="stat-label">Gold Spent</div><div class="stat-value" id="stat-spend">--</div></div>
+    <div class="stat-panel"><div class="stat-label">Treasury Left</div><div class="stat-value" id="stat-treasury">--</div></div>
+    <div class="stat-panel"><div class="stat-label">Active Guild</div><div class="stat-value" id="stat-guild">--</div></div>
+    <div class="stat-panel"><div class="stat-label">Last Deed</div><div class="stat-value" id="stat-deed">--</div></div>
+    <div class="stat-panel"><div class="stat-label">Relics Forged</div><div class="stat-value" id="stat-relics">--</div></div>
+    <div class="stat-panel"><div class="stat-label">Local / Scrolls</div><div class="stat-value" id="stat-ratio">--</div></div>
+  </div>
+  <div id="budget-bar-wrap"><div id="budget-bar"></div></div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div class="nav-group">
+        <div class="nav-group-title">Throne</div>
+        <div class="nav-item active" data-view="great-hall"><span class="gem green pulse"></span> Great Hall</div>
+        <div class="nav-item" data-view="war-chronicles"><span class="gem dark"></span> War Chronicles</div>
+        <div class="nav-item" data-view="deed-ledger"><span class="gem dark"></span> Deed Ledger</div>
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-group">
+        <div class="nav-group-title">Guilds</div>
+        <div id="guild-nav"></div>
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-group">
+        <div class="nav-group-title">Forge</div>
+        <div class="nav-item" data-view="relic-vault"><span class="gem dark"></span> Relic Vault</div>
+        <div class="nav-item" data-view="blender-forge"><span class="gem dark"></span> Blender Forge</div>
+        <div class="nav-item" data-view="print-shrine"><span class="gem dark"></span> Print Shrine</div>
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-group">
+        <div class="nav-group-title">Arcanaeum</div>
+        <div class="nav-item" data-view="library-edicts"><span class="gem dark"></span> Edicts</div>
+        <div class="nav-item" data-view="library-codex"><span class="gem dark"></span> Persona Codex</div>
+        <div class="nav-item" data-view="library-chronicles"><span class="gem dark"></span> Canon Scrolls</div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div id="center">
+      <div id="scroll-header">
+        <div class="left">The Great Hall &mdash; Emperor's Decree Feed</div>
+        <div class="right" id="current-task">Awaiting your decree</div>
+      </div>
+      <div id="feed"></div>
+      <div id="command-dock">
+        <div id="quick-buttons">
+          <button onclick="prefill('Create a Blender bpy script for ')">3D Relic</button>
+          <button onclick="prefill('Write a Node.js script that ')">Forge Script</button>
+          <button onclick="prefill('Research and write a summary document about ')">Seek Knowledge</button>
+          <button onclick="prefill('Format and clean up the following content: ')">Format Scroll</button>
+          <button onclick="prefill('What is the current status of the Norse Imperium? List active ministries, recent tasks, and any issues.')">Kingdom Status</button>
+          <button onclick="navTo('relic-vault')">Open Vault</button>
+          <button onclick="navTo('blender-forge')">Run in Blender</button>
+        </div>
+        <div id="decree-row">
+          <textarea id="decree-input" rows="1" placeholder="Speak your decree, Dovahkiin..."></textarea>
+          <button id="decree-btn" onclick="sendDecree()">Decree</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div>
+        <div class="panel-section-title" title="Odin's ravens fly the realm and report back. Click either for the full report.">The Ravens</div>
+        <div class="raven-roost">
+          <div class="raven-card huginn watch" id="raven-huginn" onclick="openRavens()">
+            <div class="raven-head">
+          <svg class="raven-svg" viewBox="0 0 32 32" aria-hidden="true">
+            <g class="body">
+              <path d="M7 11.6 C4.6 11.6 2.2 12.6 0.4 14.6 C2.6 14.4 4.8 14.8 7.4 15.6 Z" fill="#2a241a" stroke="#8a6318" stroke-width=".5"/>
+              <path d="M6 13.2 C6.5 9.5 10 8 12.6 9.2 C14.6 10.1 15.4 12 16 13.6 C20 14 24.5 16.5 27 20.5 L31 22.5 L26.2 22.8 C23.5 25.5 19 26.4 15.4 25.6 C12 24.9 9.6 22.4 9 19.6 C8.6 17.6 8.8 16 8.2 15 C7.6 14.2 6.6 14 6 13.2 Z" fill="#17130d" stroke="#8a6318" stroke-width=".7"/>
+              <path d="M8.4 15.2 L7.4 17.2 M9.2 16.4 L8.3 18.4" stroke="#8a6318" stroke-width=".5"/>
+              <circle class="raven-eye" cx="10.2" cy="12" r=".95"/>
+              <path d="M14 26 L13.2 30 M17.5 26.2 L18 30 M12 30 L14.6 30 M16.8 30 L19.4 30" stroke="#7a6a50" stroke-width=".8" fill="none"/>
+            </g>
+            <path class="wing" d="M13.5 15.5 C17 14.2 22 16 25.5 20.8 C21.5 21.6 17.6 21.4 14.6 19.6 C13.4 18.6 13 17 13.5 15.5 Z" fill="#241d13" stroke="#8a6318" stroke-width=".5"/>
+          </svg>
+              <div><div class="raven-name">Huginn</div><div class="raven-sub">Thought &middot; now</div></div>
+            </div>
+            <div id="huginn-lines"><div class="raven-line">Taking flight...</div></div>
+          </div>
+          <div class="raven-card muninn" id="raven-muninn" onclick="openRavens()">
+            <div class="raven-head">
+          <svg class="raven-svg" viewBox="0 0 32 32" style="transform:scaleX(-1)" aria-hidden="true">
+            <g class="body">
+              <path d="M7 11.6 C4.6 11.6 2.2 12.6 0.4 14.6 C2.6 14.4 4.8 14.8 7.4 15.6 Z" fill="#2a241a" stroke="#8a6318" stroke-width=".5"/>
+              <path d="M6 13.2 C6.5 9.5 10 8 12.6 9.2 C14.6 10.1 15.4 12 16 13.6 C20 14 24.5 16.5 27 20.5 L31 22.5 L26.2 22.8 C23.5 25.5 19 26.4 15.4 25.6 C12 24.9 9.6 22.4 9 19.6 C8.6 17.6 8.8 16 8.2 15 C7.6 14.2 6.6 14 6 13.2 Z" fill="#17130d" stroke="#8a6318" stroke-width=".7"/>
+              <path d="M8.4 15.2 L7.4 17.2 M9.2 16.4 L8.3 18.4" stroke="#8a6318" stroke-width=".5"/>
+              <circle class="raven-eye" cx="10.2" cy="12" r=".95"/>
+              <path d="M14 26 L13.2 30 M17.5 26.2 L18 30 M12 30 L14.6 30 M16.8 30 L19.4 30" stroke="#7a6a50" stroke-width=".8" fill="none"/>
+            </g>
+            <path class="wing" d="M13.5 15.5 C17 14.2 22 16 25.5 20.8 C21.5 21.6 17.6 21.4 14.6 19.6 C13.4 18.6 13 17 13.5 15.5 Z" fill="#241d13" stroke="#8a6318" stroke-width=".5"/>
+          </svg>
+              <div><div class="raven-name">Muninn</div><div class="raven-sub">Memory &middot; past</div></div>
+            </div>
+            <div id="muninn-lines"><div class="raven-line">Taking flight...</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-section-title">Guild Status</div>
+        <div id="guild-cards"></div>
+      </div>
+      <div>
+        <div class="panel-section-title">Relic Vault</div>
+        <div id="relic-vault"></div>
+      </div>
+      <div>
+        <div class="panel-section-title">Magicka vs Scrolls</div>
+        <div class="magicka-bar" id="magicka-bar"></div>
+        <div class="magicka-labels" id="magicka-labels"></div>
+      </div>
+      <!-- Overlay for blender/print/library replaces content -->
+      <div id="overlay-panel">
+        <button class="panel-close" onclick="closeOverlay()">Close</button>
+        <div id="overlay-content"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <button id="settings-close" onclick="closeSettings()">&times;</button>
+  <h2>Settings</h2>
+  <div class="settings-group">
+    <h3>OctoPrint Integration</h3>
+    <label>OctoPrint URL</label>
+    <input id="set-octoprint-url" type="text" placeholder="http://octopi.local">
+    <label>API Key</label>
+    <input id="set-octoprint-key" type="password" placeholder="Masked">
+    <button class="settings-btn primary" onclick="saveSettings()">Save Settings</button>
+    <button class="settings-btn" onclick="testOctoprint()">Test Connection</button>
+    <div id="octoprint-status"></div>
+  </div>
+  <div class="settings-group">
+    <h3>General</h3>
+    <label>Daily Budget Cap ($)</label>
+    <input id="set-budget" type="number" step="0.01" value="2.00">
+    <label>Warden Poll Interval (seconds)</label>
+    <input id="set-poll" type="number" value="10">
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// NORSE IMPERIUM UI — Vanilla JS
+// ══════════════════════════════════════════════════════════════════
+
+// Fix rune text (entity didn't work, set directly)
+document.querySelector('.rune-text').textContent = '\u16BE\u16DF\u16B1\u16CA\u16D6 \u16C1\u16D7\u16C8\u16D6\u16B1\u16C1\u16A2\u16D7';
+
+// ── State ──────────────────────────────────────────────────────────
+let lastFeedId = 0;
+let lastFeedTaskId = '';
+let feedFilter = null; // null = all, string = agent filter
+let statusData = {};
+let ministriesData = [];
+let outputFiles = [];
+let ollamaStats = { available: false };
+let tasksData = [];
+
+// ── Display name mapping ────────────────────────────────────────────
+const DISPLAY_NAMES = {
+  'emperor': 'Emperor Chris',
+  'imperial-chancellor': 'Imperial Chancellor',
+  'ministry-of-engineering': 'Mages Engineering',
+  'ministry-of-intelligence': 'College of Intelligence',
+  'ministry-of-works': 'Companions Works',
+  'ministry-of-protocol': 'Bards Protocol'
+};
+
+const MINISTRY_ORDER = ['imperial-chancellor', 'ministry-of-engineering', 'ministry-of-intelligence', 'ministry-of-works'];
+
+// ── API Helpers ─────────────────────────────────────────────────────
+async function api(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.statusText);
+    return await r.json();
+  } catch (e) {
+    console.warn('API error:', url, e.message);
+    return null;
+  }
+}
+
+async function apiPost(url, body) {
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return await r.json();
+  } catch (e) {
+    console.warn('API POST error:', url, e.message);
+    return null;
+  }
+}
+
+// ── Polling: Status ─────────────────────────────────────────────────
+async function pollStatus() {
+  const d = await api('/api/status');
+  if (!d) return;
+  statusData = d;
+
+  // Warden pill
+  const pill = document.getElementById('warden-pill');
+  const gem = document.getElementById('warden-gem');
+  const txt = document.getElementById('warden-text');
+  if (d.warden_alive) {
+    pill.className = 'warden-pill online';
+    gem.className = 'gem green pulse';
+    txt.textContent = 'Warden Active';
+  } else {
+    pill.className = 'warden-pill offline';
+    gem.className = 'gem red';
+    txt.textContent = 'Warden Offline';
+  }
+
+  // Status strip
+  document.getElementById('stat-spend').textContent = '$' + d.daily_spend.toFixed(2);
+  const left = d.budget - d.daily_spend;
+  document.getElementById('stat-treasury').textContent = '$' + Math.max(0, left).toFixed(2);
+
+  // Budget bar
+  const pct = Math.min(100, (d.daily_spend / d.budget) * 100);
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = pct + '%';
+  if (pct > 90) bar.style.background = '#8a3a2a';
+  else if (pct > 70) bar.style.background = '#ba7517';
+  else bar.style.background = '#8a6318';
+}
+
+// ── Polling: Ministries ─────────────────────────────────────────────
+async function pollMinistries() {
+  const d = await api('/api/ministries');
+  if (!d) return;
+  ministriesData = d;
+  renderGuildNav();
+  renderGuildCards();
+  renderMagicka();
+
+  // Active guild stat
+  if (d.length > 0) {
+    const sorted = [...d].sort((a, b) => new Date(b.last_active) - new Date(a.last_active));
+    const name = DISPLAY_NAMES[sorted[0].agent_id] || sorted[0].agent_id;
+    document.getElementById('stat-guild').textContent = name.split(' ').pop();
+  } else {
+    document.getElementById('stat-guild').textContent = 'None';
+  }
+}
+
+// ── Polling: Tasks ──────────────────────────────────────────────────
+async function pollTasks() {
+  const d = await api('/api/tasks');
+  if (!d) return;
+  tasksData = d;
+
+  if (d.length > 0) {
+    const latest = d[0];
+    const status = latest.result_status || latest.status || 'active';
+    document.getElementById('stat-deed').textContent = status;
+    if (latest.id || latest.task_id) {
+      const tid = latest.id || latest.task_id;
+      document.getElementById('current-task').textContent = tid;
+    }
+  } else {
+    document.getElementById('stat-deed').textContent = 'No data';
+  }
+}
+
+// ── Polling: Output Files ───────────────────────────────────────────
+async function pollOutputFiles() {
+  const d = await api('/api/output-files');
+  if (!d) return;
+  outputFiles = d;
+  document.getElementById('stat-relics').textContent = d.length;
+  renderRelicVault();
+}
+
+// ── Polling: Ollama ─────────────────────────────────────────────────
+async function pollOllama() {
+  const d = await api('/api/ollama-stats');
+  if (d) ollamaStats = d;
+  renderMagicka();
+}
+
+// ── Polling: Feed ───────────────────────────────────────────────────
+async function pollFeed() {
+  const d = await api('/api/feed?after=' + lastFeedId);
+  if (!d || d.length === 0) return;
+
+  const feed = document.getElementById('feed');
+  const atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 40;
+
+  for (const msg of d) {
+    lastFeedId = Math.max(lastFeedId, msg.id);
+
+    // Apply filter
+    if (feedFilter && msg.from_agent !== feedFilter && msg.to_agent !== feedFilter) continue;
+
+    // Task divider
+    if (msg.task_id !== lastFeedTaskId && lastFeedTaskId) {
+      const div = document.createElement('div');
+      div.className = 'task-divider';
+      div.innerHTML = '\u16DE';
+      feed.appendChild(div);
+    }
+    lastFeedTaskId = msg.task_id;
+
+    const el = document.createElement('div');
+    el.className = 'msg ' + (msg.from_agent || '');
+    const time = msg.created_at ? msg.created_at.split(' ')[1]?.slice(0, 5) || '' : '';
+    const from = DISPLAY_NAMES[msg.from_agent] || msg.from_agent || 'Unknown';
+
+    el.innerHTML =
+      '<div class="msg-header">' +
+        '<span class="msg-from">' + esc(from) + '</span>' +
+        '<span class="msg-time">' + esc(time) + '</span>' +
+        (msg.to_agent ? '<span class="msg-badge">\u2192 ' + esc(DISPLAY_NAMES[msg.to_agent] || msg.to_agent) + '</span>' : '') +
+      '</div>' +
+      '<div class="msg-body">' + renderContent(msg.content || '') + '</div>';
+
+    feed.appendChild(el);
+  }
+
+  if (atBottom) feed.scrollTop = feed.scrollHeight;
+}
+
+// ── Content Rendering ───────────────────────────────────────────────
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderContent(text) {
+  // Escape HTML first
+  let safe = esc(text);
+
+  // Dispatch blocks → muted
+  safe = safe.replace(/```dispatch[\s\S]*?```/g, function(m) {
+    return '<div class="dispatch-block">' + m + '</div>';
+  });
+
+  // [VERIFIED] tags
+  safe = safe.replace(/\[VERIFIED\]/g, '<span class="verified">[VERIFIED]</span>');
+  // [FAILED] tags
+  safe = safe.replace(/\[FAILED\]/g, '<span class="failed">[FAILED]</span>');
+  // [CANNOT COMPLETE] tags
+  safe = safe.replace(/\[CANNOT COMPLETE\]/g, '<span class="cannot-complete">[CANNOT COMPLETE]</span>');
+
+  return safe;
+}
+
+// ── Render: Guild Nav ───────────────────────────────────────────────
+function renderGuildNav() {
+  const container = document.getElementById('guild-nav');
+  const html = MINISTRY_ORDER.map(agentId => {
+    const m = ministriesData.find(x => x.agent_id === agentId);
+    let gemClass = 'dark';
+    if (m) {
+      const elapsed = (Date.now() - new Date(m.last_active + 'Z').getTime()) / 1000;
+      if (elapsed < 10) gemClass = 'amber pulse';
+      else if (elapsed < 60) gemClass = 'green';
+    }
+    const name = DISPLAY_NAMES[agentId] || agentId;
+    const active = feedFilter === agentId ? ' active' : '';
+    return '<div class="nav-item' + active + '" data-filter="' + agentId + '"><span class="gem ' + gemClass + '"></span> ' + esc(name.split(' ').slice(1).join(' ') || name) + '</div>';
+  }).join('');
+  container.innerHTML = html;
+
+  // Click handlers for guild filtering
+  container.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const agent = el.getAttribute('data-filter');
+      if (feedFilter === agent) {
+        feedFilter = null;
+        el.classList.remove('active');
+      } else {
+        feedFilter = agent;
+        container.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+      }
+      // Reload feed from scratch
+      lastFeedId = 0;
+      lastFeedTaskId = '';
+      document.getElementById('feed').innerHTML = '';
+      pollFeed();
+    });
+  });
+}
+
+// ── Render: Guild Cards ─────────────────────────────────────────────
+function renderGuildCards() {
+  const container = document.getElementById('guild-cards');
+  const modelMap = { 'imperial-chancellor': 'Sonnet', 'ministry-of-engineering': 'Sonnet', 'ministry-of-intelligence': 'Haiku', 'ministry-of-works': 'Haiku', 'ministry-of-protocol': 'Haiku' };
+
+  const html = MINISTRY_ORDER.map(agentId => {
+    const m = ministriesData.find(x => x.agent_id === agentId);
+    const name = DISPLAY_NAMES[agentId] || agentId;
+    const model = modelMap[agentId] || '?';
+
+    if (!m) {
+      return '<div class="guild-card">' +
+        '<div class="guild-card-header"><span class="guild-card-name">' + esc(name) + '</span><span class="guild-card-model">' + model + '</span></div>' +
+        '<div class="guild-card-status status-standby">No activity</div>' +
+        '</div>';
+    }
+
+    const elapsed = (Date.now() - new Date(m.last_active + 'Z').getTime()) / 1000;
+    let statusText, statusClass;
+    if (m.is_active || elapsed < 10) { statusText = 'Conjuring...'; statusClass = 'status-conjuring'; }
+    else if (elapsed < 60) { statusText = 'Idle'; statusClass = 'status-idle'; }
+    else { statusText = 'Standby'; statusClass = 'status-standby'; }
+
+    return '<div class="guild-card">' +
+      '<div class="guild-card-header"><span class="guild-card-name">' + esc(name) + '</span><span class="guild-card-model">' + model + '</span></div>' +
+      '<div class="guild-card-status ' + statusClass + '">' + statusText + '</div>' +
+      '<div class="guild-card-stats">' + m.total_calls + ' calls &middot; $' + m.total_cost.toFixed(4) + '</div>' +
+      '</div>';
+  }).join('');
+  container.innerHTML = html;
+}
+
+// ── Render: Relic Vault ─────────────────────────────────────────────
+function renderRelicVault() {
+  const container = document.getElementById('relic-vault');
+  if (outputFiles.length === 0) {
+    container.innerHTML = '<div class="empty-note">The vault awaits your first relic.</div>';
+    return;
+  }
+  container.innerHTML = outputFiles.map(f => {
+    const size = f.size_bytes > 1000 ? (f.size_bytes / 1024).toFixed(1) + ' KB' : f.size_bytes + ' B';
+    return '<div class="relic-item">' +
+      '<span class="relic-name clickable" title="Open ' + esc(f.rel || f.name) + '" onclick="openRelic(\'' + jsq(f.rel) + '\')">' + esc(f.name) + '</span>' +
+      '<span class="relic-size">' + size + '</span>' +
+      '<button class="relic-copy" onclick="copyPath(\'' + esc(f.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'")) + '\')" title="Copy path">cp</button>' +
+      '</div>';
+  }).join('');
+}
+
+function copyPath(p) {
+  navigator.clipboard.writeText(p).catch(() => {});
+}
+
+// ── Render: Magicka Bar ─────────────────────────────────────────────
+function renderMagicka() {
+  const totalApi = ministriesData.reduce((s, m) => s + m.total_calls, 0);
+  let totalLocal = 0;
+  if (ollamaStats.available && ollamaStats.models) {
+    totalLocal = ollamaStats.models.reduce((s, m) => s + m.calls, 0);
+  }
+  const total = totalApi + totalLocal;
+
+  const bar = document.getElementById('magicka-bar');
+  const labels = document.getElementById('magicka-labels');
+
+  if (total === 0) {
+    bar.innerHTML = '';
+    labels.textContent = 'No calls yet';
+    return;
+  }
+
+  const localPct = (totalLocal / total) * 100;
+  const apiPct = (totalApi / total) * 100;
+
+  bar.innerHTML =
+    (totalLocal > 0 ? '<div class="magicka-local" style="width:' + localPct + '%"></div>' : '') +
+    '<div class="magicka-api" style="width:' + apiPct + '%"></div>';
+
+  if (!ollamaStats.available) {
+    labels.innerHTML = totalApi + ' API <span style="color:var(--text3);font-size:8px">&middot; Local tracking not active</span>';
+  } else {
+    labels.innerHTML = totalLocal + ' local &middot; ' + totalApi + ' API';
+  }
+}
+
+// ── Send Decree ─────────────────────────────────────────────────────
+async function sendDecree() {
+  const input = document.getElementById('decree-input');
+  const btn = document.getElementById('decree-btn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  const result = await apiPost('/api/send', { content: text });
+  if (result && result.task_id) {
+    input.value = '';
+    document.getElementById('current-task').textContent = result.task_id;
+    // Immediate poll to show the new message
+    setTimeout(pollFeed, 500);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Decree';
+}
+
+function prefill(text) {
+  const input = document.getElementById('decree-input');
+  input.value = text;
+  input.focus();
+  // Move cursor to end
+  input.setSelectionRange(text.length, text.length);
+}
+
+// Ctrl+Enter to send
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter' && document.activeElement === document.getElementById('decree-input')) {
+    sendDecree();
+  }
+});
+
+// ── Navigation ──────────────────────────────────────────────────────
+function navTo(view) {
+  // Deactivate all nav items except guild ones
+  document.querySelectorAll('#sidebar .nav-item[data-view]').forEach(n => n.classList.remove('active'));
+  const target = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (target) target.classList.add('active');
+
+  const overlay = document.getElementById('overlay-panel');
+  const content = document.getElementById('overlay-content');
+
+  // Views that use the right-panel overlay
+  if (view === 'blender-forge') {
+    showBlenderForge(overlay, content);
+  } else if (view === 'print-shrine') {
+    showPrintShrine(overlay, content);
+  } else if (view === 'relic-vault') {
+    showRelicVaultFull(overlay, content);
+  } else if (view.startsWith('library-')) {
+    showLibrary(view, overlay, content);
+  } else if (view === 'war-chronicles') {
+    showWarChronicles(overlay, content);
+  } else if (view === 'deed-ledger') {
+    showDeedLedger(overlay, content);
+  } else if (view === 'great-hall') {
+    closeOverlay();
+    feedFilter = null;
+    lastFeedId = 0; lastFeedTaskId = '';
+    document.getElementById('feed').innerHTML = '';
+    pollFeed();
+  } else {
+    closeOverlay();
+  }
+}
+
+function closeOverlay() {
+  const overlay = document.getElementById('overlay-panel');
+  overlay.classList.remove('open');
+}
+
+// Sidebar click handlers for data-view items
+document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+  el.addEventListener('click', () => navTo(el.getAttribute('data-view')));
+});
+
+// ── Blender Forge ───────────────────────────────────────────────────
+function showBlenderForge(overlay, content) {
+  const scripts = outputFiles.filter(f => f.name.endsWith('.py'));
+  content.innerHTML =
+    '<h3>Blender Forge</h3>' +
+    '<label style="color:var(--text2);font-size:11px">Script path:</label>' +
+    '<input id="blender-path" type="text" placeholder="C:\\Imperium\\output\\scripts\\viking_shield.py">' +
+    '<button class="panel-btn" onclick="genBlenderCmd()">Generate Command</button>' +
+    '<label style="color:var(--text2);font-size:11px;margin-top:8px;display:block">Command to run:</label>' +
+    '<textarea id="blender-cmd" readonly rows="3" style="color:var(--text3)"></textarea>' +
+    '<button class="panel-btn" onclick="navigator.clipboard.writeText(document.getElementById(\'blender-cmd\').value)" style="margin-top:4px">Copy Command</button>' +
+    (scripts.length > 0 ? '<div style="margin-top:10px"><div class="panel-section-title">Available Scripts</div>' +
+      scripts.map(f => '<div class="script-list-item" onclick="document.getElementById(\'blender-path\').value=\'' + esc(f.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'")) + '\'">' + esc(f.name) + '</div>').join('') +
+    '</div>' : '');
+  overlay.classList.add('open');
+}
+
+function genBlenderCmd() {
+  const p = document.getElementById('blender-path').value.trim();
+  if (!p) return;
+  document.getElementById('blender-cmd').value =
+    '"C:\\Program Files\\Blender Foundation\\Blender 5.0\\blender.exe" --background --python "' + p + '"';
+}
+
+// ── Print Shrine ────────────────────────────────────────────────────
+async function showPrintShrine(overlay, content) {
+  const settings = await api('/api/settings');
+  if (!settings || !settings.octoprint_url) {
+    content.innerHTML = '<h3>Print Shrine</h3><div class="empty-note">Configure OctoPrint in Settings to use the Print Shrine.</div>';
+    overlay.classList.add('open');
+    return;
+  }
+
+  content.innerHTML = '<h3>Print Shrine</h3><div class="empty-note">Checking printer status...</div>';
+  overlay.classList.add('open');
+
+  const status = await api('/api/octoprint-status');
+  const stls = outputFiles.filter(f => f.name.endsWith('.stl'));
+
+  let html = '<h3>Print Shrine</h3>';
+  if (status && status.connected) {
+    html += '<div style="color:var(--green);font-size:12px;margin-bottom:8px">Printer connected</div>';
+    if (status.printer && status.printer.state) {
+      html += '<div style="font-size:11px;color:var(--text2)">State: ' + esc(JSON.stringify(status.printer.state)) + '</div>';
+    }
+  } else {
+    html += '<div style="color:var(--red);font-size:12px;margin-bottom:8px">Printer offline: ' + esc(status?.reason || 'unknown') + '</div>';
+  }
+
+  if (stls.length > 0) {
+    html += '<div style="margin-top:10px"><div class="panel-section-title">STL Files</div>';
+    html += stls.map(f => '<div class="relic-item"><span class="relic-name">' + esc(f.name) + '</span><button class="panel-btn" style="font-size:9px;padding:2px 6px">Send to Printer</button></div>').join('');
+    html += '</div>';
+  } else {
+    html += '<div class="empty-note" style="margin-top:10px">No STL files in the vault yet.</div>';
+  }
+  content.innerHTML = html;
+}
+
+// ── Relic Vault Full (reader, 2026-11-01) ───────────────────────────
+let vaultAll = [];
+async function showRelicVaultFull(overlay, content) {
+  content.innerHTML = '<h3>Relic Vault</h3><div class="empty-note">Opening the vault…</div>';
+  overlay.classList.add('open');
+  vaultAll = (await api('/api/output-files?all=1')) || [];
+  if (vaultAll.length === 0) {
+    content.innerHTML = '<h3>Relic Vault</h3><div class="empty-note">The vault awaits your first relic.</div>';
+    return;
+  }
+  content.innerHTML = '<h3>Relic Vault <span style="font-size:10px;color:var(--text3)">' + vaultAll.length + ' relics · click to open</span></h3>' +
+    '<input class="vault-search" id="vault-search" placeholder="Search relics…" oninput="renderVaultList()">' +
+    '<div id="vault-list"></div>';
+  renderVaultList();
+  setTimeout(() => { const i = document.getElementById('vault-search'); if (i) i.focus(); }, 50);
+}
+
+function renderVaultList() {
+  const q = ((document.getElementById('vault-search') || {}).value || '').toLowerCase();
+  const list = vaultAll.filter(f => !q || (f.rel || f.name).toLowerCase().includes(q));
+  document.getElementById('vault-list').innerHTML = list.map(f => {
+    const size = f.size_bytes > 1000 ? (f.size_bytes / 1024).toFixed(1) + ' KB' : f.size_bytes + ' B';
+    const date = f.modified_at ? new Date(f.modified_at).toLocaleString() : '';
+    const folder = (f.rel || '').includes('/') ? f.rel.slice(0, f.rel.lastIndexOf('/') + 1) : '';
+    return '<div class="relic-item" style="flex-direction:column;align-items:flex-start;padding:6px 0;cursor:pointer" onclick="openRelic(\'' + jsq(f.rel) + '\')">' +
+      '<div style="display:flex;width:100%;justify-content:space-between">' +
+      '<span class="relic-name clickable" style="max-width:none">' + esc(f.name) + '</span>' +
+      '<span class="relic-size">' + size + '</span></div>' +
+      '<div class="vault-folder">' + esc(folder ? 'output/' + folder : 'output/') + ' &middot; ' + date + '</div>' +
+      '</div>';
+  }).join('') || '<div class="empty-note">No relic matches that search.</div>';
+}
+
+// ── App feel (2026-11-01): behave like a program, not a web page ────
+(function appFeel() {
+  const textual = el => el && (el.closest('input, textarea, [contenteditable], #rd-body, #feed, .msg') || window.getSelection().toString());
+  document.addEventListener('contextmenu', e => { if (!textual(e.target)) e.preventDefault(); });
+  document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (e.ctrlKey && ['+', '=', '-', '_', '0', 'p', 's', 'u', 'o', 'g', 'h', 'j', 'd'].includes(k)) e.preventDefault();
+    if (e.key === 'F3' || e.key === 'F7') e.preventDefault();   // find bar / caret browsing — F5 and F12 kept for troubleshooting
+  });
+  document.addEventListener('dragstart', e => { if (e.target.tagName === 'IMG' || e.target.tagName === 'A') e.preventDefault(); });
+})();
+
+// ── Petitions (Edict VIII) ──────────────────────────────────────────
+const AGENT_NAMES = { 'ministry-of-intelligence': 'Intelligence', 'ministry-of-engineering': 'Engineering',
+                      'ministry-of-works': 'Works', 'ministry-of-protocol': 'Protocol' };
+let petitionsSeen = new Set();
+async function pollPetitions() {
+  const d = await api('/api/petitions');
+  const box = document.getElementById('petitions');
+  if (!Array.isArray(d) || d.length === 0) { box.classList.remove('open'); box.innerHTML = ''; return; }
+  box.innerHTML = d.map(p => '<div class="petition"><div class="pt-text"><b>&#9878; Petition #' + p.id + '</b> — ' +
+    esc(AGENT_NAMES[p.agent] || p.agent) + ' asks to go beyond the order' + (p.title ? ' on <i>' + esc(String(p.title).slice(0, 70)) + '</i>' : '') +
+    ': ' + esc(p.request) + '</div>' +
+    '<button class="ok" onclick="decidePetition(' + p.id + ',\'approve\')">Approve</button>' +
+    '<button class="no" onclick="decidePetition(' + p.id + ',\'deny\')">Deny</button></div>').join('');
+  box.classList.add('open');
+  for (const p of d) if (!petitionsSeen.has(p.id)) { petitionsSeen.add(p.id); try { mascotEmote('nod'); } catch {} }
+}
+async function decidePetition(id, how) {
+  try {
+    const r = await fetch('/api/petitions/' + id + '/' + how, { method: 'POST' }).then(r => r.json());
+    if (r.error) alertFeed(r.error);
+  } catch {}
+  pollPetitions();
+}
+function alertFeed(t) { try { console.warn(t); } catch {} }
+setInterval(pollPetitions, 8000);
+setTimeout(pollPetitions, 1500);
+
+// ── Relic Reader ────────────────────────────────────────────────────
+let currentRelic = null;
+function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function relFromArtifact(p) {
+  const m = String(p || '').replace(/\\/g, '/').match(/\/output\/(.+)$/i);
+  return m ? m[1] : null;
+}
+
+async function openRelic(rel) {
+  if (!rel) return;
+  const box = document.getElementById('reader'), body = document.getElementById('rd-body');
+  document.getElementById('rd-title').textContent = rel.split('/').pop();
+  document.getElementById('rd-meta').textContent = 'output/' + rel;
+  body.innerHTML = '<div class="rd-note">Unrolling the scroll…</div>';
+  box.classList.add('open');
+  const f = await api('/api/output-file?path=' + encodeURIComponent(rel));
+  if (!f || f.error) { body.innerHTML = '<div class="rd-note">' + esc((f && f.error) || 'Could not open that relic.') + '</div>'; return; }
+  currentRelic = { ...f, winPath: 'C:\\Imperium\\output\\' + f.rel.replace(/\//g, '\\') };
+  const size = f.size_bytes > 1000 ? (f.size_bytes / 1024).toFixed(1) + ' KB' : f.size_bytes + ' B';
+  document.getElementById('rd-meta').textContent = 'output/' + f.rel + ' · ' + size + ' · ' + new Date(f.modified_at).toLocaleString();
+  if (f.kind === 'image') { body.innerHTML = '<img alt="" src="/api/output-raw?path=' + encodeURIComponent(f.rel) + '">'; return; }
+  if (f.kind === 'binary') { body.innerHTML = '<div class="rd-note">This relic is a binary file (' + esc(f.ext || '?') + '). Use Copy path to open it in its own program.</div>'; return; }
+  let html;
+  if (f.ext === '.md' || f.ext === '.markdown') html = renderMarkdown(f.text);
+  else if (f.ext === '.json') { let t = f.text; try { t = JSON.stringify(JSON.parse(t), null, 2); } catch {} html = '<pre><code>' + esc(t) + '</code></pre>'; }
+  else if (f.ext === '.csv') html = renderCsv(f.text);
+  else if (f.ext === '.txt' || f.ext === '.log' || !f.ext) html = '<pre style="white-space:pre-wrap"><code>' + esc(f.text) + '</code></pre>';
+  else html = '<pre class="code"><code>' + esc(f.text) + '</code></pre>';
+  if (f.truncated) html += '<div class="rd-note">Only the first 2 MB are shown.</div>';
+  body.innerHTML = html;
+  body.scrollTop = 0;
+}
+
+function closeRelic() { document.getElementById('reader').classList.remove('open'); currentRelic = null; }
+function copyRelicText() { if (currentRelic && currentRelic.text) navigator.clipboard.writeText(currentRelic.text).catch(() => {}); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('reader').classList.contains('open')) closeRelic(); });
+
+function mdInline(t) {
+  t = esc(t);
+  const codes = [];
+  t = t.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
+  t = t.replace(/!\[([^\]]*)\]\(([^)\s"'<>]+)\)/g, (_, a, u) => /^https?:/.test(u) ? '<a href="' + u + '" target="_blank" rel="noopener">[image: ' + (a || u) + ']</a>' : a);
+  t = t.replace(/\[([^\]]+)\]\(([^)\s"'<>]+)\)/g, (_, a, u) => /^https?:/.test(u) ? '<a href="' + u + '" target="_blank" rel="noopener">' + a + '</a>' : a);
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/__([^_]+)__/g, '<b>$1</b>');
+  t = t.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+  t = t.replace(/\u0000(\d+)\u0000/g, (_, i) => '<code>' + codes[+i] + '</code>');
+  return t;
+}
+
+function renderMarkdown(src) {
+  const lines = String(src).replace(/\r/g, '').split('\n');
+  let out = '', i = 0, para = [];
+  const flush = () => { if (para.length) { out += '<p>' + mdInline(para.join(' ')) + '</p>'; para = []; } };
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^```/.test(l)) { flush(); const buf = []; i++; while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]); i++;
+      out += '<pre><code>' + esc(buf.join('\n')) + '</code></pre>'; continue; }
+    const h = l.match(/^(#{1,4})\s+(.*)/);
+    if (h) { flush(); out += '<h' + h[1].length + '>' + mdInline(h[2]) + '</h' + h[1].length + '>'; i++; continue; }
+    if (/^\s*(---|\*\*\*|___)\s*$/.test(l)) { flush(); out += '<hr>'; i++; continue; }
+    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      flush(); const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => mdInline(c.trim()));
+      out += '<table><tr>' + cells(l).map(c => '<th>' + c + '</th>').join('') + '</tr>'; i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) out += '<tr>' + cells(lines[i++]).map(c => '<td>' + c + '</td>').join('') + '</tr>';
+      out += '</table>'; continue; }
+    if (/^\s*>/.test(l)) { flush(); const buf = []; while (i < lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, ''));
+      out += '<blockquote>' + mdInline(buf.join(' ')) + '</blockquote>'; continue; }
+    const ul = /^\s*[-*+]\s+/, ol = /^\s*\d+[.)]\s+/;
+    if (ul.test(l) || ol.test(l)) { flush(); const tag = ul.test(l) ? 'ul' : 'ol', re = tag === 'ul' ? ul : ol; out += '<' + tag + '>';
+      while (i < lines.length && re.test(lines[i])) out += '<li>' + mdInline(lines[i++].replace(re, '')) + '</li>';
+      out += '</' + tag + '>'; continue; }
+    if (!l.trim()) { flush(); i++; continue; }
+    para.push(l.trim()); i++;
+  }
+  flush();
+  return out;
+}
+
+function renderCsv(text) {
+  const rows = [];
+  for (const line of String(text).replace(/\r/g, '').split('\n')) {
+    if (!line) continue;
+    const cells = []; let cur = '', q = false;
+    for (let k = 0; k < line.length; k++) {
+      const ch = line[k];
+      if (q) { if (ch === '"' && line[k + 1] === '"') { cur += '"'; k++; } else if (ch === '"') q = false; else cur += ch; }
+      else if (ch === '"') q = true; else if (ch === ',') { cells.push(cur); cur = ''; } else cur += ch;
+    }
+    cells.push(cur); rows.push(cells);
+    if (rows.length > 2000) break;
+  }
+  if (!rows.length) return '<div class="rd-note">Empty file.</div>';
+  return '<table><tr>' + rows[0].map(c => '<th>' + esc(c) + '</th>').join('') + '</tr>' +
+    rows.slice(1).map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</table>';
+}
+
+// ── Library ─────────────────────────────────────────────────────────
+async function showLibrary(view, overlay, content) {
+  const fileMap = { 'library-edicts': 'edicts', 'library-codex': 'codex', 'library-chronicles': 'chronicles' };
+  const titles = { 'library-edicts': 'Imperial Edicts', 'library-codex': 'Persona Codex', 'library-chronicles': 'Canon Scrolls' };
+  const file = fileMap[view];
+  content.innerHTML = '<h3>' + (titles[view] || 'Library') + '</h3><div class="empty-note">Loading...</div>';
+  overlay.classList.add('open');
+
+  const d = await api('/api/library?file=' + file);
+  if (d && d.content) {
+    content.innerHTML = '<h3>' + (titles[view] || 'Library') + '</h3><div class="panel-content">' + esc(d.content) + '</div>';
+  } else {
+    content.innerHTML = '<h3>' + (titles[view] || 'Library') + '</h3><div class="empty-note">File not found or empty.</div>';
+  }
+}
+
+// ── War Chronicles ──────────────────────────────────────────────────
+async function showWarChronicles(overlay, content) {
+  content.innerHTML = '<h3>War Chronicles</h3><div class="empty-note">Loading tasks...</div>';
+  overlay.classList.add('open');
+
+  const tasks = await api('/api/tasks');
+  if (!tasks || tasks.length === 0) {
+    content.innerHTML = '<h3>War Chronicles</h3><div class="empty-note">No tasks recorded yet.</div>';
+    return;
+  }
+
+  const html = '<h3>War Chronicles</h3>' + tasks.map(t => {
+    const tid = t.id || t.task_id || '?';
+    const status = t.result_status || t.status || 'unknown';
+    const created = t.created_at || '';
+    const agents = t.agents || '';
+    const count = t.msg_count || '';
+    const statusColor = status === 'verified' ? 'var(--green)' : status === 'failed' ? 'var(--red)' : 'var(--text2)';
+    return '<div style="padding:6px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--gold2)">' + esc(tid) + '</span><span style="font-size:10px;color:' + statusColor + '">' + esc(status) + '</span></div>' +
+      (t.title ? '<div style="font-size:11px;color:var(--text)">' + esc(t.title) + '</div>' : '') +
+      '<div style="font-size:10px;color:var(--text3)">' + esc(created) + (count ? ' \u00b7 ' + count + ' msgs' : '') + (agents ? ' \u00b7 ' + esc(agents) : '') +
+      (relFromArtifact(t.artifact_path) ? ' \u00b7 <span class="relic-open" onclick="openRelic(\'' + jsq(relFromArtifact(t.artifact_path)) + '\')">&#128220; open result</span>' : '') + '</div>' +
+      '</div>';
+  }).join('');
+  content.innerHTML = html;
+}
+
+// ── Deed Ledger ─────────────────────────────────────────────────────
+async function showDeedLedger(overlay, content) {
+  content.innerHTML = '<h3>Deed Ledger</h3><div class="empty-note">Loading...</div>';
+  overlay.classList.add('open');
+
+  const ministries = await api('/api/ministries');
+  if (!ministries || ministries.length === 0) {
+    content.innerHTML = '<h3>Deed Ledger</h3><div class="empty-note">No API calls recorded.</div>';
+    return;
+  }
+
+  let totalCost = 0, totalCalls = 0;
+  ministries.forEach(m => { totalCost += m.total_cost; totalCalls += m.total_calls; });
+
+  const html = '<h3>Deed Ledger</h3>' +
+    '<div style="padding:6px 0;border-bottom:1px solid var(--border2);margin-bottom:6px"><span style="color:var(--gold2);font-size:13px">$' + totalCost.toFixed(4) + '</span> <span style="color:var(--text2);font-size:11px">total across ' + totalCalls + ' calls</span></div>' +
+    ministries.map(m => {
+      const name = DISPLAY_NAMES[m.agent_id] || m.agent_id;
+      return '<div style="padding:4px 0;display:flex;justify-content:space-between;font-size:11px">' +
+        '<span style="color:var(--text)">' + esc(name) + '</span>' +
+        '<span style="color:var(--text2)">' + m.total_calls + ' calls \u00b7 $' + m.total_cost.toFixed(4) + '</span></div>';
+    }).join('');
+  content.innerHTML = html;
+}
+
+// ── Settings ────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
+  loadSettings();
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+async function loadSettings() {
+  const s = await api('/api/settings');
+  if (!s) return;
+  if (s.octoprint_url) document.getElementById('set-octoprint-url').value = s.octoprint_url;
+  if (s.octoprint_key) document.getElementById('set-octoprint-key').value = s.octoprint_key;
+  if (s.budget) document.getElementById('set-budget').value = s.budget;
+  if (s.poll_interval) document.getElementById('set-poll').value = s.poll_interval;
+}
+
+async function saveSettings() {
+  const body = {
+    octoprint_url: document.getElementById('set-octoprint-url').value.trim(),
+    octoprint_key: document.getElementById('set-octoprint-key').value.trim(),
+    budget: parseFloat(document.getElementById('set-budget').value) || 2.00,
+    poll_interval: parseInt(document.getElementById('set-poll').value) || 10
+  };
+  const r = await apiPost('/api/settings', body);
+  if (r && r.success) {
+    document.getElementById('octoprint-status').innerHTML = '<span style="color:var(--green)">Settings saved.</span>';
+  }
+}
+
+async function testOctoprint() {
+  document.getElementById('octoprint-status').innerHTML = '<span style="color:var(--text2)">Testing...</span>';
+  // Save first so the server has the URL/key
+  await saveSettings();
+  const r = await api('/api/test-octoprint');
+  if (r && r.connected) {
+    document.getElementById('octoprint-status').innerHTML = '<span style="color:var(--green)">Connected \u2014 OctoPrint ' + esc(r.version) + '</span>';
+  } else {
+    document.getElementById('octoprint-status').innerHTML = '<span style="color:var(--red)">Failed: ' + esc(r?.reason || 'Unknown error') + '</span>';
+  }
+}
+
+// ── Local/Scrolls stat ──────────────────────────────────────────────
+function updateRatioStat() {
+  const totalApi = ministriesData.reduce((s, m) => s + m.total_calls, 0);
+  let totalLocal = 0;
+  if (ollamaStats.available && ollamaStats.models) {
+    totalLocal = ollamaStats.models.reduce((s, m) => s + m.calls, 0);
+  }
+  document.getElementById('stat-ratio').textContent = totalLocal + ' / ' + totalApi;
+}
+
+// ── The Ravens: Huginn & Muninn (2026-11-02) ────────────────────────
+// Plain-code report from /api/ravens. The ravens flap when something in the realm changes.
+let ravensLast = null, ravensSig = { h: '', m: '' };
+function ravenFlap(id) {
+  const el = document.getElementById(id); if (!el) return;
+  el.classList.remove('flap'); void el.offsetWidth; el.classList.add('flap');
+  setTimeout(() => el.classList.remove('flap'), 1300);
+}
+function rl(label, val, cls) {
+  return '<div class="raven-line" title="' + esc(label + ': ' + val) + '">' + esc(label) + ' <b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(val) + '</b></div>';
+}
+async function pollRavens() {
+  const r = await api('/api/ravens');
+  if (!r || r.error) return;
+  ravensLast = r;
+  const h = r.huginn, m = r.muninn;
+  const wCls = h.warden.status === 'offline' ? 'bad' : (h.warden.status === 'idle' ? 'ok' : 'warn');
+  const bCls = h.budget.pct >= 100 ? 'bad' : (h.budget.pct >= 80 ? 'warn' : 'ok');
+  const hHtml =
+    rl('Warden', h.warden.status + (h.warden.current_agent ? ' (' + h.warden.current_agent.replace('ministry-of-','') + ')' : ''), wCls) +
+    rl('Spend', '$' + h.budget.spent.toFixed(4) + ' / $' + h.budget.limit + ' (' + h.budget.pct + '%)', bCls) +
+    rl('Queue', h.queue.length ? h.queue.length + ' waiting' : 'empty') +
+    rl('Petitions', h.petitions.length ? h.petitions.length + ' await you' : 'none', h.petitions.length ? 'warn' : '');
+  const t = m.recent_tasks[0];
+  const mHtml =
+    (t ? rl('Last', t.title, '') + rl('Outcome', t.status + (t.forseti ? ' · Forseti ' + t.forseti : '') + ' · $' + t.cost,
+          t.status === 'failed' || t.forseti === 'FAIL' ? 'bad' : (t.forseti === 'UNSURE' ? 'warn' : 'ok')) : rl('Last', 'no tasks yet')) +
+    rl('Saga', m.task_stats.done + ' done · ' + m.task_stats.failed + ' failed') +
+    (m.skald ? rl('Skald ' + m.skald.date, 'crypto ' + m.skald.crypto_mood + ' · stocks ' + m.skald.stock_mood) : rl('Skald', 'no readings yet'));
+  // What counts as "news": anything except the heartbeat age / clock
+  const hSig = JSON.stringify([h.warden.status, h.warden.current_agent, h.budget.spent, h.queue.length, h.petitions.length]);
+  const mSig = JSON.stringify([t && t.id, t && t.status, t && t.forseti, m.task_stats, m.skald && m.skald.date]);
+  if (ravensSig.h && hSig !== ravensSig.h) ravenFlap('raven-huginn');
+  if (ravensSig.m && mSig !== ravensSig.m) ravenFlap('raven-muninn');
+  ravensSig = { h: hSig, m: mSig };
+  document.getElementById('huginn-lines').innerHTML = hHtml;
+  document.getElementById('muninn-lines').innerHTML = mHtml;
+  const ov = document.getElementById('ravens-report-pre');
+  if (ov) ov.textContent = r.text;
+}
+function openRavens() {
+  const overlay = document.getElementById('overlay-panel');
+  const content = document.getElementById('overlay-content');
+  content.innerHTML = '<h3>The Ravens’ Report</h3>' +
+    '<div class="empty-note" style="margin-bottom:8px">Exactly what the Chancellor sees before every answer. Plain code, no tokens.</div>' +
+    '<pre id="ravens-report-pre">' + esc(ravensLast ? ravensLast.text : 'The ravens are still in flight...') + '</pre>';
+  overlay.classList.add('open');
+  ravenFlap('raven-huginn'); setTimeout(() => ravenFlap('raven-muninn'), 250);
+}
+
+// ── Boot ────────────────────────────────────────────────────────────
+async function boot() {
+  await Promise.all([pollStatus(), pollMinistries(), pollTasks(), pollOutputFiles(), pollOllama(), pollRavens()]);
+  updateRatioStat();
+  await pollFeed();
+
+  // Polling intervals
+  setInterval(pollStatus, 5000);
+  setInterval(pollMinistries, 5000);
+  setInterval(pollTasks, 10000);
+  setInterval(pollOutputFiles, 15000);
+  setInterval(pollOllama, 30000);
+  setInterval(pollFeed, 3000);
+  setInterval(updateRatioStat, 5000);
+  setInterval(pollRavens, 10000);
+}
+
+boot();
+</script>
+<script>
+// ══ Mascot: blinks, and emotes on real outcomes from the Saga ledger (2026-11-01) ══
+(function () {
+  const wrap = document.getElementById('mascotWrap'), m = document.getElementById('mascot');
+  const bubble = document.getElementById('mascotBubble'), fx = document.getElementById('mascotFx');
+  if (!m) return;
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const LINES = {
+    cheer:   ['Skål! Forseti approves!', 'Judged worthy!', 'Victory! Into the Chronicles!', 'Hah! Forged true!', 'Valhalla-grade work!'],
+    nod:     ['Done. Filed and logged.', 'That one\'s finished.', 'Task complete, Emperor.'],
+    grumble: ['Forseti sent it back to the forge.', 'Not good enough yet — revising.', 'Hammer it again!'],
+    fail:    ['Ugh. That one failed.', 'A defeat. Check the ledger.', 'By Odin\'s beard… it broke.'],
+    work:    ['Hmm… working on it.', 'The ministries are busy.', 'Sharpening the axe…'],
+    worry:   ['The treasury runs thin…', 'Careful — budget\'s nearly spent!'],
+    broke:   ['Treasury empty. Resting till tomorrow.'],
+    sleep:   ['Zzz…', 'The Warden sleeps. Zzz…'],
+    wake:    ['I\'m up! The Warden is watching.', 'Back on watch!'],
+    hello:   ['Hail, Emperor!', 'Skål, Emperor!', 'Ready when you are.'],
+  };
+  const FX = { cheer: ['✦','✧','★','✦'], fail: ['✖'], grumble: ['💢'], sleep: ['z','Z'] };
+  const MOODS = ['cheer','nod','grumble','fail','work','worry','sleep'];
+
+  let base = 'idle', emoteTimer = null, bubbleTimer = null;
+  function setClass(mood) { MOODS.forEach(x => wrap.classList.remove('mood-' + x)); if (mood && mood !== 'idle') wrap.classList.add('mood-' + mood); }
+  function say(text, ms = 4200) {
+    bubble.textContent = text; bubble.classList.add('show');
+    clearTimeout(bubbleTimer); bubbleTimer = setTimeout(() => bubble.classList.remove('show'), ms);
+  }
+  function sparkle(kind) {
+    const set = FX[kind]; if (!set) return;
+    const n = kind === 'cheer' ? 6 : 3;
+    for (let i = 0; i < n; i++) setTimeout(() => {
+      const e = document.createElement('span'); e.textContent = pick(set);
+      e.style.left = (8 + Math.random() * 70) + 'px'; e.style.top = (Math.random() * 40) + 'px';
+      e.style.color = kind === 'fail' ? '#d04030' : kind === 'sleep' ? '#9aa' : '#f0c040';
+      fx.appendChild(e); setTimeout(() => e.remove(), 1500);
+    }, i * 160);
+  }
+  // A short emote that returns to the base mood
+  function emote(kind, line) {
+    clearTimeout(emoteTimer);
+    setClass(kind); sparkle(kind); say(line || pick(LINES[kind]));
+    emoteTimer = setTimeout(() => { emoteTimer = null; setClass(base); }, 3200);
+  }
+  // A lasting mood (working / worried / asleep) — only shown when no emote is playing
+  function setBase(mood) {
+    if (mood === base) return;
+    const prev = base; base = mood;
+    if (!emoteTimer) setClass(mood);
+    if (mood === 'sleep') { say(pick(LINES.sleep), 3000); sparkle('sleep'); }
+    if (prev === 'sleep' && mood !== 'sleep') say(pick(LINES.wake), 3000);
+    if (mood === 'work' && !emoteTimer) say(pick(LINES.work), 2500);
+  }
+
+  // Blink — never while asleep
+  const blink = (then) => { if (base === 'sleep') return then && then();
+    m.classList.add('blink'); setTimeout(() => { m.classList.remove('blink'); then && then(); }, 140); };
+  (function loop() { setTimeout(() => Math.random() < 0.2 ? blink(() => setTimeout(() => blink(loop), 180)) : blink(loop),
+    2500 + Math.random() * 4500); })();
+  m.addEventListener('click', () => { blink(); if (!bubble.classList.contains('show')) say(pick(LINES.hello), 2200); });
+
+  // Watch the ledger. First poll is a baseline so old tasks don't trigger cheers.
+  const seen = new Map();   // task id -> "status|verdict|fails"
+  let first = true, warnedBudget = false;
+  async function poll() {
+    try {
+      const [st, tasks] = await Promise.all([
+        fetch('/api/status').then(r => r.json()),
+        fetch('/api/tasks').then(r => r.json())
+      ]);
+      // Lasting mood
+      const pct = st.budget ? st.daily_spend / st.budget : 0;
+      if (!st.warden_alive) setBase('sleep');
+      else if (st.warden_status === 'processing') setBase('work');
+      else if (pct >= 0.8) setBase('worry');
+      else setBase('idle');
+      if (!first && pct >= 0.8 && !warnedBudget) { warnedBudget = true; emote('worry', pct >= 1 ? LINES.broke[0] : pick(LINES.worry)); }
+      if (pct < 0.8) warnedBudget = false;
+
+      // Outcomes
+      for (const t of Array.isArray(tasks) ? tasks : []) {
+        if (!t.id || t.status === undefined) continue;
+        const key = `${t.status}|${t.forseti_verdict || ''}|${t.forseti_fails || 0}`;
+        const before = seen.get(t.id);
+        seen.set(t.id, key);
+        if (first || before === key) continue;
+        const title = (t.title || '').slice(0, 40);
+        const isTreasury = /^Treasury/.test(t.title || '');
+        if (isTreasury && t.status === 'done') { emote('nod', pick(['Treasury ledger updated.', 'Coin counted. Report filed.', 'The books are balanced.'])); continue; }
+        if (isTreasury && t.status === 'failed') { emote('fail', 'Treasury scan failed — check the report.'); continue; }
+        const isSkald = /^Skald/.test(t.title || '');
+        if (isSkald && t.status === 'done') { emote('nod', pick(['The Skald has sung the mood.', 'Today\'s saga of fear and greed is written.', 'The mood is read. Report filed.'])); continue; }
+        if (isSkald && t.status === 'failed') { emote('grumble', 'The Lawspeaker rejected the Skald\'s tale.'); continue; }
+        if (t.status === 'failed') emote('fail');
+        else if (t.status === 'done' && t.forseti_verdict === 'PASS') emote('cheer');
+        else if (t.status === 'done') emote('nod', title ? `Done: ${title}` : null);
+        else if (t.forseti_verdict === 'FAIL') emote('grumble');
+      }
+      first = false;
+    } catch { /* terminal busy or restarting — try again next tick */ }
+  }
+  poll(); setInterval(poll, 4000);
+  setTimeout(() => say(pick(LINES.hello), 2600), 800);
+
+  // Skald button
+  window.runSkald = async () => {
+    const b = document.getElementById('skaldBtn');
+    b.disabled = true;
+    try {
+      const r = await fetch('/api/skald/scan', { method: 'POST' }).then(r => r.json());
+      if (r.error) emote('grumble', r.error); else emote('nod', 'The Skald goes to read the headlines…');
+    } catch (e) { emote('fail', 'Could not reach the Warden.'); }
+    finally { setTimeout(() => { b.disabled = false; }, 4000); }
+  };
+
+  // Treasury button + its own reactions
+  window.runTreasury = async () => {
+    const b = document.getElementById('treasuryBtn');
+    b.disabled = true;
+    try {
+      const r = await fetch('/api/treasury/scan', { method: 'POST' }).then(r => r.json());
+      say(r.error ? r.error : 'Counting the coin… (first run fetches prices, ~5 min)', 4500);
+    } catch { say('Couldn\'t reach the Warden.'); }
+    setTimeout(() => { b.disabled = false; }, 8000);
+  };
+
+  // For testing in the browser console: mascotEmote('cheer'|'nod'|'grumble'|'fail'|'worry')
+  window.mascotEmote = k => emote(k);
+})();
+</script>
+<div id="petitions"></div>
+<div id="reader" onclick="if(event.target===this)closeRelic()">
+  <div class="rd-box">
+    <div class="rd-head">
+      <div class="rd-title" id="rd-title">Relic</div>
+      <div class="rd-meta" id="rd-meta"></div>
+      <button class="rd-btn" onclick="copyRelicText()" title="Copy the file's text">Copy text</button>
+      <button class="rd-btn" onclick="copyPath(currentRelic && currentRelic.winPath || '')" title="Copy the Windows path">Copy path</button>
+      <button class="rd-btn" onclick="closeRelic()" title="Close (Esc)">Close &#10005;</button>
+    </div>
+    <div class="rd-body" id="rd-body"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,179 @@
+{
+  "date": "2026-11-01",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 10,
+  "cost": 0.114724,
+  "reading": {
+    "crypto_mood": 30,
+    "stock_mood": 32,
+    "crypto_drivers": [
+      {
+        "event": "Binance suffered a record $6.3B crypto heist, which the FBI has linked to North Korea",
+        "effect": "fear",
+        "url": "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl"
+      },
+      {
+        "event": "Spot Bitcoin and Ether ETFs posted nearly $800M in combined outflows after the Binance breach",
+        "effect": "fear",
+        "url": "https://cryptotimes.io/2026/10/31/bitcoin-and-ether-etfs-lose-nearly-800m-amid-6-3b-binance-hack-fallout"
+      },
+      {
+        "event": "About $427M in leveraged crypto positions were forcibly closed over 24 hours as Bitcoin traded near $77,000",
+        "effect": "fear",
+        "url": "https://cryptotimes.io/2026/10/31/bitcoin-price-today-btc-falls-to-77k-as-427m-in-crypto-liquidations-hit-etfs-see-643m-outflow"
+      },
+      {
+        "event": "Binance said it replaced nearly all stolen customer crypto and most customers can withdraw again",
+        "effect": "neutral",
+        "url": "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea"
+      },
+      {
+        "event": "A Trump-backed crypto market-structure bill suffered a setback in the Senate, leaving US regulation uncertain",
+        "effect": "fear",
+        "url": "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Tech-led selloff: the Nasdaq suffered its worst single day since June as investors dumped AI-related shares",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/10/29/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "The Nasdaq posted its worst monthly performance since early 2025 after weak earnings and guidance from firms including Intel and Amazon",
+        "effect": "fear",
+        "url": "https://www.google.com/finance/"
+      },
+      {
+        "event": "The Fed held rates at 3.75-4% in a 10-2 vote, with two dissenters favoring a hike as inflation stayed elevated",
+        "effect": "fear",
+        "url": "https://thehill.com/business/6174753-fed-interest-rates-decision-inflation/"
+      },
+      {
+        "event": "Intel stock plunged 29% after its results and outlook",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/"
+      },
+      {
+        "event": "Crocs stock jumped 25% after earnings, a rare bright spot",
+        "effect": "greed",
+        "url": "https://www.cnbc.com/"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Binance crypto hack: North Korea suspected to be behind biggest-ever heist",
+        "url": "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin and Ether ETFs lose nearly $800M amid Binance hack fallout",
+        "url": "https://cryptotimes.io/2026/10/31/bitcoin-and-ether-etfs-lose-nearly-800m-amid-6-3b-binance-hack-fallout",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin price today: BTC falls to $77K as $427M in liquidations hit",
+        "url": "https://cryptotimes.io/2026/10/31/bitcoin-price-today-btc-falls-to-77k-as-427m-in-crypto-liquidations-hit-etfs-see-643m-outflow",
+        "market": "crypto"
+      },
+      {
+        "title": "A simple explainer of the $6.3 billion crypto heist at Binance",
+        "url": "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance targeted in $6.3 billion crypto heist, the largest ever",
+        "url": "https://www.nbcnews.com/business/markets/binance-hack-tether-circle-stablecoins-rcna606445",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum price today: why ETH is up as it targets $2,300",
+        "url": "https://crypto.news/why-is-ethereum-price-up-today",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto market is on sale as Fear & Greed Index reads 31",
+        "url": "https://coinpedia.org/news/crypto-market-is-on-sale-top-5-altcoins-showing-buying-opportunities",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin holds $77K support following record Binance breach",
+        "url": "https://www.coingecko.com/",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market rocked as investors dump tech shares; Nasdaq suffers worst day since June",
+        "url": "https://www.cnbc.com/2026/10/29/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Major US stock indices end sharply lower as AI optimism takes a severe setback",
+        "url": "https://www.google.com/finance/",
+        "market": "stocks"
+      },
+      {
+        "title": "Federal Reserve holds interest rates steady as midterm elections loom",
+        "url": "https://abcnews.com/Business/federal-reserve-set-issue-interest-rate-decision-midterm/story?id=137599228",
+        "market": "stocks"
+      },
+      {
+        "title": "Federal Reserve holds interest rates steady in face of persistent inflation",
+        "url": "https://thehill.com/business/6174753-fed-interest-rates-decision-inflation/",
+        "market": "stocks"
+      },
+      {
+        "title": "Intel stock plunges 29%; Crocs jumps 25% after earnings",
+        "url": "https://www.cnbc.com/",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.coingecko.com/",
+    "https://www.newsnow.co.uk/h/Business+&+Finance/Cryptocurrencies",
+    "https://news.bitcoin.com/",
+    "https://www.coindesk.com/",
+    "https://cryptoslate.com/",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://coinpedia.org/news/crypto-market-is-on-sale-top-5-altcoins-showing-buying-opportunities",
+    "https://blockchainreporter.net/best-crypto-to-buy-now-btc-77k-tron-withdrawals/",
+    "https://crypto.news/",
+    "https://crypto.news/why-is-ethereum-price-up-today",
+    "https://coingape.com/markets/bitcoin-price-prediction-this-week-what-to-expect-ahead-of-us-midterm-elections/",
+    "https://cryptonews.net/news/analytics/33679504/",
+    "https://cryptoticker.io/en/ethereum-price-prediction-glamsterdam-delayed-31-october-2026/",
+    "https://cryptoticker.io/en/ethereum-price-prediction-defi-deposits-1-november-2026/",
+    "https://cryptotimes.io/2026/10/31/bitcoin-and-ether-etfs-lose-nearly-800m-amid-6-3b-binance-hack-fallout",
+    "https://cryptotimes.io/2026/10/31/bitcoin-price-today-btc-falls-to-77k-as-427m-in-crypto-liquidations-hit-etfs-see-643m-outflow",
+    "https://www.cnbc.com/2026/10/29/stock-market-today-live-updates.html",
+    "https://seekingalpha.com/market-news",
+    "https://www.cnbc.com/",
+    "https://www.google.com/finance/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://tagteam.harvard.edu/hub_feeds/4600/feed_items/13706195",
+    "https://tagteam.harvard.edu/hub_feeds/4600/feed_items/13705639/about",
+    "https://seekingalpha.com/author/matthew-smith/analysis?page=84",
+    "https://www.business-standard.com/amp/economy/news/fed-keeps-interest-rates-unchanged-awaits-more-data-on-inflation-126102802093_1.html",
+    "https://www.nbcnews.com/business/economy/fed-rates-inflation-warsh-midterms-rcna606154",
+    "https://abcnews.com/Business/federal-reserve-set-issue-interest-rate-decision-midterm/story?id=137599228",
+    "https://thehill.com/business/6174753-fed-interest-rates-decision-inflation/",
+    "https://finance.yahoo.com/economy/policy/live/fed-meeting-live-updates-federal-reserve-october-meeting-kevin-warsh-161129201.html",
+    "https://thefederal.com/category/business/us-fed-reserve-keeps-rates-unchanged-despite-elevated-inflation-gives-little-signal-of-next-move-261084",
+    "https://www.ms.now/news/federal-reserve-holds-interest-rates-steady-despite-elevated-inflation",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl",
+    "https://www.cnbc.com/make-it/2026/10/30/binance-crypto-hack-customer-funds.html",
+    "https://letrasbonitashub.com.mx/2026/11/01/6-3b-taken-in-binance-crypto-hack-2/",
+    "https://finance.yahoo.com/markets/article/bitcoin-drops-to-76000-as-binance-hack-spooks-investors-tether-circle-freeze-assets-083406383.html",
+    "https://www.nbcnews.com/business/markets/binance-hack-tether-circle-stablecoins-rcna606445",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46"
+  ]
+}

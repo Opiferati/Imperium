@@ -1,0 +1,18 @@
+# Secrets — never commit
+.env
+.env.*
+.claude/
+
+# Live data (databases change every tick; back these up separately)
+data/*.db
+data/*.db-*
+data/warden-heartbeat.json
+
+# Logs and generated output
+logs/
+output/
+
+# Old folder-copy backups (git replaces these)
+_archive/
+
+node_modules/

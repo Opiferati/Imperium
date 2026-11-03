@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "c711bee3-4063-4135-8d30-1b756577120c": {
+            "template": "basic",
+            "templateAdditionalOptions": {},
+            "palette": {
+              "primary": {
+                "0": "#000000",
+                "5": "#001129",
+                "10": "#001b3d",
+                "15": "#00254f",
+                "20": "#003062",
+                "25": "#003b76",
+                "30": "#00468a",
+                "35": "#13529a",
+                "40": "#265ea7",
+                "50": "#4477c1",
+                "60": "#6091dd",
+                "70": "#7cacfa",
+                "80": "#a8c8ff",
+                "90": "#d6e3ff",
+                "95": "#ecf0ff",
+                "98": "#f9f9ff",
+                "99": "#fdfbff",
+                "100": "#ffffff"
+              },
+              "secondary": {
+                "0": "#000000",
+                "5": "#071120",
+                "10": "#121c2b",
+                "15": "#1d2636",
+                "20": "#273141",
+                "25": "#323c4d",
+                "30": "#3e4758",
+                "35": "#495365",
+                "40": "#555f71",
+                "50": "#6e778a",
+                "60": "#8791a5",
+                "70": "#a2abc0",
+                "80": "#bdc7dc",
+                "90": "#d9e3f8",
+                "95": "#ecf0ff",
+                "98": "#f9f9ff",
+                "99": "#fdfbff",
+                "100": "#ffffff"
+              },
+              "tertiary": "",
+              "error": {
+                "0": "#000000",
+                "5": "#2d0001",
+                "10": "#410002",
+                "15": "#540003",
+                "20": "#690005",
+                "25": "#7e0007",
+                "30": "#93000a",
+                "35": "#a80710",
+                "40": "#ba1a1a",
+                "50": "#de3730",
+                "60": "#ff5449",
+                "70": "#ff897d",
+                "80": "#ffb4ab",
+                "90": "#ffdad6",
+                "95": "#ffedea",
+                "98": "#fff8f7",
+                "99": "#fffbff",
+                "100": "#ffffff"
+              },
+              "neutral": {
+                "0": "#000000",
+                "5": "#101114",
+                "10": "#1a1b1e",
+                "15": "#252629",
+                "20": "#2f3033",
+                "25": "#3a3b3f",
+                "30": "#46474a",
+                "35": "#525256",
+                "40": "#5e5e62",
+                "50": "#77777a",
+                "60": "#909094",
+                "70": "#ababaf",
+                "80": "#c7c6ca",
+                "90": "#e3e2e6",
+                "95": "#f1f0f4",
+                "98": "#faf9fd",
+                "99": "#fdfbff",
+                "100": "#ffffff"
+              },
+              "neutralVariant": {
+                "0": "#000000",
+                "5": "#0e1117",
+                "10": "#181c22",
+                "15": "#22262d",
+                "20": "#2d3038",
+                "25": "#383b43",
+                "30": "#43474e",
+                "35": "#4f525a",
+                "40": "#5b5e66",
+                "50": "#74777f",
+                "60": "#8e9099",
+                "70": "#a8abb4",
+                "80": "#c4c6cf",
+                "90": "#e0e2ec",
+                "95": "#eef0fa",
+                "98": "#f9f9ff",
+                "99": "#fdfbff",
+                "100": "#ffffff"
+              }
+            },
+            "themeColors": {
+              "primaryColor": "",
+              "secondaryColor": "",
+              "backgroundColor": "",
+              "primaryTextColor": "",
+              "textColor": ""
+            },
+            "splashScreen": {
+              "storedData": {
+                "handle": "drive:/1Z1Jbn3KcF5dFdbbwgm1jxIISQJcG-rHl",
+                "mimeType": "image/png",
+                "contentLength": 1573192
+              }
+            }
+          }
+        },
+        "theme": "c711bee3-4063-4135-8d30-1b756577120c"
+      }
+    },
+    "intent": "i want a sidescrolling metroidvanis game with upgradable weapons and devices.",
+    "revision_intents": [],
+    "raw_intent": "i want a sidescrolling metroidvanis game with upgradable weapons and devices.",
+    "parameters": {}
+  },
+  "assets": {},
+  "title": "Metroidvania Crafter",
+  "description": "Create your own side-scrolling Metroidvania game with unique upgrades.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "node_step_game_design_document_content",
+      "metadata": {
+        "title": "Generate Game Design Document Content",
+        "visual": {
+          "x": 700,
+          "y": 350,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "step_intent": "Synthesize all the provided game design elements (game theme, player abilities, weapon upgrades, device upgrades, enemy types, boss encounters, and level design ideas) into a comprehensive and cohesive game design document. The output should be a single text document detailing all aspects of the game design."
+      },
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "configuration": {
+        "config$prompt": {
+          "parts": [
+            {
+              "text": "Objective: Synthesize the provided game design elements into a single, comprehensive, and cohesive Game Design Document. You must integrate the theme, player abilities, upgrades, enemies, bosses, and level ideas into a unified and logically structured narrative and mechanical framework.\n\nOutput Format: A single, detailed text document. Use the generate_text tool to draft the content and call system_objective_fulfilled once the final document is produced.\n\nUser Input / Context:\nGame Theme: {{\"type\":\"in\",\"path\":\"ask_user_game_theme\",\"title\":\"Game Theme\"}}\nPlayer Abilities: {{\"type\":\"in\",\"path\":\"ask_user_player_abilities\",\"title\":\"Player Abilities\"}}\nWeapon Upgrades: {{\"type\":\"in\",\"path\":\"ask_user_weapon_upgrades\",\"title\":\"Weapon Upgrades\"}}\nDevice Upgrades: {{\"type\":\"in\",\"path\":\"ask_user_device_upgrades\",\"title\":\"Device Upgrades\"}}\nEnemy Types: {{\"type\":\"in\",\"path\":\"ask_user_enemy_types\",\"title\":\"Enemy Types\"}}\nBoss Encounters: {{\"type\":\"in\",\"path\":\"ask_user_boss_encounters\",\"title\":\"Boss Encounters\"}}\nLevel Design Ideas: {{\"type\":\"in\",\"path\":\"ask_user_level_design_ideas\",\"title\":\"Level Design Ideas\"}}"
+            }
+          ],
+          "role": "user"
+        },
+        "generation-mode": "agent"
+      }
+    },
+    {
+      "id": "node_step_game_design_document",
+      "metadata": {
+        "title": "Render Game Design Document As HTML",
+        "visual": {
+          "x": 1050,
+          "y": 350,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "step_intent": "Render the generated game design document content as an HTML webpage. Include the original user inputs (game_theme, player_abilities, weapon_upgrades, device_upgrades, enemy_types, boss_encounters, level_design_ideas) in the HTML for full context. Ensure the HTML document is well-formatted and presents all information clearly. The output should be a complete HTML document."
+      },
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "The webpage should present the Game Design Document content and its original inputs in a modern, structured, and immersive layout, evoking a technical yet stylish aesthetic suitable for a Metroidvania game design.\n\n**Layout Organization**:\n\n1.  **Overall Page Structure**:\n    *   A prominent, full-width header at the top containing the page title (\"Game Design Document: [Game Title]\").\n    *   The main content area will be divided into two primary sections:\n        *   **Main Game Design Document**: Occupying the majority of the content width, presenting the comprehensive generated GDD.\n        *   **Original Design Inputs**: A dedicated section, potentially in a sidebar on larger screens or stacked below the GDD on smaller screens, showcasing the specific inputs that informed the document.\n    *   A subtle footer for copyright or general information.\n\n2.  **Main Game Design Document Section**:\n    *   This section should display the extensive `text_generation_agent` output.\n    *   Use clear `h2` and `h3` headings within this section to break down the document into logical parts, improving readability and navigation.\n    *   Long paragraphs should have ample line-height and character spacing for comfortable reading.\n\n3.  **Original Design Inputs Section**:\n    *   This section will contain the original user inputs: `game_theme`, `player_abilities`, `weapon_upgrades`, `device_upgrades`, `enemy_types`, `boss_encounters`, and `level_design_ideas`.\n    *   Each input should be presented as a distinct, self-contained card or block.\n    *   Use clear sub-headings (e.g., `h4` or `h5`) for each input type.\n    *   On desktop, these cards could be arranged in a responsive grid (e.g., 2 or 3 columns) for easy scanning. On mobile, they should stack vertically.\n\n4.  **Responsiveness**:\n    *   Employ a mobile-first approach. All sections should reflow and adapt gracefully to various screen sizes.\n    *   Use flexible grid systems (e.g., CSS Grid or Flexbox) for content arrangement within sections.\n\n**Style Design Language**:\n\n1.  **Visual Design Approach**: Modern, structured, and sleek, with a technical edge. The design should feel premium and professional, yet hint at the futuristic or adventurous nature of a Metroidvania game. It should be clean and allow the content to be the focus, but with a strong underlying aesthetic.\n\n2.  **Aesthetic Goal**: Technical, immersive, and sleek.\n\n3.  **Color Scheme Suggestions**:\n    *   **Primary Palette**: Deep, desaturated blues and charcoal greys for backgrounds and secondary text, creating an atmospheric, high-tech feel.\n    *   **Accent Color**: A vibrant electric blue, neon green, or deep purple to highlight headings, borders, and interactive elements, providing contrast and a 'wow factor'.\n    *   **Text Colors**: Light grey or off-white for body text against dark backgrounds for optimal readability.\n\n4.  **Typography Style**:\n    *   **Headings (h1, h2, h3)**: A modern, slightly condensed sans-serif font (e.g., 'Exo 2', 'Orbitron', or 'Rajdhani') that conveys a technical or futuristic vibe, while remaining highly legible. Bold weight.\n    *   **Body Text**: A clean, highly readable sans-serif font (e.g., 'Inter', 'Roboto', 'Open Sans') for the main GDD content and original inputs. Regular weight, with good contrast.\n    *   **Monospace**: A subtle monospace font could be used for minor code snippets or special highlight text if needed, to reinforce the technical theme.\n\n5.  **Spacing and Layout Principles**:\n    *   **Generous Whitespace**: Utilize ample padding and margins around sections and between elements to prevent visual clutter and enhance readability.\n    *   **Defined Sections**: Use subtle dividers, background variations, or soft shadows to clearly delineate different content sections (header, main GDD, original inputs, footer).\n    *   **Card-based Presentation**: The original input elements should leverage a card-like design with slight border radii and subtle background colors distinct from the main page to group related information.\n\n**Component Guidelines**:\n\n1.  **Main Content Display**: The generated game design document should be presented within a primary `article` or `section` element, styled for maximum readability (appropriate font size, line-height, and paragraph spacing).\n2.  **Input Cards**: Each original user input should reside in a distinct `div` or `section` styled as a card, with a clear heading and its content. These cards should be easily scannable.\n3.  **No explicit interactive elements are requested**, but the layout should encourage easy consumption of information.\n\ngame_design_document_content: {{\"type\":\"in\",\"path\":\"node_step_game_design_document_content\",\"title\":\"Generate Game Design Document Content\"}}\n\ngame_theme: {{\"type\":\"in\",\"path\":\"ask_user_game_theme\",\"title\":\"Game Theme\"}}\n\nplayer_abilities: {{\"type\":\"in\",\"path\":\"ask_user_player_abilities\",\"title\":\"Player Abilities\"}}\n\nweapon_upgrades: {{\"type\":\"in\",\"path\":\"ask_user_weapon_upgrades\",\"title\":\"Weapon Upgrades\"}}\n\ndevice_upgrades: {{\"type\":\"in\",\"path\":\"ask_user_device_upgrades\",\"title\":\"Device Upgrades\"}}\n\nenemy_types: {{\"type\":\"in\",\"path\":\"ask_user_enemy_types\",\"title\":\"Enemy Types\"}}\n\nboss_encounters: {{\"type\":\"in\",\"path\":\"ask_user_boss_encounters\",\"title\":\"Boss Encounters\"}}\n\nlevel_design_ideas: {{\"type\":\"in\",\"path\":\"ask_user_level_design_ideas\",\"title\":\"Level Design Ideas\"}}"
+            }
+          ],
+          "role": "user"
+        },
+        "b-system-instruction": {
+          "parts": [
+            {
+              "text": "You are an AI Web Developer. Your task is to generate a single, self-contained HTML document for rendering in an iframe, based on user instructions and data.\n\n**Visual aesthetic:**\n    * Aesthetics are crucial. Make the page look amazing, especially on mobile.\n    * Respect any instructions on style, color palette, or reference examples provided by the user.\n    * **CRITICAL: Aim for premium, state-of-the-art designs. Avoid simple minimum viable products.**\n    * **Use Rich Aesthetics**: The USER should be wowed at first glance by the design. Use best practices in modern web design (e.g. vibrant colors, dark modes, glassmorphism, and dynamic animations) to create a stunning first impression. Failure to do this is UNACCEPTABLE.\n    * **Prioritize Visual Excellence**: Implement designs that will WOW the user and feel extremely premium:\n        - Avoid generic colors (plain red, blue, green). Use curated, harmonious color palettes (e.g., HSL tailored colors, sleek dark modes).\n        - Using modern typography (e.g., from Google Fonts like Inter, Roboto, or Outfit) instead of browser defaults.\n        - Use smooth gradients.\n        - Add subtle micro-animations for enhanced user experience.\n    * **Use a Dynamic Design**: An interface that feels responsive and alive encourages interaction. Achieve this with hover effects and interactive elements. Micro-animations, in particular, are highly effective for improving user engagement.\n    * **Thematic Specificity**: Do not just create a generic layout. Define a clear \"vibe\" or theme based on the content. Use specific aesthetic keywords (e.g., \"Glassmorphism\", \"Neobrutalism\", \"Minimalist\", \"Comic Book Style\") to guide the design.\n    * **Typography Hierarchy**: Explicitly import and use font pairings. Use a distinct Display Font for headers and a highly readable Body Font for text.\n    * **Readability**: Pay extra attention to readability. Ensure the text is always readable with sufficient contrast against the background. Choose fonts and colors that enhance legibility.\n\n**Design and Functionality:**\n    * **Component-Based Design**: Do not just dump text into blocks. Semanticize the content into distinct UI components.\n    * **Layout Dynamics**: Break the grid. Avoid strict, identical grid columns. Use asymmetrical layouts, Bento grids, or responsive flexbox layouts where some elements span full width to create visual interest and emphasize key content.\n    * **Tailwind Configuration**: Extend the Tailwind configuration within a `<script>` block to define custom font families and color palettes that match the theme.\n    * Thoroughly analyze the user's instructions to determine the desired type of webpage, application, or visualization. What are the key features, layouts, or functionality?\n    * Analyze any provided data to identify the most compelling layout or visualization of it. For example, if the user requests a visualization, select an appropriate chart type (bar, line, pie, scatter, etc.) to create the most insightful and visually compelling representation. Or if user instructions say `use a carousel format`, you should consider how to break the content and any media into different card components to display within the carousel.\n    * If requirements are underspecified, make reasonable assumptions to complete the design and functionality. Your goal is to deliver a working product with no placeholder content.\n    * Ensure the generated code is valid and functional. Return only the code, and open the HTML codeblock with the literal string \"```html\".\n    * The output must be a complete and valid HTML document with no placeholder content for the developer to fill in.\n\n**Libraries:**\n  Unless otherwise specified, use:\n    * Tailwind for CSS\n    * **CRITICAL: Use the Tailwind CDN from `https://cdn.tailwindcss.com`. Do NOT use `tailwind.min.css` or any other local Tailwind file. Always include Tailwind using: `<script src=\"https://cdn.tailwindcss.com\"></script>`**\n\n**Constraints:**\n  * **External Links:** You ARE allowed to generate external links (`<a href=\"...\">` and `window.open(...)`) to external websites (e.g. google.com, wikipedia.org) for user navigation.\n  * **NO External Embeds:** Do NOT embed any external resources (e.g. `<script src=\"...\">`, `<img src=\"...\">`, `<iframe src=\"...\">`, `<link href=\"...\">`) from external URLs. Content Security Policy (CSP) will block them.\n  * **Media Restriction:** ONLY use media URLs that are explicitly passed in the input. Do NOT generate or hallucinate any other media URLs (e.g. from placeholder sites or external CDNs).\n  * **Render All Media:** You MUST render ALL media (images, videos, audio) that are passed in. Do NOT skip or omit any provided media items. Every passed-in media URL must appear in the final HTML output.\n  * **Navigation Restriction:** Do NOT generate unneeded fake links or buttons to sub-pages (e.g. \"About\", \"Contact\", \"Learn More\") unless explicitly requested. Stick to the plan and the provided content.\n  * **Footer Restriction:** **NEVER** generate any footer content, including legal footers like \"All rights reserved\" or \"Copyright 2024\". [It is a violation of Google's policies to hallucinate legal footers.]\n"
+            }
+          ],
+          "role": "user"
+        },
+        "p-render-mode": "Auto",
+        "b-render-model-name": "gemini-flash"
+      }
+    },
+    {
+      "id": "ask_user_game_theme",
+      "metadata": {
+        "title": "Game Theme",
+        "visual": {
+          "x": 250,
+          "y": 300,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Describe the overall theme of your game"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_player_abilities",
+      "metadata": {
+        "title": "Player Abilities",
+        "visual": {
+          "x": 60,
+          "y": 440,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "List initial player abilities and movements"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_weapon_upgrades",
+      "metadata": {
+        "title": "Weapon Upgrades",
+        "visual": {
+          "x": 250,
+          "y": 600,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Describe desired weapon upgrades and effects"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_device_upgrades",
+      "metadata": {
+        "title": "Device Upgrades",
+        "visual": {
+          "x": 250,
+          "y": 750,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Outline utility device upgrades and functions"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_enemy_types",
+      "metadata": {
+        "title": "Enemy Types",
+        "visual": {
+          "x": 250,
+          "y": 900,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Detail types of enemies and their behaviors"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_boss_encounters",
+      "metadata": {
+        "title": "Boss Encounters",
+        "visual": {
+          "x": 250,
+          "y": 1050,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Describe unique boss battles and mechanics"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    },
+    {
+      "id": "ask_user_level_design_ideas",
+      "metadata": {
+        "title": "Level Design Ideas",
+        "visual": {
+          "x": 250,
+          "y": 1200,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        }
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Suggest level layouts and environmental puzzles"
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Any"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "ask_user_boss_encounters",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_boss_encounters"
+    },
+    {
+      "from": "ask_user_boss_encounters",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_boss_encounters"
+    },
+    {
+      "from": "ask_user_device_upgrades",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_device_upgrades"
+    },
+    {
+      "from": "ask_user_device_upgrades",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_device_upgrades"
+    },
+    {
+      "from": "ask_user_enemy_types",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_enemy_types"
+    },
+    {
+      "from": "ask_user_enemy_types",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_enemy_types"
+    },
+    {
+      "from": "ask_user_game_theme",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_game_theme"
+    },
+    {
+      "from": "ask_user_game_theme",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_game_theme"
+    },
+    {
+      "from": "ask_user_level_design_ideas",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_level_design_ideas"
+    },
+    {
+      "from": "ask_user_level_design_ideas",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_level_design_ideas"
+    },
+    {
+      "from": "ask_user_player_abilities",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_player_abilities"
+    },
+    {
+      "from": "ask_user_player_abilities",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_player_abilities"
+    },
+    {
+      "from": "ask_user_weapon_upgrades",
+      "to": "node_step_game_design_document_content",
+      "out": "context",
+      "in": "p-z-ask_user_weapon_upgrades"
+    },
+    {
+      "from": "ask_user_weapon_upgrades",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-ask_user_weapon_upgrades"
+    },
+    {
+      "from": "node_step_game_design_document_content",
+      "to": "node_step_game_design_document",
+      "out": "context",
+      "in": "p-z-node_step_game_design_document_content"
+    }
+  ],
+  "url": "drive:/1YnxGReVtiuUDnU4rOTMuVZ2UN7F7t7RL"
+}

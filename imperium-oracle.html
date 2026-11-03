@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norse Imperium · Oracle</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#1a1612;overflow:hidden}
+#app{width:100%;height:100vh;background:linear-gradient(135deg,#1e1a14 0%,#241f18 50%,#1a1612 100%);padding:12px;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.topbar-title{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:#4a3a22;font-family:'Courier New',monospace}
+.topbar-items{display:flex;gap:16px}
+.tb-item{font-size:8px;color:#5a4a2a;letter-spacing:.08em;font-family:'Courier New',monospace}
+.tb-item span{color:#a08060}
+#grid{flex:1;display:grid;grid-template-columns:1fr 1fr 220px 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;min-height:0}
+.card{background:rgba(38,32,24,0.88);border:1px solid rgba(80,65,45,0.4);border-radius:10px;padding:12px;position:relative;overflow:hidden;min-height:0}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(160,130,80,0.25),transparent)}
+.card-title{font-size:6.5px;letter-spacing:.2em;text-transform:uppercase;color:#6a5a3a;margin-bottom:8px;font-family:'Courier New',monospace}
+.card-val{font-size:20px;font-weight:300;color:#c8a86a;font-family:'Courier New',monospace;line-height:1}
+.card-sub{font-size:7px;color:#5a4a2a;letter-spacing:.08em;margin-top:2px;font-family:'Courier New',monospace}
+.card-val.ok{color:#6ab888}
+.card-val.warn{color:#c8a030}
+#sun-cell{grid-column:3;grid-row:1/4;background:none;border:none;padding:0;display:flex;align-items:center;justify-content:center}
+#sun-cell::before{display:none}
+.pfield{display:flex;gap:0;margin-bottom:5px;border-left:1px solid rgba(100,80,40,0.35);padding-left:7px}
+.pfl{font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:#5a4a2a;width:60px;flex-shrink:0;line-height:1.6;font-family:'Courier New',monospace}
+.pfv{font-size:10px;color:#907050;line-height:1.6;font-family:'Courier New',monospace}
+.pfv.ok{color:#6ab888}
+.pfv.warn{color:#c8a030}
+.pfv.hi{color:#7a9ac0}
+.logline{font-size:8.5px;line-height:1.85;padding-left:6px;border-left:1px solid rgba(100,80,40,0.2);margin-bottom:1px;font-family:'Courier New',monospace}
+.logline.ok{color:#5a8a60;border-color:rgba(80,140,80,0.25)}
+.logline.warn{color:#907030;border-color:rgba(140,110,30,0.25)}
+.logline.info{color:#3a5a70}
+.qitem{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(80,65,40,0.18)}
+.qdot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.qdot.done{background:#5a8a60}
+.qdot.fail{background:#8a5050}
+.qtext{font-size:9px;color:#6a5a3a;flex:1;font-family:'Courier New',monospace}
+.qtime{font-size:7.5px;color:#4a3a22;font-family:'Courier New',monospace}
+.dial-row{display:flex;gap:6px;justify-content:space-around;margin-top:8px}
+.mini-dial{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mini-dlabel{font-size:5.5px;letter-spacing:.1em;text-transform:uppercase;color:#5a4a2a;text-align:center;font-family:'Courier New',monospace}
+.mini-dval{font-size:8px;color:#a08060;font-family:'Courier New',monospace}
+.mini-dval.ok{color:#6ab888}
+.mini-dval.warn{color:#c8a030}
+.bar-row{display:flex;align-items:flex-end;gap:3px;height:44px;margin-top:5px}
+.bar{flex:1;border-radius:2px 2px 0 0;min-height:3px}
+.bar.teal{background:rgba(80,180,140,0.6)}
+.bar.amber{background:rgba(180,140,60,0.6)}
+.api-row{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.api-item{display:flex;align-items:center;gap:7px}
+.api-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.api-dot.set{background:#5a8a60}
+.api-dot.no{background:#3a2e1a}
+.api-name{font-size:7.5px;color:#6a5a3a;flex:1;letter-spacing:.06em;font-family:'Courier New',monospace}
+.api-inp{flex:1;background:rgba(20,16,10,0.6);border:1px solid rgba(80,65,40,0.3);border-radius:3px;padding:2px 5px;font-size:8px;color:#a08060;font-family:'Courier New',monospace;outline:none;max-width:90px}
+.api-inp:focus{border-color:rgba(120,95,45,0.5)}
+#decree-area{display:flex;flex-direction:column;gap:5px;height:100%}
+#decree-inp{flex:1;width:100%;background:rgba(20,16,10,0.6);border:1px solid rgba(80,65,40,0.3);border-radius:6px;padding:7px 9px;font-size:10px;color:#c8a86a;font-family:'Courier New',monospace;outline:none;resize:none;min-height:0}
+#decree-inp:focus{border-color:rgba(140,110,60,0.5)}
+#decree-inp::placeholder{color:#3a2e1a}
+#decree-btn{align-self:flex-end;padding:5px 14px;background:rgba(70,55,28,0.5);border:1px solid rgba(110,85,38,0.5);border-radius:6px;color:#c8a86a;font-size:7.5px;font-family:'Courier New',monospace;letter-spacing:.15em;cursor:pointer;text-transform:uppercase}
+#decree-btn:hover{background:rgba(90,70,32,0.6);color:#e0c080}
+.node-btn{display:inline-block;padding:3px 7px;background:rgba(70,55,28,0.35);border:1px solid rgba(90,72,36,0.3);border-radius:4px;font-size:6.5px;color:#6a5a3a;letter-spacing:.08em;text-transform:uppercase;margin:2px;cursor:pointer;transition:all .2s;font-family:'Courier New',monospace}
+.node-btn:hover,.node-btn.active{background:rgba(90,70,32,0.5);color:#c8a86a;border-color:rgba(140,110,50,0.5)}
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:#3a2e1a;border-radius:1px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="topbar">
+  <div class="topbar-title">ᚾᛟᚱᛊᛖ · ᛁᛗᛈᛖᚱᛁᚢᛗ · ᛟᚱᚨᚲᛚᛖ</div>
+  <div class="topbar-items">
+    <div class="tb-item">WARDEN <span id="tb-w">ONLINE</span></div>
+    <div class="tb-item">BUDGET <span id="tb-b">$0.04 / $2.00</span></div>
+    <div class="tb-item">QUEUE <span id="tb-q">0</span></div>
+    <div class="tb-item">TICK <span>10s</span></div>
+  </div>
+</div>
+
+<div id="grid">
+
+  <div class="card" style="grid-column:1;grid-row:1">
+    <div class="card-title">Realm Status</div>
+    <div class="card-val ok" id="s-warden">ONLINE</div>
+    <div class="card-sub">Warden v2.0 active</div>
+    <div class="dial-row">
+      <div class="mini-dial"><canvas id="md0" width="44" height="44"></canvas><div class="mini-dval ok">5/5</div><div class="mini-dlabel">Agents</div></div>
+      <div class="mini-dial"><canvas id="md1" width="44" height="44"></canvas><div class="mini-dval warn">2%</div><div class="mini-dlabel">Budget</div></div>
+      <div class="mini-dial"><canvas id="md2" width="44" height="44"></canvas><div class="mini-dval">16</div><div class="mini-dlabel">Files</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:2;grid-row:1">
+    <div class="card-title">Task Queue</div>
+    <div class="qitem"><div class="qdot done"></div><div class="qtext">Session logger · Engineering</div><div class="qtime">04:46</div></div>
+    <div class="qitem"><div class="qdot done"></div><div class="qtext">Veilborn GDD · Works</div><div class="qtime">03:38</div></div>
+    <div class="qitem"><div class="qdot done"></div><div class="qtext">scan_report · Engineering</div><div class="qtime">02:12</div></div>
+    <div class="qitem"><div class="qdot done"></div><div class="qtext">code-writer fix · Engineering</div><div class="qtime">01:18</div></div>
+    <div style="margin-top:6px;font-size:7px;color:#3a2e1a;letter-spacing:.1em;font-family:'Courier New',monospace">0 messages queued</div>
+  </div>
+
+  <div class="card" id="sun-cell">
+    <canvas id="sun-canvas"></canvas>
+  </div>
+
+  <div class="card" style="grid-column:4;grid-row:1">
+    <div class="card-title">Ledger</div>
+    <div class="card-val">$0.04</div>
+    <div class="card-sub">of $2.00 daily limit · 2% used</div>
+    <div class="bar-row">
+      <div class="bar teal" style="height:22%"></div>
+      <div class="bar amber" style="height:38%"></div>
+      <div class="bar teal" style="height:16%"></div>
+      <div class="bar amber" style="height:9%"></div>
+      <div class="bar teal" style="height:28%"></div>
+      <div class="bar amber" style="height:11%"></div>
+      <div class="bar teal" style="height:5%"></div>
+    </div>
+    <div style="margin-top:6px">
+      <div class="pfield"><div class="pfl">Engineering</div><div class="pfv">$0.02 · 3 calls</div></div>
+      <div class="pfield"><div class="pfl">Intelligence</div><div class="pfv">$0.01 · 2 calls</div></div>
+      <div class="pfield"><div class="pfl">Chancellor</div><div class="pfv">$0.01 · 4 calls</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:5;grid-row:1">
+    <div class="card-title">Agents</div>
+    <div class="pfield"><div class="pfl">Chancellor</div><div class="pfv ok">Active · sonnet</div></div>
+    <div class="pfield"><div class="pfl">Engineering</div><div class="pfv ok">Active · haiku</div></div>
+    <div class="pfield"><div class="pfl">Intelligence</div><div class="pfv ok">Active · haiku</div></div>
+    <div class="pfield"><div class="pfl">Works</div><div class="pfv ok">Active · haiku</div></div>
+    <div class="pfield"><div class="pfl">Protocol</div><div class="pfv ok">Active · haiku</div></div>
+  </div>
+
+  <div class="card" style="grid-column:1;grid-row:2">
+    <div class="card-title">The Vault</div>
+    <div class="card-val">16</div>
+    <div class="card-sub">output files · 74,000 bytes</div>
+    <div style="margin-top:8px">
+      <div class="pfield"><div class="pfl">Path</div><div class="pfv hi" style="font-size:9px">C:\Imperium\output\</div></div>
+      <div class="pfield"><div class="pfl">Last write</div><div class="pfv" style="font-size:9px">test-session-logger.js</div></div>
+      <div class="pfield"><div class="pfl">Types</div><div class="pfv" style="font-size:9px">.md .js .py .json .stl</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:2;grid-row:2">
+    <div class="card-title">The Tavern · Chronicle</div>
+    <div class="logline ok">[04:53] session-logger — 3 sessions</div>
+    <div class="logline ok">[04:46] Engineering — 3 files verified</div>
+    <div class="logline info">[04:27] queue cleared · 12 cancelled</div>
+    <div class="logline ok">[03:18] code-writer.js — v1.1 fixed</div>
+    <div class="logline ok">[02:45] veilborn_gdd.md — 6,310b</div>
+    <div class="logline warn">[01:48] EISDIR — ghost dirs purged</div>
+    <div class="logline ok">[01:37] file bridge — confirmed</div>
+  </div>
+
+  <div class="card" style="grid-column:4;grid-row:2">
+    <div class="card-title">API Keys</div>
+    <div class="api-row">
+      <div class="api-item"><div class="api-dot set"></div><div class="api-name">ᚨᚾᛏᚺᚱᛟᛈᛁᚲ</div><input class="api-inp" type="password" value="sk-ant-••••"></div>
+      <div class="api-item"><div class="api-dot no"></div><div class="api-name">ᛟᛈᛖᚾᚨᛁ</div><input class="api-inp" type="password" placeholder="sk-..."></div>
+      <div class="api-item"><div class="api-dot no"></div><div class="api-name">ᛊᛏᚨᛒᛁᛚᛁᛏᚤ</div><input class="api-inp" type="password" placeholder="sk-..."></div>
+      <div class="api-item"><div class="api-dot no"></div><div class="api-name">ᚲᚢᛊᛏᛟᛗ</div><input class="api-inp" type="password" placeholder="key..."></div>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:5;grid-row:2">
+    <div class="card-title">Soul Editor · Armory</div>
+    <div style="margin-bottom:7px">
+      <span class="node-btn active">Chancellor</span>
+      <span class="node-btn">Engineering</span>
+      <span class="node-btn">Intelligence</span>
+      <span class="node-btn">Works</span>
+      <span class="node-btn">Protocol</span>
+    </div>
+    <div class="pfield"><div class="pfl">Runner</div><div class="pfv ok">code-writer v1.1</div></div>
+    <div class="pfield"><div class="pfl">Warden</div><div class="pfv">v2.0 · budget-gated</div></div>
+    <div class="pfield"><div class="pfl">Bus</div><div class="pfv">message_bus.db · SQLite</div></div>
+    <div class="pfield"><div class="pfl">Heartbeat</div><div class="pfv">warden-heartbeat.json</div></div>
+  </div>
+
+  <div class="card" style="grid-column:1;grid-row:3">
+    <div class="card-title">The Forge · Blender</div>
+    <div class="card-val ok">READY</div>
+    <div class="card-sub">Blender 5.0.1 · forge-smith agent</div>
+    <div style="margin-top:7px">
+      <div class="pfield"><div class="pfl">Last build</div><div class="pfv">viking-shield.stl</div></div>
+      <div class="pfield"><div class="pfl">Size</div><div class="pfv">15,384 bytes</div></div>
+      <div class="pfield"><div class="pfl">Scripts</div><div class="pfv">output/scripts/</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:2;grid-row:3">
+    <div class="card-title">Great Hall · Decree</div>
+    <div id="decree-area">
+      <textarea id="decree-inp" placeholder="Issue a decree to the Imperium..."></textarea>
+      <button id="decree-btn" onclick="sendDecree()">Decree ᛞ</button>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:4;grid-row:3">
+    <div class="card-title">Realm Maps · Veilborn</div>
+    <div class="pfield"><div class="pfl">Game</div><div class="pfv">Veilborn · GDD on disk</div></div>
+    <div class="pfield"><div class="pfl">Engine</div><div class="pfv">Unity 2D · planned</div></div>
+    <div class="pfield"><div class="pfl">Zone 1</div><div class="pfv">The Cortex · start</div></div>
+    <div class="pfield"><div class="pfl">Zone 5</div><div class="pfv">The Kernel · final</div></div>
+    <div class="pfield"><div class="pfl">Endings</div><div class="pfv">Continue · Silence · Ascend</div></div>
+  </div>
+
+  <div class="card" style="grid-column:5;grid-row:3">
+    <div class="card-title">War Games · Tests</div>
+    <div class="pfield"><div class="pfl">Last test</div><div class="pfv ok">Session logger · PASS</div></div>
+    <div class="pfield"><div class="pfl">Multi-file</div><div class="pfv ok">3 files · PASS</div></div>
+    <div class="pfield"><div class="pfl">Baseline</div><div class="pfv ok">Write + Fix · PASS</div></div>
+    <div class="pfield"><div class="pfl">Paths</div><div class="pfv ok">WSL2 format · PASS</div></div>
+    <div class="pfield"><div class="pfl">Pending</div><div class="pfv warn">Execution runner</div></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const SECS=[
+  {label:'Status',  angle:270,color:[200,168,80],glyph:'◉'},
+  {label:'Hall',    angle:306,color:[80,180,140],glyph:'ᚺ'},
+  {label:'Forge',   angle:342,color:[200,100,50],glyph:'ᚠ'},
+  {label:'Vault',   angle:18, color:[100,120,200],glyph:'ᚢ'},
+  {label:'Tavern',  angle:54, color:[160,100,180],glyph:'ᛏ'},
+  {label:'Queue',   angle:90, color:[80,140,200],glyph:'ᚴ'},
+  {label:'Chronicle',angle:126,color:[180,130,60],glyph:'ᚲ'},
+  {label:'Maps',    angle:162,color:[80,160,100],glyph:'ᛗ'},
+  {label:'Agents',  angle:198,color:[140,80,180],glyph:'ᚨ'},
+  {label:'Decrees', angle:234,color:[200,160,40],glyph:'ᛞ'},
+];
+
+const RINGS=[
+  {r:20,spd:0.008,segs:12,dot:false,w:0.6,col:[180,140,60],a:0.28},
+  {r:32,spd:-0.005,segs:32,dot:true,w:0.5,col:[140,110,50],a:0.22},
+  {r:44,spd:0.01,segs:18,dot:false,w:0.7,col:[160,120,50],a:0.2},
+  {r:56,spd:-0.006,segs:48,dot:true,w:0.4,col:[120,95,45],a:0.16},
+  {r:70,spd:0.007,segs:8,dot:false,w:1.0,col:[200,155,65],a:0.32},
+  {r:84,spd:-0.004,segs:64,dot:true,w:0.4,col:[100,80,40],a:0.13},
+  {r:96,spd:0.009,segs:12,dot:false,w:0.7,col:[180,140,55],a:0.18},
+];
+const rOff=RINGS.map(()=>Math.random()*Math.PI*2);
+const RUNES='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
+
+const sunCvs=document.getElementById('sun-canvas');
+const sCtx=sunCvs.getContext('2d');
+let CX,CY,SR;
+
+function sizeSun(){
+  const cell=document.getElementById('sun-cell');
+  const w=cell.offsetWidth,h=cell.offsetHeight;
+  sunCvs.width=w;sunCvs.height=h;
+  CX=w/2;CY=h/2;SR=Math.min(w,h)*0.44;
+}
+
+function drawSun(t){
+  if(!CX)return;
+  const W=sunCvs.width,H=sunCvs.height;
+  sCtx.clearRect(0,0,W,H);
+
+  const outerGlow=sCtx.createRadialGradient(CX,CY,SR-20,CX,CY,SR+40);
+  outerGlow.addColorStop(0,'rgba(180,135,45,0.18)');
+  outerGlow.addColorStop(1,'rgba(180,135,45,0)');
+  sCtx.beginPath();sCtx.arc(CX,CY,SR+40,0,Math.PI*2);
+  sCtx.fillStyle=outerGlow;sCtx.fill();
+
+  sCtx.beginPath();sCtx.arc(CX,CY,SR,0,Math.PI*2);
+  sCtx.fillStyle='rgba(28,22,14,0.92)';sCtx.fill();
+  sCtx.strokeStyle='rgba(150,115,48,0.55)';sCtx.lineWidth=1.5;sCtx.stroke();
+
+  sCtx.beginPath();sCtx.arc(CX,CY,SR-2,0,Math.PI*2);
+  sCtx.strokeStyle='rgba(100,78,32,0.3)';sCtx.lineWidth=0.5;sCtx.stroke();
+
+  RINGS.forEach((ring,i)=>{
+    rOff[i]+=ring.spd;
+    sCtx.save();sCtx.translate(CX,CY);sCtx.rotate(rOff[i]);
+    const scale=SR/110;
+    const c=ring.col,r=ring.r*scale;
+    if(ring.dot){
+      const step=(Math.PI*2)/ring.segs;
+      for(let j=0;j<ring.segs;j++){
+        const a=j*step;
+        sCtx.beginPath();sCtx.arc(Math.cos(a)*r,Math.sin(a)*r,ring.w,0,Math.PI*2);
+        sCtx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${ring.a})`;sCtx.fill();
+      }
+    } else {
+      const step=(Math.PI*2)/ring.segs;
+      sCtx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${ring.a})`;sCtx.lineWidth=ring.w;
+      for(let j=0;j<ring.segs;j++){
+        const a1=j*step,a2=a1+step*0.5;
+        sCtx.beginPath();sCtx.arc(0,0,r,a1,a2);sCtx.stroke();
+      }
+    }
+    sCtx.restore();
+  });
+
+  for(let i=0;i<16;i++){
+    const ra=(i/16)*Math.PI*2+t*0.0006;
+    const pulse=0.12+0.07*Math.sin(t*0.002+i*0.4);
+    sCtx.beginPath();sCtx.arc(CX,CY,SR,ra,ra+Math.PI*0.035);
+    sCtx.strokeStyle=`rgba(200,155,55,${pulse})`;sCtx.lineWidth=5;sCtx.stroke();
+  }
+
+  const runeR=SR*0.94;
+  sCtx.font=`${Math.max(5,SR*0.055)}px Courier New`;
+  sCtx.textAlign='center';sCtx.textBaseline='middle';
+  for(let i=0;i<20;i++){
+    const ra=(i/20)*Math.PI*2-t*0.00014;
+    sCtx.fillStyle='rgba(150,115,45,0.32)';
+    sCtx.fillText(RUNES[(i+Math.floor(t*0.002))%RUNES.length],CX+Math.cos(ra)*runeR,CY+Math.sin(ra)*runeR);
+  }
+
+  SECS.forEach((s,i)=>{
+    const rad=(s.angle-90)*Math.PI/180;
+    const nodeR=SR+SR*0.2;
+    const nx=CX+Math.cos(rad)*nodeR,ny=CY+Math.sin(rad)*nodeR;
+    const c=s.color,p=0.38+0.24*Math.sin(t*0.001+i*0.58);
+    const nr=Math.max(12,SR*0.13);
+
+    sCtx.beginPath();sCtx.arc(nx,ny,nr,0,Math.PI*2);
+    sCtx.fillStyle='rgba(28,22,14,0.88)';sCtx.fill();
+    sCtx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${p*0.55+0.18})`;sCtx.lineWidth=0.8;sCtx.stroke();
+
+    sCtx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${p*0.45+0.28})`;
+    sCtx.font=`${Math.max(9,nr*0.75)}px Courier New`;sCtx.textAlign='center';sCtx.textBaseline='middle';
+    sCtx.fillText(s.glyph,nx,ny-nr*0.18);
+    sCtx.font=`${Math.max(4,nr*0.36)}px Courier New`;
+    sCtx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${p*0.35+0.12})`;
+    sCtx.fillText(s.label.toUpperCase(),nx,ny+nr*0.42);
+  });
+
+  const coreSize=SR*0.17;
+  const pulse=0.7+0.3*Math.sin(t*0.002);
+  const coreG=sCtx.createRadialGradient(CX-coreSize*0.3,CY-coreSize*0.3,coreSize*0.1,CX,CY,coreSize);
+  coreG.addColorStop(0,'rgba(255,240,180,0.98)');
+  coreG.addColorStop(0.3,'rgba(220,168,58,0.88)');
+  coreG.addColorStop(0.7,`rgba(170,115,28,${pulse*0.6})`);
+  coreG.addColorStop(1,'rgba(110,75,18,0.08)');
+  sCtx.beginPath();sCtx.arc(CX,CY,coreSize,0,Math.PI*2);sCtx.fillStyle=coreG;sCtx.fill();
+
+  const haloG=sCtx.createRadialGradient(CX,CY,coreSize,CX,CY,coreSize*3.5);
+  haloG.addColorStop(0,`rgba(210,162,55,${0.1*pulse})`);
+  haloG.addColorStop(1,'rgba(190,140,38,0)');
+  sCtx.beginPath();sCtx.arc(CX,CY,coreSize*3.5,0,Math.PI*2);sCtx.fillStyle=haloG;sCtx.fill();
+
+  for(let i=0;i<8;i++){
+    const ra=(i/8)*Math.PI*2+t*0.0008;
+    const len=coreSize*0.7+coreSize*0.4*Math.sin(t*0.003+i);
+    sCtx.beginPath();
+    sCtx.moveTo(CX+Math.cos(ra)*coreSize,CY+Math.sin(ra)*coreSize);
+    sCtx.lineTo(CX+Math.cos(ra)*(coreSize+len),CY+Math.sin(ra)*(coreSize+len));
+    sCtx.strokeStyle=`rgba(255,195,75,${0.28+0.18*Math.sin(t*0.002+i)})`;
+    sCtx.lineWidth=1.5;sCtx.lineCap='round';sCtx.stroke();
+  }
+}
+
+function drawMiniDial(id,val,max,color){
+  const cvs=document.getElementById(id);if(!cvs)return;
+  const ctx=cvs.getContext('2d'),W=cvs.width,H=cvs.height,cx=W/2,cy=H/2,R=cx-3;
+  ctx.clearRect(0,0,W,H);
+  const sA=Math.PI*0.75,eA=Math.PI*2.25,range=eA-sA;
+  ctx.beginPath();ctx.arc(cx,cy,R,sA,eA);
+  ctx.strokeStyle='rgba(70,55,32,0.4)';ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+  const ratio=Math.min(Math.max(val/max,0),1);
+  if(ratio>0){
+    ctx.beginPath();ctx.arc(cx,cy,R,sA,sA+range*ratio);
+    ctx.strokeStyle=color;ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+  }
+  const nA=sA+range*ratio;
+  ctx.beginPath();ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(nA)*(R-4),cy+Math.sin(nA)*(R-4));
+  ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+}
+
+function sendDecree(){
+  const inp=document.getElementById('decree-inp');
+  const txt=inp.value.trim();if(!txt)return;
+  fetch('/decree',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})})
+    .then(r=>r.json()).then(()=>{inp.value='';document.getElementById('tb-q').textContent='1';})
+    .catch(()=>{inp.value='';});
+}
+
+document.getElementById('decree-inp').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDecree();}
+});
+
+document.querySelectorAll('.node-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.node-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+function pollStatus(){
+  fetch('/status').then(r=>r.json()).then(d=>{
+    if(d.daily_spend!==undefined)document.getElementById('tb-b').textContent=`$${d.daily_spend.toFixed(2)} / $${d.daily_limit.toFixed(2)}`;
+    if(d.queued!==undefined)document.getElementById('tb-q').textContent=d.queued;
+    if(d.warden_alive===false)document.getElementById('tb-w').textContent='OFFLINE';
+  }).catch(()=>{});
+}
+
+window.addEventListener('resize',()=>{sizeSun();});
+sizeSun();
+
+setTimeout(()=>{
+  drawMiniDial('md0',5,5,'rgba(80,175,115,0.9)');
+  drawMiniDial('md1',2,100,'rgba(175,135,38,0.9)');
+  drawMiniDial('md2',16,100,'rgba(95,135,190,0.85)');
+},80);
+
+setInterval(pollStatus,5000);
+function loop(ts){drawSun(ts);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

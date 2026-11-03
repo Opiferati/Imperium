@@ -1,0 +1,67 @@
+{
+  "agents": {
+    "imperial-chancellor": {
+      "model": "sonnet",
+      "priority": 1,
+      "workspace": "ministries/chancellor"
+    },
+    "ministry-of-intelligence": {
+      "model": "haiku",
+      "priority": 2,
+      "workspace": "ministries/intelligence",
+      "web_search": {
+        "max_uses": 5
+      },
+      "max_tokens": 16000
+    },
+    "ministry-of-works": {
+      "model": "haiku",
+      "priority": 2,
+      "workspace": "ministries/works"
+    },
+    "ministry-of-engineering": {
+      "model": "sonnet",
+      "priority": 2,
+      "workspace": "ministries/engineering",
+      "max_tokens": 16000
+    }
+  },
+  "models": {
+    "sonnet": "claude-sonnet-5-5",
+    "haiku": "claude-haiku-5-5",
+    "opus": "claude-opus-5-5"
+  },
+  "budget": {
+    "daily_limit_usd": 2.0,
+    "warn_at_pct": 80
+  },
+  "routing": {
+    "emperor_agent_id": "emperor",
+    "coordinator_agent_id": "imperial-chancellor"
+  },
+  "forseti": {
+    "model": "haiku",
+    "enabled": true,
+    "max_revisions": 2
+  },
+  "treasury": {
+    "enabled": true,
+    "finalance_dir": "C:\\Finalance",
+    "python": ".venv-v2/bin/python",
+    "timeout_min": 15
+  },
+  "skald": {
+    "enabled": true,
+    "model": "haiku",
+    "max_searches": 6,
+    "retries": 1,
+    "run_after_hour_et": 18,
+    "finalance_dir": "C:\\Finalance"
+  },
+  "retired": {
+    "ministry-of-protocol": {
+      "retired_on": "2026-11-01",
+      "reason": "0 calls since April; every ministry formats its own work and Forseti checks it"
+    }
+  }
+}

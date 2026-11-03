@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-02",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.0572792,
+  "reading": {
+    "crypto_mood": 32,
+    "stock_mood": 42,
+    "crypto_drivers": [
+      {
+        "event": "Binance suffered a $6.3 billion hack, the largest crypto theft on record, with about $3 billion frozen on-chain and losses promised to be covered",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/10/29/circle-tether-freeze-funds-impacted-by-potential-binance-security-issue.html"
+      },
+      {
+        "event": "Bitcoin spot ETFs recorded roughly $643 million in daily withdrawals after the Binance hack, a sign of investors cutting risk",
+        "effect": "fear",
+        "url": "https://www.analyticsinsight.net/news/crypto-news-today-binance-hack-wallet-moves-funds-rlusd-supply-slides-ethereum-whale-buys-usd-63m-in-eth"
+      },
+      {
+        "event": "Binance reopened withdrawals but customers pulled a net $3.64 billion on the first day, while the exchange says it replaced about 95% of stolen funds",
+        "effect": "neutral",
+        "url": "https://www.coindesk.com/markets/2026/11/02/binance-hack-fallout-u-s-midterms-and-jobs-report-crypto-week-ahead"
+      },
+      {
+        "event": "Bitcoin consolidating near $78,000 with weak sentiment and bearish technicals after last week's hack-driven correction",
+        "effect": "fear",
+        "url": "https://www.tmgm.com/en-eu/analysis/market-news/article/crypto-today-bitcoin-ethereum-and-xrp-consolidate-amid-weak-market-sentiment-202611021027"
+      },
+      {
+        "event": "Strategy, a large corporate bitcoin holder, bought over $65 million of bitcoin and treated the hack-driven dip as an opportunity",
+        "effect": "greed",
+        "url": "https://fortune.com/2026/11/02/bitcoin-giant-strategy-binance-hack-65-million-holdings"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Tech stocks sold off again, pulling the S&P 500 and Nasdaq lower as investors rotated out of technology ahead of midterm elections, while the Dow rose as oil prices plunged",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html"
+      },
+      {
+        "event": "Intel shares slid after a steep post-earnings drop, a weak PC outlook and a manufacturing disruption in Israel, while the broader market was calm",
+        "effect": "fear",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-intel-stock-sliding-today-93CH-4992550"
+      },
+      {
+        "event": "Oil prices fell on Iran diplomatic developments, supporting a rebound in US equities at the open",
+        "effect": "greed",
+        "url": "https://www.stl.news/stock-market-today-monday-november-2-2026/"
+      },
+      {
+        "event": "Investors head into the midterm elections and a packed week of earnings and labor data, keeping caution high",
+        "effect": "neutral",
+        "url": "https://www.stl.news/stock-market-today-monday-november-2-2026/"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Binance's $6.3 billion hack raises questions about crypto wallet safety",
+        "url": "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance hack fallout, U.S. midterms and jobs report: Crypto Week Ahead",
+        "url": "https://www.coindesk.com/markets/2026/11/02/binance-hack-fallout-u-s-midterms-and-jobs-report-crypto-week-ahead",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin giant Strategy, unfazed by Binance hack, adds over $65 million BTC to its holdings",
+        "url": "https://fortune.com/2026/11/02/bitcoin-giant-strategy-binance-hack-65-million-holdings",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Today: Bitcoin, Ethereum and XRP trade sideways as market sentiment remains weak",
+        "url": "https://www.tmgm.com/en-eu/analysis/market-news/article/crypto-today-bitcoin-ethereum-and-xrp-consolidate-amid-weak-market-sentiment-202611021027",
+        "market": "crypto"
+      },
+      {
+        "title": "Current price of Bitcoin for November 2, 2026",
+        "url": "https://fortune.com/article/price-of-bitcoin-11-02-2026",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Prices Today: Bitcoin Climbs Near USD 78,500 as Binance Restores Withdrawals",
+        "url": "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-climbs-near-usd-78500-as-binance-restores-withdrawals",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market today: S&P 500 and Nasdaq extend tech sell-off, Dow gains as oil prices plunge",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock Market Today: Monday, November 2, 2026",
+        "url": "https://www.stl.news/stock-market-today-monday-november-2-2026/",
+        "market": "stocks"
+      },
+      {
+        "title": "Why is Intel stock sliding today?",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-intel-stock-sliding-today-93CH-4992550",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://techbullion.com/crypto-news-today-6-3b-binance-hack-shakes-market-as-whales-buy-dip-and-pepeto-draws-buyers/",
+    "https://www.analyticsinsight.net/news/crypto-news-today-binance-hack-wallet-moves-funds-rlusd-supply-slides-ethereum-whale-buys-usd-63m-in-eth",
+    "https://crypto.news/",
+    "https://www.coindesk.com/",
+    "https://cryptoslate.com/",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://www.coingabbar.com/en/why-is-crypto-market-down-today-btc-eth-xrp-price-drop",
+    "https://www.coingecko.com/en/coins/ethereum",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-consolidate-amid-weak-market-sentiment-202611021027",
+    "https://www.fxstreet.com/cryptocurrencies/news/top-3-price-predictions-bitcoin-ethereum-ripple-btc-eth-and-xrp-rebound-as-november-begins-after-a-losing-october-202611020358",
+    "https://fortune.com/article/price-of-bitcoin-11-02-2026",
+    "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-climbs-near-usd-78500-as-binance-restores-withdrawals",
+    "https://www.tmgm.com/en-eu/analysis/market-news/article/crypto-today-bitcoin-ethereum-and-xrp-consolidate-amid-weak-market-sentiment-202611021027",
+    "https://cryptoticker.io/en/ethereum-trading-volume-vs-bitcoin-november-1-2026/",
+    "https://thecryptobasic.com/2026/11/02/crypto-price-analysis-btc-eth-inj-hype-and-uni-nov-02-bitcoin-and-ethereum-rebound-as-uniswap-gains-3-4-and-injective-lags/",
+    "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html",
+    "https://www.investing.com/",
+    "https://www.investing.com/news/stock-market-news/why-is-intel-stock-sliding-today-93CH-4992550",
+    "https://www.cnbc.com/",
+    "https://www.stl.news/stock-market-today-monday-november-2-2026/",
+    "https://www.bloomberg.com/markets",
+    "https://www.msn.com/en-us/money",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://www.nbcnews.com/business/economy/fed-rates-inflation-warsh-midterms-rcna606154",
+    "https://thehill.com/business/6174753-fed-interest-rates-decision-inflation/",
+    "https://www.scrippsnews.com/politics/economy/federal-reserve-keeps-rates-unchanged-despite-elevated-inflation-gives-little-signal-of-next-move",
+    "https://www.wpri.com/money/federal-reserve-keeps-rates-unchanged-despite-elevated-inflation-gives-little-signal-of-next-move/amp/",
+    "https://www.wkbn.com/news/national-world/ap-federal-reserve-likely-to-skip-rate-hike-despite-elevated-inflation/",
+    "https://www.marketplace.org/story/2026/10/28/federal-reserve-leaves-interest-rates-unchanged-despite-elevated-inflation",
+    "https://www.npr.org/2026/10/28/nx-s1-6020425/federal-reserve-interest-rates-inflation",
+    "https://thefederal.com/category/business/us-fed-reserve-keeps-rates-unchanged-despite-elevated-inflation-gives-little-signal-of-next-move-261084",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://cointelegraph.com/news/what-happened-in-crypto-today",
+    "https://www.coindesk.com/markets/2026/11/02/binance-hack-fallout-u-s-midterms-and-jobs-report-crypto-week-ahead",
+    "https://en.bloomingbit.io/feed/news/123438",
+    "https://www.cnbc.com/2026/10/29/circle-tether-freeze-funds-impacted-by-potential-binance-security-issue.html",
+    "https://bitcoinnewscom.substack.com/p/bitcoin-just-survived-a-63-billion",
+    "https://www.cryptotimes.io/2026/10/31/security-lapses-and-regulatory-heat-on-indian-crypto-exchanges-whats-happening-at-coindcx-mudrex-and-coinswitch/",
+    "https://fortune.com/2026/11/02/bitcoin-giant-strategy-binance-hack-65-million-holdings",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14"
+  ]
+}
