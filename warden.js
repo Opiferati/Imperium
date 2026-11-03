@@ -178,6 +178,23 @@ busDb.exec(`CREATE TABLE IF NOT EXISTS petitions (
 const stmtPetitionAdd = busDb.prepare(`INSERT INTO petitions (task_id, agent, request) VALUES (?, ?, ?)`);
 const PETITION_RE = /\[PETITION:\s*([^\]\n]{3,300})\]/i;
 
+// ── The Imperial Brief (2026-11-03, Phase 3½): the Empire's source of truth ──
+// Read fresh for every Chancellor call, so edits to IMPERIAL_BRIEF.md take effect without a restart.
+// If a decree needs a fact the Brief lacks, the Chancellor answers [BLOCKED: ...] and the task is marked blocked.
+const BRIEF_PATH = path.join(ROOT, 'IMPERIAL_BRIEF.md');
+const BLOCKED_RE = /\[BLOCKED:\s*([^\]\n]{3,300})\]/i;
+function briefBlock() {
+  let txt;
+  try { txt = fs.readFileSync(BRIEF_PATH, 'utf8').trim(); } catch { return ''; }
+  return `\n\n## THE IMPERIAL BRIEF (source of truth — read it before planning)\n${txt}\n\n` +
+    `### How to use the Brief\n` +
+    `- Facts in the Brief outrank your assumptions.\n` +
+    `- If a decree needs a fact the Brief marks \`unknown\` (or doesn't contain), and neither the decree nor the Ravens' Report supplies it, ` +
+    `do NOT dispatch and do NOT guess. Reply with a line that starts [BLOCKED: <the missing input>], then ONE short question for the Emperor.\n` +
+    `- Status questions, small talk and decrees that need no business facts are never blocked.\n` +
+    `- Every dispatch for real work states what "done" looks like (section 8) and reminds the ministry of the ask-first list (section 5).`;
+}
+
 // ── Saga ledger: one row per task in the bus `tasks` table ─────────────
 // pending -> in_progress -> done | failed. Artifacts + cost accumulate here.
 const stmtTaskStart = busDb.prepare(
@@ -198,6 +215,11 @@ const stmtTaskCritic = busDb.prepare(
      forseti_fails = COALESCE(forseti_fails,0) + ? WHERE id = ?`
 );
 const stmtTaskGet = busDb.prepare(`SELECT * FROM tasks WHERE id = ?`);
+// Phase 3½: every blocked / failed / awaiting-approval task carries a plain-English reason
+if (!busDb.prepare(`PRAGMA table_info(tasks)`).all().some(c => c.name === 'status_reason'))
+  busDb.exec(`ALTER TABLE tasks ADD COLUMN status_reason TEXT`);
+const stmtTaskReason = busDb.prepare(`UPDATE tasks SET status = ?, status_reason = ? WHERE id = ?`);
+const stmtTaskReasonOnly = busDb.prepare(`UPDATE tasks SET status_reason = ? WHERE id = ?`);
 function taskTitle(raw) {
   let t = raw;
   try {
@@ -512,9 +534,11 @@ async function runSkald(msg, sconf) {
           '\nReply with ONE corrected JSON object. Only cite URLs your searches returned.' }];
     }
     stmtTaskFinish.run('failed', msg.task_id);
+    stmtTaskReasonOnly.run(`Lawspeaker rejected: ${last.problems.slice(0, 3).join(' ')}`.slice(0, 300), msg.task_id);
     finish(false, `[FAILED] Skald reading ${dateEt} rejected by the Lawspeaker: ${last.problems.slice(0, 3).join(' ')} ($${totalCost.toFixed(4)} spent). Nothing was logged.`);
   } catch (e) {
     stmtTaskFinish.run('failed', msg.task_id);
+    stmtTaskReasonOnly.run(String(e.message).slice(0, 300), msg.task_id);
     finish(false, `[FAILED] Skald reading ${dateEt}: ${e.message}`);
   }
 }
@@ -730,7 +754,8 @@ async function tickInner() {
     try { ravensBlock = `\n\n${ravens.toPrompt(ravens.gather(ROOT))}`; }
     catch (e) { ravensBlock = `\n\n## THE RAVENS' REPORT\nThe ravens could not fly this time (${e.message}). Say you have no live data rather than guessing.`; }
   }
-  const systemProm = `${EDICTS}\n\n${soul}${codexBlock}${ravensBlock}`;
+  const briefStr   = msg.to_agent === 'imperial-chancellor' ? briefBlock() : '';
+  const systemProm = `${EDICTS}\n\n${soul}${codexBlock}${briefStr}${ravensBlock}`;
 
   // Build conversation thread
   const thread = buildThread(msg.task_id, msg.to_agent);
@@ -953,12 +978,22 @@ async function tickInner() {
         stmtInsertMessage.run(msg.task_id, 'warden', 'emperor',
           `[FAILED] ${d.to} hit the ${MAX_ATTEMPTS}-attempt limit on this task. Stopped to protect the budget.`, msg.priority);
         stmtTaskFinish.run('failed', msg.task_id);
+        stmtTaskReasonOnly.run(`${d.to} hit the ${MAX_ATTEMPTS}-attempt limit`, msg.task_id);
         continue;
       }
       const content = typeof d.content === 'string' ? d.content : JSON.stringify(d.content ?? '');
       stmtInsertMessage.run(msg.task_id, msg.to_agent, d.to, content, d.priority ?? msg.priority);
       console.log(`[WARDEN] dispatch -> ${d.to}`);
       dispatchedCount++;
+    }
+
+    // Phase 3½: the Chancellor said it's blocked on a missing fact -> the ledger says so, with the reason
+    if (msg.to_agent === 'imperial-chancellor' && dispatchedCount === 0) {
+      const bm = responseText.match(BLOCKED_RE);
+      if (bm) {
+        stmtTaskReason.run('blocked', bm[1].trim(), msg.task_id);
+        console.log(`[WARDEN] task ${msg.task_id} BLOCKED: ${bm[1].trim()}`);
+      }
     }
 
     // Route the response back — but suppress if it contained dispatches
@@ -1013,6 +1048,7 @@ async function tickInner() {
     console.error(`[WARDEN] API error for ${msg.to_agent}: ${e.message}`);
     stmtMarkFailed.run(msg.id);
     stmtTaskFinish.run('failed', msg.task_id);
+    stmtTaskReasonOnly.run(`${msg.to_agent} could not run: ${e.message}`.slice(0, 300), msg.task_id);
     // Edict IV: report failures to the Emperor, don't swallow them
     stmtInsertMessage.run(msg.task_id, 'warden', 'emperor',
       `[FAILED] ${msg.to_agent} could not run: ${e.message}`, msg.priority);

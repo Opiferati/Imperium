@@ -67,16 +67,28 @@ function gather(root) {
     .map(r => ({ task: r.task_id, agent: r.agent, request: short(r.request, 120), when: etTime(r.created_at) }));
 
   // ── Muninn: memory ──
+  const hasReason = withDb(busP, db => db.prepare(`PRAGMA table_info(tasks)`).all().some(c => c.name === 'status_reason'), false);
   const tasks = withDb(busP, db => db.prepare(
-    `SELECT id, title, status, cost_usd, forseti_verdict, forseti_fails, artifact_path, created_at
+    `SELECT id, title, status, ${hasReason ? 'status_reason' : 'NULL AS status_reason'}, cost_usd, forseti_verdict, forseti_fails, artifact_path, created_at
      FROM tasks ORDER BY created_at DESC LIMIT 8`).all(), [])
-    .map(r => ({ id: r.id, title: short(r.title, 80), status: r.status, cost: +(r.cost_usd || 0).toFixed(4),
+    .map(r => ({ id: r.id, title: short(r.title, 80), status: r.status, reason: r.status_reason ? short(r.status_reason, 140) : null,
+                 cost: +(r.cost_usd || 0).toFixed(4),
                  forseti: r.forseti_verdict || null, revisions: r.forseti_fails || 0,
                  artifact: r.artifact_path ? String(r.artifact_path).split(/[\\/]/).pop() : null, when: etTime(r.created_at) }));
 
   const taskStats = withDb(busP, db => db.prepare(
     `SELECT COUNT(*) total, SUM(status='done') done, SUM(status='failed') failed,
-            SUM(status IN ('pending','in_progress')) open FROM tasks`).get(), {});
+            SUM(status IN ('pending','in_progress')) open, SUM(status='blocked') blocked,
+            SUM(status='awaiting_approval') awaiting FROM tasks`).get(), {});
+
+  // The Imperial Brief: when it was last updated and how many facts are still unknown
+  let brief = null;
+  try {
+    const bp = path.join(root, 'IMPERIAL_BRIEF.md');
+    const txt = fs.readFileSync(bp, 'utf8');
+    const lu = txt.match(/\*\*Last updated:\*\*\s*([0-9-]+)/);
+    brief = { last_updated: lu ? lu[1] : 'unknown', unknowns: (txt.match(/:\*\*\s*unknown|^- unknown/gim) || []).length };
+  } catch {}
 
   const lastCalls = withDb(ledP, db => db.prepare(
     `SELECT agent_id, MAX(called_at) last, SUM(date(called_at)=date('now')) today, COUNT(*) total
@@ -116,7 +128,8 @@ function gather(root) {
   return {
     as_of: etTime(now) + ' (New York)',
     huginn: { warden, budget, queue, petitions },
-    muninn: { task_stats: { total: taskStats.total || 0, done: taskStats.done || 0, failed: taskStats.failed || 0, open: taskStats.open || 0 },
+    muninn: { brief, task_stats: { total: taskStats.total || 0, done: taskStats.done || 0, failed: taskStats.failed || 0, open: taskStats.open || 0,
+                            blocked: taskStats.blocked || 0, awaiting: taskStats.awaiting || 0 },
               recent_tasks: tasks, ministries, retired, skald, recent_relics: relics }
   };
 }
@@ -133,10 +146,11 @@ function toPrompt(r) {
   L.push(`- Petitions awaiting the Emperor: ${h.petitions.length ? h.petitions.map(p => `${p.agent}: ${p.request}`).join('; ') : 'none'}`);
   L.push(`### Muninn (memory)`);
   const s = m.task_stats;
-  L.push(`- Saga ledger: ${s.total} tasks — ${s.done} done, ${s.failed} failed, ${s.open} open`);
+  L.push(`- Saga ledger: ${s.total} tasks — ${s.done} done, ${s.failed} failed, ${s.open} open, ${s.blocked || 0} blocked, ${s.awaiting || 0} awaiting approval`);
+  L.push(m.brief ? `- Imperial Brief: last updated ${m.brief.last_updated}, ${m.brief.unknowns} fact(s) still unknown` : `- Imperial Brief: not found`);
   L.push(`- Recent tasks (newest first):`);
   for (const t of m.recent_tasks)
-    L.push(`  - ${t.when} | ${t.status}${t.forseti ? ` | Forseti ${t.forseti}` : ''}${t.revisions ? ` (${t.revisions} fails)` : ''} | $${t.cost} | ${t.title}${t.artifact ? ` -> ${t.artifact}` : ''}`);
+    L.push(`  - ${t.when} | ${t.status}${t.reason ? ` (${t.reason})` : ''}${t.forseti ? ` | Forseti ${t.forseti}` : ''}${t.revisions ? ` (${t.revisions} fails)` : ''} | $${t.cost} | ${t.title}${t.artifact ? ` -> ${t.artifact}` : ''}`);
   L.push(`- Ministries (last worked / calls today / all-time):`);
   for (const x of m.ministries) L.push(`  - ${x.id} [${x.model ?? '?'}]: ${x.last_worked} / ${x.calls_today} / ${x.calls_total}`);
   if (m.retired.length) L.push(`- Retired: ${m.retired.join(', ')}`);
