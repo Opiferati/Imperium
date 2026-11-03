@@ -441,6 +441,13 @@ async function runSkald(msg, sconf) {
   stmtTaskStart.run(msg.task_id, `Skald reading — ${dateEt}`);
   currentAgent = 'ministry-of-skald';
   writeHeartbeat('processing');
+  // Thesis C Amendment 1 (2026-11-03): refresh prices + gauges first, so the reading records today's
+  // gauges, not whatever the last Treasury press left on disk (11-02 logged Friday's stock gauge).
+  if (treasury && sconf.refresh_gauges_first !== false) {
+    console.log('[WARDEN] skald: refreshing gauges first (Treasury)…');
+    const tr = await treasury.runScan(registry.treasury || {});
+    console.log(`[WARDEN] skald: gauge refresh ${tr.status}${tr.status === 'ok' ? ` (prices as of ${tr.as_of})` : ` — ${tr.message}`}`);
+  }
   const model = resolveModel(sconf.model || 'haiku');
   // Search cap (2026-11-02): ONE budget for the whole reading. max_uses is per API call, so every
   // pause_turn resume and the retry used to get a fresh 6 — that's how 11-01 ran 10 searches.
@@ -484,7 +491,7 @@ async function runSkald(msg, sconf) {
         stmtTaskFinish.run('done', msg.task_id);
         const r = last.reading;
         finish(true, `[VERIFIED] Skald reading ${dateEt} — crypto ${r.crypto_mood} (${skald.label(r.crypto_mood)}), ` +
-          `stocks ${r.stock_mood} (${skald.label(r.stock_mood)}). Price gauges: crypto ${g.crypto_fg ?? '—'}, stocks ${g.stock_gauge ?? '—'}. ` +
+          `stocks ${r.stock_mood} (${skald.label(r.stock_mood)}). Price gauges: crypto ${g.crypto_fg ?? '—'}, stocks ${g.stock_gauge ?? '—'}${g.stale ? ` (⚠ STALE: ${g.stale})` : ''}. ` +
           `Top driver: ${(r.crypto_drivers[0] || {}).event || '—'}. Report: ${rel}`);
         return;
       }

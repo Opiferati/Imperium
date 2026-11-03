@@ -11,7 +11,9 @@ const fs   = require('node:fs');
 const path = require('node:path');
 
 const RUBRIC_VERSION = 'skald-rubric-v1 (2026-11-01)';
-const CSV_HEADER = 'date,crypto_mood,stock_mood,crypto_fg,stock_gauge,model,rubric,n_sources,searches,cost_usd,crypto_why,stock_why';
+const CSV_HEADER_V1 = 'date,crypto_mood,stock_mood,crypto_fg,stock_gauge,model,rubric,n_sources,searches,cost_usd,crypto_why,stock_why';
+// 2026-11-03: gauge dates + a stale flag added at the end (Thesis C Amendment 1). Older rows leave them blank.
+const CSV_HEADER = CSV_HEADER_V1 + ',crypto_fg_date,stock_gauge_date,stale';
 
 const SYSTEM = `You are the Skald of the Norse Imperium: you read the mood of the markets from today's news.
 Rules you never break:
@@ -120,7 +122,7 @@ function latest(file, onOrBefore) {
   try {
     const rows = fs.readFileSync(file, 'utf8').trim().split('\n').slice(1).map(l => l.split(','));
     let v = null;
-    for (const [d, x] of rows) if (d <= onOrBefore) v = parseFloat(x);
+    for (const [d, x] of rows) if (d <= onOrBefore) v = [d, parseFloat(x)];
     return v;
   } catch { return null; }
 }
@@ -128,8 +130,14 @@ function latest(file, onOrBefore) {
 function gauges(conf, dateEt) {
   const toWsl = p => { const m = String(p).match(/^([A-Za-z]):[\\/](.*)/); return m ? `/mnt/${m[1].toLowerCase()}/${m[2].replace(/\\/g, '/')}` : p; };
   const dir = path.join(toWsl(conf.finalance_dir || 'C:\\Finalance'), 'data', 'v2_prices');
-  return { crypto_fg: latest(path.join(dir, '_fear_greed.csv'), dateEt),
-           stock_gauge: latest(path.join(dir, '_stock_fear_gauge.csv'), dateEt) };
+  const c = latest(path.join(dir, '_fear_greed.csv'), dateEt);
+  const s = latest(path.join(dir, '_stock_fear_gauge.csv'), dateEt);
+  // Stale = not from the reading's own day. Crypto trades daily; stocks only on weekdays
+  // (a holiday flags stocks too, which is harmless: Thesis C only scores SPY trading days).
+  const weekday = new Date(dateEt + 'T12:00:00Z').getUTCDay() % 6 !== 0;
+  const stale = [!c || c[0] !== dateEt ? 'crypto' : '', weekday && (!s || s[0] !== dateEt) ? 'stock' : ''].filter(Boolean).join('+');
+  return { crypto_fg: c ? c[1] : null, crypto_fg_date: c ? c[0] : '',
+           stock_gauge: s ? s[1] : null, stock_gauge_date: s ? s[0] : '', stale };
 }
 
 const q = s => `"${String(s).replace(/"/g, "'").replace(/[\r\n]+/g, ' ')}"`;
@@ -139,9 +147,13 @@ function record(root, conf, dateEt, reading, meta, rawContent) {
   const g = gauges(conf, dateEt);
   const f = csvPath(root);
   if (!fs.existsSync(f)) fs.writeFileSync(f, CSV_HEADER + '\n');
+  else {   // one-time header upgrade; existing rows are left exactly as they were
+    const txt = fs.readFileSync(f, 'utf8');
+    if (txt.startsWith(CSV_HEADER_V1 + '\n')) fs.writeFileSync(f, CSV_HEADER + txt.slice(CSV_HEADER_V1.length));
+  }
   fs.appendFileSync(f, [dateEt, reading.crypto_mood, reading.stock_mood, g.crypto_fg ?? '', g.stock_gauge ?? '',
     meta.model, q(RUBRIC_VERSION), reading.headlines.length, meta.searches, meta.cost.toFixed(4),
-    q(why(reading.crypto_drivers)), q(why(reading.stock_drivers))].join(',') + '\n');
+    q(why(reading.crypto_drivers)), q(why(reading.stock_drivers)), g.crypto_fg_date, g.stock_gauge_date, g.stale].join(',') + '\n');
   // Raw archive: the exact headlines seen today, kept for future studies
   const arch = path.join(root, 'data', 'skald-archive');
   fs.mkdirSync(arch, { recursive: true });
