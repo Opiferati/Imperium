@@ -63,5 +63,11 @@
       "retired_on": "2026-11-01",
       "reason": "0 calls since April; every ministry formats its own work and Forseti checks it"
     }
+  },
+  "ecnalanif": {
+    "enabled": true,
+    "dir": "C:\\Ecnalanif",
+    "python": "python3",
+    "timeout_min": 5
   }
 }

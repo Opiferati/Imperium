@@ -32,6 +32,12 @@ try {
   ravens = require('./runners/ravens.js');          // Huginn & Muninn — state of the realm for the Chancellor (2026-11-02)
 } catch (e) { console.warn('[WARDEN] ravens.js not loaded:', e.message); }
 
+let ecnalanif = null;
+try {
+  ecnalanif = require('./runners/ecnalanif.js');
+} catch (e) {
+  console.warn('[WARDEN] ecnalanif not loaded:', e.message);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -677,6 +683,13 @@ async function tickInner() {
   // The Skald: news-mood reading (measurement only — Edict VI)
   if (msg.to_agent === 'ministry-of-skald') {
     await runSkald(msg, registry.skald || {});
+    // Ecnalanif (2026-11-03): the mirror station scans right after the evening reading. $0, plain code.
+    const econf = registry.ecnalanif || {};
+    if (ecnalanif && econf.enabled) {
+      const er = await ecnalanif.runScan(econf);
+      console.log(`[WARDEN] ecnalanif: ${er.status}${er.message ? ' — ' + er.message : ''}`);
+      if (er.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ecnalanif', 'emperor', ecnalanif.summaryLine(er), msg.priority);
+    }
     return;
   }
 
