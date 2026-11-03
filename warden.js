@@ -33,6 +33,7 @@ try {
 } catch (e) { console.warn('[WARDEN] ravens.js not loaded:', e.message); }
 
 let ecnalanif = null;
+let ecnalanifFlown = null;   // New York date of the last Ecnalanif scan (once per day)
 try {
   ecnalanif = require('./runners/ecnalanif.js');
 } catch (e) {
@@ -488,7 +489,23 @@ async function runSkald(msg, sconf) {
   const toolsFor = left => left > 0 ? [{ type: 'web_search_20250305', name: 'web_search', max_uses: left }] : null;
   const tries = 1 + (sconf.retries ?? 1);
   let messages = [{ role: 'user', content: skald.userPrompt(dateEt) }];
-  let totalCost = 0, totalSearches = 0, last = null, priorContent = [];
+  let totalCost = 0, totalSearches = 0, last = null, priorContent = [], bestThin = null;
+  // Record a reading (PASS, or THIN = few sources, flagged — Thesis C Amendment 2 draft, 2026-11-03)
+  const recordReading = (lw, content) => {
+    const quality = lw.verdict === 'THIN' ? 'thin' : 'pass';
+    const meta = { model, searches: totalSearches, cost: totalCost, quality, thin_why: lw.thinWhy || '' };
+    const g = skald.record(ROOT, sconf, dateEt, lw.reading, meta, content);
+    const rel = `output/skald/skald-${dateEt}.md`;
+    fs.mkdirSync(path.join(ROOT, 'output', 'skald'), { recursive: true });
+    fs.writeFileSync(path.join(ROOT, rel), skald.report(dateEt, lw.reading, g, meta));
+    stmtTaskArtifact.run(`C:\\Imperium\\${rel.replace(/\//g, '\\')}`, fs.statSync(path.join(ROOT, rel)).size, msg.task_id);
+    stmtTaskFinish.run('done', msg.task_id);
+    if (quality === 'thin') stmtTaskReasonOnly.run(`THIN reading: ${lw.thinWhy}`.slice(0, 300), msg.task_id);
+    const r = lw.reading;
+    finish(true, `[VERIFIED] Skald reading ${dateEt}${quality === 'thin' ? ' ⚠ THIN (few sources, unverified)' : ''} — crypto ${r.crypto_mood} (${skald.label(r.crypto_mood)}), ` +
+      `stocks ${r.stock_mood} (${skald.label(r.stock_mood)}). Price gauges: crypto ${g.crypto_fg ?? '—'}, stocks ${g.stock_gauge ?? '—'}${g.stale ? ` (⚠ STALE: ${g.stale})` : ''}. ` +
+      `Top driver: ${(r.crypto_drivers[0] || {}).event || '—'}. Report: ${rel}`);
+  };
   try {
     for (let attempt = 1; attempt <= tries; attempt++) {
       let result = await callAnthropic(model, `${EDICTS}\n\n${skald.SYSTEM}`, messages, 4096, toolsFor(searchCap - totalSearches));
@@ -513,38 +530,32 @@ async function runSkald(msg, sconf) {
       totalCost += cost; totalSearches += searches;
 
       last = skald.lawspeaker(content, totalSearches, priorContent);
-      console.log(`[WARDEN] skald: attempt ${attempt} | ${searches} searches (${totalSearches}/${searchCap}) | $${cost.toFixed(4)} | lawspeaker ${last.ok ? 'PASS' : 'FAIL'}`);
-      if (last.ok) {
-        const meta = { model, searches: totalSearches, cost: totalCost };
-        const g = skald.record(ROOT, sconf, dateEt, last.reading, meta, content);
-        const rel = `output/skald/skald-${dateEt}.md`;
-        fs.mkdirSync(path.join(ROOT, 'output', 'skald'), { recursive: true });
-        fs.writeFileSync(path.join(ROOT, rel), skald.report(dateEt, last.reading, g, meta));
-        stmtTaskArtifact.run(`C:\\Imperium\\${rel.replace(/\//g, '\\')}`, fs.statSync(path.join(ROOT, rel)).size, msg.task_id);
-        stmtTaskFinish.run('done', msg.task_id);
-        const r = last.reading;
-        finish(true, `[VERIFIED] Skald reading ${dateEt} — crypto ${r.crypto_mood} (${skald.label(r.crypto_mood)}), ` +
-          `stocks ${r.stock_mood} (${skald.label(r.stock_mood)}). Price gauges: crypto ${g.crypto_fg ?? '—'}, stocks ${g.stock_gauge ?? '—'}${g.stale ? ` (⚠ STALE: ${g.stale})` : ''}. ` +
-          `Top driver: ${(r.crypto_drivers[0] || {}).event || '—'}. Report: ${rel}`);
-        return;
-      }
+      console.log(`[WARDEN] skald: attempt ${attempt} | ${searches} searches (${totalSearches}/${searchCap}) | $${cost.toFixed(4)} | lawspeaker ${last.verdict}`);
+      if (last.ok) { recordReading(last, content); return true; }
+      if (last.thin) bestThin = { lw: last, content };   // keep it; a retry may still reach a full PASS
       // One retry: hand the Lawspeaker's ruling back so the Skald can fix it.
       // Links from this attempt's searches still count next time; searches left come from the same cap.
       priorContent = [...priorContent, ...content];
       const left = searchCap - totalSearches;
       const text = content.filter(b => b.type === 'text').map(b => b.text).join('');
       messages = [...messages, { role: 'assistant', content: text || '(no text)' },
-        { role: 'user', content: 'The Lawspeaker rejected that reading:\n- ' + last.problems.join('\n- ') +
+        { role: 'user', content: (last.thin ? 'The Lawspeaker passed that reading only as THIN (few sources):\n- ' : 'The Lawspeaker rejected that reading:\n- ') + last.problems.join('\n- ') +
           (left > 0 ? `\nYou may run up to ${left} more search(es) if needed.` : '\nThe search budget is spent: fix the reading using only links your earlier searches returned.') +
           '\nReply with ONE corrected JSON object. Only cite URLs your searches returned.' }];
+    }
+    if (bestThin) {   // no full PASS, but a real THIN reading exists: record it, flagged
+      console.log('[WARDEN] skald: no full PASS — recording the THIN reading, flagged');
+      recordReading(bestThin.lw, bestThin.content); return true;
     }
     stmtTaskFinish.run('failed', msg.task_id);
     stmtTaskReasonOnly.run(`Lawspeaker rejected: ${last.problems.slice(0, 3).join(' ')}`.slice(0, 300), msg.task_id);
     finish(false, `[FAILED] Skald reading ${dateEt} rejected by the Lawspeaker: ${last.problems.slice(0, 3).join(' ')} ($${totalCost.toFixed(4)} spent). Nothing was logged.`);
+    return false;
   } catch (e) {
     stmtTaskFinish.run('failed', msg.task_id);
     stmtTaskReasonOnly.run(String(e.message).slice(0, 300), msg.task_id);
     finish(false, `[FAILED] Skald reading ${dateEt}: ${e.message}`);
+    return false;
   }
 }
 
@@ -713,8 +724,11 @@ async function tickInner() {
   if (msg.to_agent === 'ministry-of-skald') {
     await runSkald(msg, registry.skald || {});
     // Ecnalanif (2026-11-03): the mirror station scans right after the evening reading. $0, plain code.
+    // Once per New York day, whether or not the reading passed (its scan needs the close, not the Skald).
     const econf = registry.ecnalanif || {};
-    if (ecnalanif && econf.enabled) {
+    const etDay = skald.etNow().date;
+    if (ecnalanif && econf.enabled && ecnalanifFlown !== etDay) {
+      ecnalanifFlown = etDay;
       const er = await ecnalanif.runScan(econf);
       console.log(`[WARDEN] ecnalanif: ${er.status}${er.message ? ' — ' + er.message : ''}`);
       if (er.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ecnalanif', 'emperor', ecnalanif.summaryLine(er), msg.priority);

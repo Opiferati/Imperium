@@ -13,7 +13,9 @@ const path = require('node:path');
 const RUBRIC_VERSION = 'skald-rubric-v1 (2026-11-01)';
 const CSV_HEADER_V1 = 'date,crypto_mood,stock_mood,crypto_fg,stock_gauge,model,rubric,n_sources,searches,cost_usd,crypto_why,stock_why';
 // 2026-11-03: gauge dates + a stale flag added at the end (Thesis C Amendment 1). Older rows leave them blank.
-const CSV_HEADER = CSV_HEADER_V1 + ',crypto_fg_date,stock_gauge_date,stale';
+const CSV_HEADER_V2 = CSV_HEADER_V1 + ',crypto_fg_date,stock_gauge_date,stale';
+// 2026-11-03 (Amendment 2): quality = pass | thin, and why it's thin. Older rows leave them blank (= pass).
+const CSV_HEADER = CSV_HEADER_V2 + ',quality,thin_why';
 
 const SYSTEM = `You are the Skald of the Norse Imperium: you read the mood of the markets from today's news.
 Rules you never break:
@@ -38,7 +40,12 @@ Reply with ONE JSON object and nothing else:
  "crypto_drivers": [{"event": "...", "effect": "fear|greed|neutral", "url": "https://..."}],
  "stock_drivers":  [{"event": "...", "effect": "fear|greed|neutral", "url": "https://..."}],
  "headlines": [{"title": "...", "url": "https://...", "market": "crypto|stocks"}]}
-2–5 drivers per market. 6–15 headlines.`;
+2–5 drivers per market. 6–15 headlines.
+The Lawspeaker (plain code) checks your reply. To pass in full:
+- at least 3 searches ran;
+- every driver and headline URL is one your searches actually returned, and is an article page (not a homepage);
+- each market has 2+ such drivers, and 3+ headlines trace back to your searches.
+A reading with real but fewer sources is recorded as THIN (flagged: few sources, unverified). A link your searches never returned fails the reading outright. Never invent or guess a URL.`;
 
 function userPrompt(dateEt) {
   return `Today is ${dateEt} (New York). Run your five searches and give today's Skald reading.`;
@@ -92,30 +99,40 @@ function extractJson(text) {
   try { return JSON.parse(text.slice(s, e + 1)); } catch { return null; }
 }
 
-// The Lawspeaker: plain-code checks. Returns { ok, problems, reading }
+// The Lawspeaker v2 (2026-11-03): a graded verdict. Returns { verdict, ok, thin, problems, thinWhy, reading }
+//   PASS — full sourcing.   THIN — real but few sources (recorded, flagged "few sources, unverified").
+//   FAIL — not JSON, bad scores, under 3 searches, an invented link, or nothing real to stand on.
+// (Opie, 2026-11-03: "I've got something, but it's weak" beats silently throwing a reading away.)
 function lawspeaker(content, searches, priorContent = []) {   // priorContent: earlier attempts' blocks (2026-11-02)
-  const problems = [];
+  const hard = [], thin = [];
   const text = (content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   const j = extractJson(text);
-  if (!j) return { ok: false, problems: ['Reply was not a JSON object.'], reading: null };
+  if (!j) return { verdict: 'FAIL', ok: false, thin: false, problems: ['Reply was not a JSON object.'], thinWhy: '', reading: null };
   const found = searchResultUrls([...priorContent, ...(content || [])]);
-  if (searches < 3) problems.push(`Only ${searches} web search(es) ran — need at least 3 of the 5 beats.`);
+  if (searches < 3) hard.push(`Only ${searches} web search(es) ran — need at least 3 of the 5 beats.`);
   for (const k of ['crypto_mood', 'stock_mood']) {
-    if (!Number.isInteger(j[k]) || j[k] < 0 || j[k] > 100) problems.push(`${k} must be a whole number 0–100 (got ${JSON.stringify(j[k])}).`);
+    if (!Number.isInteger(j[k]) || j[k] < 0 || j[k] > 100) hard.push(`${k} must be a whole number 0–100 (got ${JSON.stringify(j[k])}).`);
   }
   for (const k of ['crypto_drivers', 'stock_drivers']) {
     const arr = Array.isArray(j[k]) ? j[k] : [];
-    if (arr.length < 2) problems.push(`${k}: need at least 2 drivers.`);
+    const good = [];
     for (const d of arr) {
-      if (!d || !d.event || !/^https:\/\//.test(d.url || '')) { problems.push(`${k}: a driver is missing its event or https link.`); break; }
-      if (!found.has(d.url)) { problems.push(`${k}: "${String(d.event).slice(0, 60)}" cites a link the search never returned (${d.url}).`); }
-      else if (!isArticleUrl(d.url)) { problems.push(`${k}: "${String(d.event).slice(0, 60)}" cites a homepage (${d.url}), not an article — cite the specific story.`); }
+      if (!d || !d.event || !/^https:\/\//.test(d.url || '')) { hard.push(`${k}: a driver is missing its event or https link.`); continue; }
+      if (!found.has(d.url)) { hard.push(`${k}: "${String(d.event).slice(0, 60)}" cites a link the search never returned (${d.url}).`); continue; }
+      if (!isArticleUrl(d.url)) { thin.push(`${k}: "${String(d.event).slice(0, 60)}" cites a homepage, not an article — dropped.`); continue; }
+      good.push(d);
     }
+    j[k] = good;
+    if (good.length === 0) hard.push(`${k}: no driver with a real article link.`);
+    else if (good.length < 2) thin.push(`${k}: only 1 sourced driver (want 2+).`);
   }
   const heads = (Array.isArray(j.headlines) ? j.headlines : []).filter(h => h && h.url && found.has(h.url) && isArticleUrl(h.url));
-  if (heads.length < 3) problems.push(`Only ${heads.length} headline(s) trace back to real search results — need 3+.`);
+  if (heads.length === 0) hard.push('No headline traces back to a real search result.');
+  else if (heads.length < 3) thin.push(`Only ${heads.length} headline(s) trace back to real search results (want 3+).`);
   j.headlines = heads;
-  return { ok: problems.length === 0, problems, reading: j };
+  const verdict = hard.length ? 'FAIL' : thin.length ? 'THIN' : 'PASS';
+  return { verdict, ok: verdict === 'PASS', thin: verdict === 'THIN', problems: [...hard, ...thin],
+           thinWhy: verdict === 'THIN' ? thin.join(' ') : '', reading: j };
 }
 
 function latest(file, onOrBefore) {
@@ -149,11 +166,13 @@ function record(root, conf, dateEt, reading, meta, rawContent) {
   if (!fs.existsSync(f)) fs.writeFileSync(f, CSV_HEADER + '\n');
   else {   // one-time header upgrade; existing rows are left exactly as they were
     const txt = fs.readFileSync(f, 'utf8');
-    if (txt.startsWith(CSV_HEADER_V1 + '\n')) fs.writeFileSync(f, CSV_HEADER + txt.slice(CSV_HEADER_V1.length));
+    for (const old of [CSV_HEADER_V2, CSV_HEADER_V1])
+      if (txt.startsWith(old + '\n')) { fs.writeFileSync(f, CSV_HEADER + txt.slice(old.length)); break; }
   }
   fs.appendFileSync(f, [dateEt, reading.crypto_mood, reading.stock_mood, g.crypto_fg ?? '', g.stock_gauge ?? '',
     meta.model, q(RUBRIC_VERSION), reading.headlines.length, meta.searches, meta.cost.toFixed(4),
-    q(why(reading.crypto_drivers)), q(why(reading.stock_drivers)), g.crypto_fg_date, g.stock_gauge_date, g.stale].join(',') + '\n');
+    q(why(reading.crypto_drivers)), q(why(reading.stock_drivers)), g.crypto_fg_date, g.stock_gauge_date, g.stale,
+    meta.quality || 'pass', q(meta.thin_why || '')].join(',') + '\n');
   // Raw archive: the exact headlines seen today, kept for future studies
   const arch = path.join(root, 'data', 'skald-archive');
   fs.mkdirSync(arch, { recursive: true });
@@ -167,7 +186,7 @@ const label = v => v == null ? '—' : v <= 10 ? 'Panic' : v <= 25 ? 'Extreme Fe
 function report(dateEt, reading, g, meta) {
   const drv = arr => (arr || []).map(d => `- **${d.effect || '?'}** — ${d.event} ([source](${d.url}))`).join('\n');
   return `# Skald reading — ${dateEt}
-
+${meta.quality === 'thin' ? `\n> ⚠ **THIN — few sources, unverified.** ${meta.thin_why}\n` : ''}
 | | Skald (news mood) | Price gauge |
 |---|---|---|
 | **Crypto** | **${reading.crypto_mood}** ${label(reading.crypto_mood)} | ${g.crypto_fg ?? '—'} ${label(g.crypto_fg)} (alternative.me) |
