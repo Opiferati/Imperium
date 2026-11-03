@@ -14,6 +14,8 @@ const fs   = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
+let gate = null;
+try { gate = require('./gate.js'); } catch (e) { console.warn('[CODE-WRITER] gate.js not loaded — falling back to the folder sandbox:', e.message); }
 
 function normalisePath(rawPath) {
   let trimmed = rawPath.trim().split('\\n')[0];          // literal \n ends a path
@@ -89,13 +91,29 @@ function extractReadRequests(responseText) {
   return out;
 }
 
-function extractAndWrite(responseText, taskId) {
+function extractAndWrite(responseText, taskId, db = null) {   // db: the bus, for Ask-First approvals
   const blocks  = extractFileBlocks(responseText);
   const results = [];
   for (const block of blocks) {
+    let approvalId = null;
     try {
       if (!insideRoot(block.resolvedPath)) {
         throw new Error(`Outside the Imperium folder — refused: ${block.resolvedPath}`);
+      }
+      // ── The Ask-First Gate (2026-11-03) ──
+      if (gate) {
+        const g = gate.classifyWrite(block.resolvedPath);
+        if (g.verdict === 'never') throw new Error(`NEVER — ${g.reason}`);
+        if (g.verdict === 'ask') {
+          const ap = db ? gate.findApproval(db, block.resolvedPath) : null;
+          if (!ap) {
+            console.warn(`[CODE-WRITER] ⛔ ${block.declaredPath} — ASK-FIRST: ${g.reason}`);
+            results.push({ path: block.declaredPath, resolvedPath: block.resolvedPath, rel: g.rel, bytes: 0,
+                           success: false, gated: true, error: `ASK-FIRST — ${g.reason}` });
+            continue;
+          }
+          approvalId = ap.id;
+        }
       }
       fs.mkdirSync(path.dirname(block.resolvedPath), { recursive: true });
       if (fs.existsSync(block.resolvedPath) && fs.statSync(block.resolvedPath).isDirectory()) {
@@ -105,6 +123,7 @@ function extractAndWrite(responseText, taskId) {
       // Verify from disk, not from memory
       const bytes = fs.statSync(block.resolvedPath).size;
       if (bytes === 0) throw new Error('File is empty after write');
+      if (approvalId && db) { gate.useApproval(db, approvalId); console.log(`[CODE-WRITER] approval #${approvalId} used`); }
       console.log(`[CODE-WRITER] ✓ ${block.declaredPath} (${bytes} bytes)`);
       results.push({ path: block.declaredPath, resolvedPath: block.resolvedPath, bytes, success: true });
     } catch (err) {
@@ -119,6 +138,7 @@ function readFile(rawPath) {
   const resolvedPath = normalisePath(rawPath);
   try {
     if (!insideRoot(resolvedPath)) throw new Error('Outside the Imperium folder — refused');
+    if (gate) { const g = gate.classifyRead(resolvedPath); if (g.verdict === 'never') throw new Error(`NEVER — ${g.reason}`); }
     const content = fs.readFileSync(resolvedPath, 'utf8');
     return { path: rawPath, resolvedPath, content, success: true };
   } catch (err) {

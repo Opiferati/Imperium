@@ -241,6 +241,19 @@ async function handleRequest(req, res) {
         db.prepare(`UPDATE petitions SET status='denied', decided_at=datetime('now') WHERE id=?`).run(p.id);
         json(res, { ok: true, status: 'denied' }); return;
       }
+      if (p.kind === 'gate') {   // Ask-First Gate (2026-11-03): one approval = one write of that file, 24 h
+        db.exec(`CREATE TABLE IF NOT EXISTS approvals (id INTEGER PRIMARY KEY AUTOINCREMENT, petition_id INTEGER, task_id TEXT,
+                 target TEXT NOT NULL, granted_at TEXT DEFAULT (datetime('now')), used_at TEXT)`);
+        db.prepare(`INSERT INTO approvals (petition_id, task_id, target) VALUES (?, ?, ?)`).run(p.id, p.task_id, p.target);
+        const gTask = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-GATE';
+        const gText = `ASK-FIRST #${p.id} APPROVED by the Emperor: ${p.agent} may write ${p.target} once (within 24 hours). ` +
+          `Original task: ${p.task_id}. Dispatch ${p.agent} to write that file again, with the same content it produced before.`;
+        db.prepare(`INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
+                    VALUES (?, 'emperor', 'imperial-chancellor', ?, 'queued', 1)`)
+          .run(gTask, JSON.stringify({ action: 'decree', text: gText, sent_at: new Date().toISOString() }));
+        db.prepare(`UPDATE petitions SET status='approved', decided_at=datetime('now'), granted_task=? WHERE id=?`).run(gTask, p.id);
+        json(res, { ok: true, status: 'approved', task_id: gTask }); return;
+      }
       const t = db.prepare(`SELECT title, artifact_path FROM tasks WHERE id = ?`).get(p.task_id) || {};
       const first = db.prepare(`SELECT content FROM messages WHERE task_id=? AND from_agent='emperor' ORDER BY id LIMIT 1`).get(p.task_id);
       let order = t.title || '';

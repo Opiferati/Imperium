@@ -176,6 +176,11 @@ busDb.exec(`CREATE TABLE IF NOT EXISTS petitions (
   id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT NOT NULL, agent TEXT NOT NULL, request TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now')), decided_at TEXT, granted_task TEXT)`);
 const stmtPetitionAdd = busDb.prepare(`INSERT INTO petitions (task_id, agent, request) VALUES (?, ?, ?)`);
+let gate = null;
+try { gate = require('./runners/gate.js'); gate.ensureTables(busDb); }
+catch (e) { console.warn('[WARDEN] gate.js not loaded:', e.message); }
+const stmtGatePetition = busDb.prepare(`INSERT INTO petitions (task_id, agent, request, kind, target) VALUES (?, ?, ?, 'gate', ?)`);
+const stmtGatePending  = busDb.prepare(`SELECT id FROM petitions WHERE kind='gate' AND status='pending' AND target=?`);
 const PETITION_RE = /\[PETITION:\s*([^\]\n]{3,300})\]/i;
 
 // ── The Imperial Brief (2026-11-03, Phase 3½): the Empire's source of truth ──
@@ -727,7 +732,8 @@ async function tickInner() {
     const trow   = stmtTaskGet.get(msg.task_id);
     const failed = (trow && trow.forseti_verdict === 'FAIL') ||
                    (/\[FAILED\]/.test(formatted) && !/\[VERIFIED\]/.test(formatted));
-    stmtTaskFinish.run(failed ? 'failed' : 'done', msg.task_id);
+    if (!(trow && ['blocked', 'awaiting_approval'].includes(trow.status) && !failed))   // keep the reason-bearing status
+      stmtTaskFinish.run(failed ? 'failed' : 'done', msg.task_id);
     appendChronicle(msg.task_id, msg.from_agent, formatted, 0);
     stmtMarkDelivered.run(msg.id);
     return;
@@ -858,11 +864,28 @@ async function tickInner() {
     let verifiedFiles = [];
     if (codeWriter) {
       try {
-        const fileResults = codeWriter.extractAndWrite(responseText, msg.task_id);
+        const fileResults = codeWriter.extractAndWrite(responseText, msg.task_id, busDb);
         if (fileResults.length > 0) {
           const verified = fileResults.filter(r => r.success);
           verifiedFiles = verified;
-          const failed   = fileResults.filter(r => !r.success);
+          const gated    = fileResults.filter(r => r.gated);
+          const failed   = fileResults.filter(r => !r.success && !r.gated);
+
+          // ── Ask-First Gate: file a petition per refused file; the task waits for the Emperor ──
+          if (gated.length > 0) {
+            for (const g of gated) {
+              const pending = stmtGatePending.get(g.rel);
+              const pid = pending ? pending.id : stmtGatePetition.run(msg.task_id, msg.to_agent,
+                `Write ${g.rel} (outside output/, changes the Empire's own files)`, g.rel).lastInsertRowid;
+              if (!pending) stmtInsertMessage.run(`${msg.task_id}-GATE${pid}`, 'warden', 'emperor',
+                `[ASK-FIRST #${pid}] ${msg.to_agent} wants to write ${g.rel}, which is outside output/. Nothing was written. ` +
+                `Approve or deny it in the Petitions bar. One approval allows one write of that file, for 24 hours.`, msg.priority);
+              console.log(`[WARDEN] gate: ${g.rel} needs approval (petition #${pid})`);
+            }
+            stmtTaskReason.run('awaiting_approval', `Ask-first: ${gated.map(g => g.rel).join(', ')}`.slice(0, 300), msg.task_id);
+            responseText += '\n\n---\n' + gated.map(g => `[AWAITING APPROVAL] ${g.path} — not written; the Emperor decides`).join('\n') +
+              `\nThis is not a failure — do not re-dispatch over it.`;
+          }
 
           if (verified.length > 0) {
             responseText += '\n\n---\n' + verified.map(r =>
