@@ -9,16 +9,9 @@
 - **Empire:** Opie's one-person workshop (apps, music, digital products, measurement projects)
 - **Emperor:** Opie, the only one who approves anything that leaves this PC
 - **Current goal and deadline:** unknown
-- **This season's focus project:** unknown (candidates: Main Street Logs launch, Opiferati channel launch)
+- **This season's focus project:** unknown (candidate: Opiferati channel launch; Main Street Logs is banked, not active)
 
 ## 2. Offers
-### Main Street Logs
-- **What it is:** Gumroad shop selling checklist and log PDFs
-- **Customer and problem:** unknown
-- **Confirmed products, prices and terms:** unknown
-- **Approved source documents:** unknown
-- **Writing examples (approved):** unknown
-
 ### Opiferati (YouTube, AI-assisted music videos)
 - **What it is:** music channel, kept separate from Opie's personal identity
 - **Audience:** unknown
