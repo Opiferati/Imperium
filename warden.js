@@ -78,6 +78,10 @@ const CODEX_PATH        = path.join(ROOT, 'library', 'persona-codex', 'CODEX.md'
 const CHRONICLE_DIR     = path.join(ROOT, 'library', 'chronicles');
 const TICK_MS           = 10_000;
 
+// Skald runs per New York day (in memory; a restart resets it)
+const skaldRunsByDate = new Map();
+const skaldGaveUp = new Set();
+
 // ── Load static config ─────────────────────────────────────────────────
 const registry = JSON.parse(fs.readFileSync(REGISTRY_PATH, 'utf8'));
 
@@ -599,10 +603,17 @@ async function tickInner() {
 
   // The Skald: once per New York day after the close, queue a mood reading
   const sconf = registry.skald || {};
+  // A FAILED reading logs nothing, so isDue() stays true: without a cap the Warden re-queued it every tick
+  // (11-02: failed at 23:00, re-queued at 23:00:58). Now at most skald.max_runs_per_day (default 2) per NY day.
   if (skald && sconf.enabled && skald.isDue(ROOT, sconf)) {
     const busy = busDb.prepare(
       `SELECT COUNT(*) n FROM messages WHERE to_agent='ministry-of-skald' AND status IN ('queued','in_progress')`).get().n;
-    if (!busy) {
+    const today = skald.etNow().date, maxRuns = sconf.max_runs_per_day ?? 2;
+    const runs = skaldRunsByDate.get(today) || 0;
+    if (!busy && runs >= maxRuns) {
+      if (!skaldGaveUp.has(today)) { skaldGaveUp.add(today); console.warn(`[WARDEN] skald: ${runs} run(s) today without a recorded reading — giving up until tomorrow`); }
+    } else if (!busy) {
+      skaldRunsByDate.set(today, runs + 1);
       const tid = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-SKLD';
       stmtInsertMessage.run(tid, 'emperor', 'ministry-of-skald',
         JSON.stringify({ action: 'skald_reading', auto: true, sent_at: new Date().toISOString() }), 2);
