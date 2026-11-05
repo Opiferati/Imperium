@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-05",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 6,
+  "cost": 0.0711673,
+  "quality": "pass",
+  "thin_why": "",
+  "reading": {
+    "crypto_mood": 38,
+    "stock_mood": 30,
+    "crypto_drivers": [
+      {
+        "event": "Post-midterm Democratic sweep and collapsing CLARITY Act odds raise doubts about US crypto legislation",
+        "effect": "fear",
+        "url": "https://cryptoticker.io/en/midterms-recap-crypto-roadmap-january-3"
+      },
+      {
+        "event": "Bitcoin fell back to about $77,000 after swinging from $75K to $81K, with a roughly $213 million liquidation total",
+        "effect": "fear",
+        "url": "https://cryptonews.net/news/bitcoin/33709185"
+      },
+      {
+        "event": "Binance security breach of about $6.34 billion, with renewed scrutiny of the Binance platform",
+        "effect": "fear",
+        "url": "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-etfs-see-fresh-inflows-polygon-rallies-uniswap-hits-new-milestone"
+      },
+      {
+        "event": "Spot Bitcoin ETFs recorded about $74.6 million in net inflows, a modest sign of returning demand",
+        "effect": "greed",
+        "url": "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-etfs-see-fresh-inflows-polygon-rallies-uniswap-hits-new-milestone"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Risk-off selling in tech equities and AI-related chipmakers, with the Nasdaq sliding over 2% (single source; THIN)",
+        "effect": "fear",
+        "url": "https://cryptonews.net/news/bitcoin/33709185"
+      },
+      {
+        "event": "Democratic sweep of Congress raises concerns over tighter AI and crypto oversight, weighing on tech sentiment (single source; THIN)",
+        "effect": "fear",
+        "url": "https://cryptoticker.io/en/midterms-recap-crypto-roadmap-january-3"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Why Did Bitcoin Price Fall Back To $77K So Quickly?",
+        "url": "https://cryptonews.net/news/bitcoin/33709185",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto News Today: Bitcoin ETFs See Fresh Inflows, Polygon Rallies, Uniswap Hits New Milestone",
+        "url": "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-etfs-see-fresh-inflows-polygon-rallies-uniswap-hits-new-milestone",
+        "market": "crypto"
+      },
+      {
+        "title": "Midterms Recap: The Crypto Roadmap to January 3, When the CLARITY Act Expires",
+        "url": "https://cryptoticker.io/en/midterms-recap-crypto-roadmap-january-3",
+        "market": "crypto"
+      }
+    ]
+  },
+  "search_results": [
+    "https://coinmarketcap.com/top-stories/",
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.coingecko.com/",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-etfs-see-fresh-inflows-polygon-rallies-uniswap-hits-new-milestone",
+    "https://crypto.news/",
+    "https://cryptoticker.io/en/midterms-recap-crypto-roadmap-january-3",
+    "https://www.coindesk.com/",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://cryptonews.net/news/bitcoin/33709185"
+  ]
+}
