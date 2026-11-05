@@ -87,7 +87,7 @@ function gather(root) {
     const bp = path.join(root, 'IMPERIAL_BRIEF.md');
     const txt = fs.readFileSync(bp, 'utf8');
     const lu = txt.match(/\*\*Last updated:\*\*\s*([0-9-]+)/);
-    brief = { last_updated: lu ? lu[1] : 'unknown', unknowns: (txt.match(/:\*\*\s*unknown|^- unknown/gim) || []).length };
+    brief = { last_updated: lu ? lu[1] : 'unknown', unknowns: (txt.match(/:\*\*\s*unknown|^- unknown/gm) || []).length };
   } catch {}
 
   const lastCalls = withDb(ledP, db => db.prepare(
