@@ -1,0 +1,123 @@
+{
+  "date": "2026-11-03",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 6,
+  "cost": 0.07106130000000001,
+  "reading": {
+    "crypto_mood": 27,
+    "stock_mood": 44,
+    "crypto_drivers": [
+      {
+        "event": "Binance suffered a $6.3 billion hack, the largest crypto theft on record, which the FBI attributes to North Korea",
+        "effect": "fear",
+        "url": "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl"
+      },
+      {
+        "event": "Spot bitcoin ETFs posted $399 million in outflows, pushing bitcoin to six-week lows",
+        "effect": "fear",
+        "url": "https://fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-under-pressure-as-investors-pull-capital-202611031037"
+      },
+      {
+        "event": "A string of follow-on exchange thefts, including a roughly $40 million Mercado Bitcoin hack and a $130 million loss tied to Kraken accounts",
+        "effect": "fear",
+        "url": "https://www.pymnts.com/cryptocurrency/2026/crypto-lobbies-looser-rules-stolen-billions-disappear/"
+      },
+      {
+        "event": "Binance reopened withdrawals in phases and says it replaced about 95% of stolen tokens from its own reserves, easing some alarm",
+        "effect": "neutral",
+        "url": "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-climbs-near-usd-78500-as-binance-restores-withdrawals"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "The S&P 500 snapped a three-day losing streak on midterm election day as chip stocks rebounded",
+        "effect": "greed",
+        "url": "https://www.cnbc.com/2026/11/02/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "Bill Ackman warned that speculative trading and leverage are causing wild price swings and that the stock market is broken",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/02/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "A tech sell-off resumed on Monday after heavy stock losses the previous Thursday and Friday, and an AI-trade sell-off continued",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html"
+      },
+      {
+        "event": "The Fed held rates at 3.75% to 4% with inflation still elevated and two dissenters voting for a hike",
+        "effect": "fear",
+        "url": "https://foxbusiness.com/economy/federal-reserve-interest-rate-decision-october-28-2026"
+      },
+      {
+        "event": "AMD beat third-quarter estimates and its shares rose about 7% after hours on data center growth",
+        "effect": "greed",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-3-dow-sp-500-nasdaq-midterms-amd-earnings-141143244.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Binance's $6.3 billion hack raises questions about crypto wallet safety",
+        "url": "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance crypto hack: North Korea suspected to be behind biggest-ever heist",
+        "url": "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Today: Bitcoin, Ethereum, XRP under pressure as investors pull capital",
+        "url": "https://fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-under-pressure-as-investors-pull-capital-202611031037",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Prices Today: Bitcoin Climbs Near USD 78,500 as Binance Restores Withdrawals",
+        "url": "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-climbs-near-usd-78500-as-binance-restores-withdrawals",
+        "market": "crypto"
+      },
+      {
+        "title": "Brazil's Largest Crypto Exchange Mercado Bitcoin Hit by Possible $40M Hack",
+        "url": "https://beincrypto.com/brazils-largest-crypto-exchange-mercado-bitcoin-hacked/",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Lobbies for Looser Rules as Stolen Billions Disappear",
+        "url": "https://www.pymnts.com/cryptocurrency/2026/crypto-lobbies-looser-rules-stolen-billions-disappear/",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Market This Week Watches Binance Hack Fallout, US Midterm Elections, Jobs Data",
+        "url": "https://en.bloomingbit.io/feed/news/123438",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market news for Nov. 3, 2026",
+        "url": "https://www.cnbc.com/2026/11/02/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market today: S&P 500 and Nasdaq extend tech sell-off, Dow gains as oil prices plunge",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market today: Dow slips, S&P 500 and Nasdaq gain as chip stocks rally, focus shifts to midterm elections",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-3-dow-sp-500-nasdaq-midterms-amd-earnings-141143244.html",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.cnbc.com/2026/11/02/stock-market-today-live-updates.html",
+    "https://finance.yahoo.com/topic/stock-market-news/",
+    "https://www.google.com/finance/",
+    "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-2-dow-sp-500-nasdaq-091835095.html",
+    "https://www.cnbc.com/",
+    "https://www.cnbc.com/markets/",
+    "https://www.bloomberg.com/markets",
+    "https://www.msn.com/en-us/money",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116"
+  ]
+}
