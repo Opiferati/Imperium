@@ -11,6 +11,7 @@
 const fs   = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const translator = require('./translator.js');
 
 const MAX_FILE_CHARS = 40_000;   // per file sent to the Critic
 const CODE_EXT = new Set(['.js', '.cjs', '.mjs', '.ts', '.cs', '.java', '.c', '.cpp', '.h', '.css', '.json', '.gd']);
@@ -159,14 +160,14 @@ function buildCriticPrompt(taskText, files) {
 }
 
 function parseVerdict(raw) {
-  const m = String(raw).match(/\{[\s\S]*\}/);
-  if (m) {
-    try {
-      const j = JSON.parse(m[0]);
-      const verdict = String(j.verdict).toUpperCase() === 'PASS' ? 'PASS' : 'FAIL';
-      const problems = Array.isArray(j.problems) ? j.problems.map(String).slice(0, 3) : [];
-      return { verdict, problems };
-    } catch {}
+  // The Translator (2026-11-07): repairs the form ("pass", "Passed", stray commas…); anything that
+  // still isn't PASS counts as FAIL, as before. Repairs ride along in `translated`.
+  const tr = translator.translate(raw, translator.FORMS.forseti);
+  const j = tr.parsed && tr.value && typeof tr.value === 'object' && !Array.isArray(tr.value) ? tr.value : null;
+  if (j && j.verdict != null) {
+    const verdict = String(j.verdict).toUpperCase() === 'PASS' ? 'PASS' : 'FAIL';
+    const problems = Array.isArray(j.problems) ? j.problems.map(String).slice(0, 3) : [];
+    return { verdict, problems, translated: tr.repairs };
   }
   // Unreadable verdict: don't block the work on our own malfunction, but say so.
   return { verdict: 'UNSURE', problems: ['Forseti\'s reply was unreadable — no verdict.'] };

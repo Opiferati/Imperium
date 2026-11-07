@@ -9,6 +9,7 @@
 // ══════════════════════════════════════════════════════════════════════
 const fs   = require('node:fs');
 const path = require('node:path');
+const translator = require('./translator.js');
 
 const RUBRIC_VERSION = 'skald-rubric-v1 (2026-11-01)';
 const CSV_HEADER_V1 = 'date,crypto_mood,stock_mood,crypto_fg,stock_gauge,model,rubric,n_sources,searches,cost_usd,crypto_why,stock_why';
@@ -93,12 +94,6 @@ function isArticleUrl(u) {
   } catch { return false; }
 }
 
-function extractJson(text) {
-  const s = text.indexOf('{'), e = text.lastIndexOf('}');
-  if (s < 0 || e <= s) return null;
-  try { return JSON.parse(text.slice(s, e + 1)); } catch { return null; }
-}
-
 // The Lawspeaker v2 (2026-11-03): a graded verdict. Returns { verdict, ok, thin, problems, thinWhy, reading }
 //   PASS — full sourcing.   THIN — real but few sources (recorded, flagged "few sources, unverified").
 //   FAIL — not JSON, bad scores, under 3 searches, an invented link, or nothing real to stand on.
@@ -106,8 +101,11 @@ function extractJson(text) {
 function lawspeaker(content, searches, priorContent = []) {   // priorContent: earlier attempts' blocks (2026-11-02)
   const hard = [], thin = [];
   const text = (content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-  const j = extractJson(text);
-  if (!j) return { verdict: 'FAIL', ok: false, thin: false, problems: ['Reply was not a JSON object.'], thinWhy: '', reading: null };
+  // The Translator (2026-11-07) fixes form only (syntax, "70"→70, case); the checks below still judge.
+  const tr = translator.translate(text, translator.FORMS.skald);
+  const j = tr.parsed && tr.value && typeof tr.value === 'object' && !Array.isArray(tr.value) ? tr.value : null;
+  if (!j) return { verdict: 'FAIL', ok: false, thin: false, problems: [`Reply was not a readable JSON object: ${tr.errors[0] || 'unknown'}`],
+                   thinWhy: '', reading: null, translated: [] };
   const found = searchResultUrls([...priorContent, ...(content || [])]);
   if (searches < 3) hard.push(`Only ${searches} web search(es) ran — need at least 3 of the 5 beats.`);
   for (const k of ['crypto_mood', 'stock_mood']) {
@@ -132,7 +130,7 @@ function lawspeaker(content, searches, priorContent = []) {   // priorContent: e
   j.headlines = heads;
   const verdict = hard.length ? 'FAIL' : thin.length ? 'THIN' : 'PASS';
   return { verdict, ok: verdict === 'PASS', thin: verdict === 'THIN', problems: [...hard, ...thin],
-           thinWhy: verdict === 'THIN' ? thin.join(' ') : '', reading: j };
+           thinWhy: verdict === 'THIN' ? thin.join(' ') : '', reading: j, translated: tr.repairs };
 }
 
 function latest(file, onOrBefore) {
@@ -186,7 +184,7 @@ const label = v => v == null ? '—' : v <= 10 ? 'Panic' : v <= 25 ? 'Extreme Fe
 function report(dateEt, reading, g, meta) {
   const drv = arr => (arr || []).map(d => `- **${d.effect || '?'}** — ${d.event} ([source](${d.url}))`).join('\n');
   return `# Skald reading — ${dateEt}
-${meta.quality === 'thin' ? `\n> ⚠ **THIN — few sources, unverified.** ${meta.thin_why}\n` : ''}
+${meta.translated ? `\n> 🔤 **Translated (form only):** ${meta.translated}\n` : ''}${meta.quality === 'thin' ? `\n> ⚠ **THIN — few sources, unverified.** ${meta.thin_why}\n` : ''}
 | | Skald (news mood) | Price gauge |
 |---|---|---|
 | **Crypto** | **${reading.crypto_mood}** ${label(reading.crypto_mood)} | ${g.crypto_fg ?? '—'} ${label(g.crypto_fg)} (alternative.me) |

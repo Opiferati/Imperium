@@ -9,6 +9,7 @@ const fs    = require('node:fs');
 const path  = require('node:path');
 const https = require('node:https');
 const { DatabaseSync } = require('node:sqlite');
+const translator = require('./runners/translator.js');   // fixes the form of court replies, never the facts (2026-11-07)
 
 const ROOT = __dirname;
 
@@ -371,15 +372,13 @@ function parseDispatches(text) {
   const regex = /```dispatch\s*([\s\S]*?)```/g;
   let m;
   while ((m = regex.exec(text)) !== null) {
-    try {
-      const parsed = JSON.parse(m[1].trim());
-      const arr = Array.isArray(parsed) ? parsed : [parsed];
-      for (const item of arr) {
-        if (item.to) items.push(item);
-        else console.warn('[WARDEN] Dispatch missing "to" — skipped');
-      }
-    } catch (e) {
-      console.warn('[WARDEN] Malformed dispatch block:', e.message.slice(0, 100));
+    // The Translator (2026-11-07) repairs the block's form; orders without "to" are still skipped.
+    const tr = translator.translate(m[1].trim(), translator.FORMS.dispatch);
+    if (!tr.parsed) { console.warn('[WARDEN] Malformed dispatch block:', (tr.errors[0] || '').slice(0, 100)); continue; }
+    if (tr.repairs.length) console.log(`[WARDEN] dispatch translated (form only): ${tr.repairs.join('; ').slice(0, 200)}`);
+    for (const item of tr.value) {
+      if (item && typeof item === 'object' && item.to) items.push(item);
+      else console.warn('[WARDEN] Dispatch missing "to" — skipped');
     }
   }
   return items;
@@ -493,7 +492,8 @@ async function runSkald(msg, sconf) {
   // Record a reading (PASS, or THIN = few sources, flagged — Thesis C Amendment 2 draft, 2026-11-03)
   const recordReading = (lw, content) => {
     const quality = lw.verdict === 'THIN' ? 'thin' : 'pass';
-    const meta = { model, searches: totalSearches, cost: totalCost, quality, thin_why: lw.thinWhy || '' };
+    const meta = { model, searches: totalSearches, cost: totalCost, quality, thin_why: lw.thinWhy || '',
+                 translated: (lw.translated || []).join('; ') };                 // the Translator's notes (form only)
     const g = skald.record(ROOT, sconf, dateEt, lw.reading, meta, content);
     const rel = `output/skald/skald-${dateEt}.md`;
     fs.mkdirSync(path.join(ROOT, 'output', 'skald'), { recursive: true });
