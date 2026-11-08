@@ -43,12 +43,15 @@ function candidates(text, opener) {
     const c = text[i];
     if (!(opener ? c === opener : c === '{' || c === '[')) continue;
     const end = closeOf(text, i);
-    out.push(end < 0 ? { src: text.slice(i), cut: true } : { src: text.slice(i, end + 1) });
-    if (end > 0) i = end;
+    if (end === CUT) { out.push({ src: text.slice(i), cut: true }); break; }   // ran off the end: everything after
+    if (end === MISMATCH) continue;                                            // is INSIDE the cut form, never mine it
+    out.push({ src: text.slice(i, end + 1) });                                 // (2026-11-07: a cut reply once yielded
+    i = end;                                                                   //  one inner driver as "the reading")
   }
   return out;
 }
 
+const CUT = -1, MISMATCH = -2;
 function closeOf(s, i) {
   const stack = [];
   let q = null;
@@ -57,9 +60,9 @@ function closeOf(s, i) {
     if (q) { if (c === '\\') j++; else if (c === q) q = null; continue; }
     if (c === '"' || c === "'") q = c;
     else if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']');
-    else if (c === '}' || c === ']') { if (stack.pop() !== c) return -1; if (!stack.length) return j; }
+    else if (c === '}' || c === ']') { if (stack.pop() !== c) return MISMATCH; if (!stack.length) return j; }
   }
-  return -1;
+  return CUT;
 }
 
 // ── loosening near-JSON into JSON ────────────────────────────────────────────

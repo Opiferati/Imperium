@@ -73,6 +73,20 @@ test('a reply cut off mid-form is reported as cut off, never completed', () => {
   assert.match(r.errors[0], /cut off/);
 });
 
+test('11-07 bug: a cut-off reading is never mined for a complete inner piece', () => {
+  // Cut AFTER the first driver closed: the old scan returned that driver as "the reading" (scores null).
+  const full = JSON.stringify(goodSkald);
+  const cut = full.slice(0, full.indexOf('"stock_drivers"') + 20);
+  const r = translate(cut, FORMS.skald);
+  assert.equal(r.parsed, false);
+  assert.match(r.errors[0], /cut off/);
+});
+
+test('a mismatched bracket in prose before the form does not stop the search', () => {
+  const r = translate('Notes (see {draft]) ' + JSON.stringify(goodSkald), FORMS.skald);
+  assert.equal(r.ok, true, r.errors.join('; '));
+});
+
 test('enums: case and aliases fixed, unknown words refused', () => {
   assert.equal(translate('{"verdict":"pass"}', FORMS.forseti).value.verdict, 'PASS');
   assert.equal(translate('{"verdict":"Failed","problems":"one thing"}', FORMS.forseti).value.verdict, 'FAIL');

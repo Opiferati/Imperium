@@ -486,6 +486,9 @@ async function runSkald(msg, sconf) {
   // pause_turn resume and the retry used to get a fresh 6 — that's how 11-01 ran 10 searches.
   const searchCap = sconf.max_searches ?? 6;
   const toolsFor = left => left > 0 ? [{ type: 'web_search_20250305', name: 'web_search', max_uses: left }] : null;
+  // Room to finish (2026-11-07, Opie's number): every Skald call since 11-01 used 4,000–4,640 output tokens
+  // against a 4,096 cap, so long nights got cut off before the JSON closed. Billed only for what's used.
+  const skaldMaxTok = sconf.max_tokens ?? 9360;
   const tries = 1 + (sconf.retries ?? 1);
   let messages = [{ role: 'user', content: skald.userPrompt(dateEt) }];
   let totalCost = 0, totalSearches = 0, last = null, priorContent = [], bestThin = null;
@@ -508,7 +511,7 @@ async function runSkald(msg, sconf) {
   };
   try {
     for (let attempt = 1; attempt <= tries; attempt++) {
-      let result = await callAnthropic(model, `${EDICTS}\n\n${skald.SYSTEM}`, messages, 4096, toolsFor(searchCap - totalSearches));
+      let result = await callAnthropic(model, `${EDICTS}\n\n${skald.SYSTEM}`, messages, skaldMaxTok, toolsFor(searchCap - totalSearches));
       if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
       const content = [...(result.content || [])];
       let inTok = result.usage?.input_tokens ?? 0, outTok = result.usage?.output_tokens ?? 0;
@@ -516,7 +519,7 @@ async function runSkald(msg, sconf) {
       for (let hop = 0; result.stop_reason === 'pause_turn' && hop < 3; hop++) {
         const left = searchCap - totalSearches - searches;
         if (left <= 0) { console.warn(`[WARDEN] skald: search cap (${searchCap}) reached mid-turn — judging what was found`); break; }
-        result = await callAnthropic(model, `${EDICTS}\n\n${skald.SYSTEM}`, [...messages, { role: 'assistant', content }], 4096, toolsFor(left));
+        result = await callAnthropic(model, `${EDICTS}\n\n${skald.SYSTEM}`, [...messages, { role: 'assistant', content }], skaldMaxTok, toolsFor(left));
         if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
         content.push(...(result.content || []));
         inTok += result.usage?.input_tokens ?? 0; outTok += result.usage?.output_tokens ?? 0;
@@ -529,8 +532,21 @@ async function runSkald(msg, sconf) {
       sessionTokens += inTok + outTok;
       totalCost += cost; totalSearches += searches;
 
+      const cutOff = result.stop_reason === 'max_tokens';
+      if (cutOff) console.warn(`[WARDEN] skald: attempt ${attempt} hit the ${skaldMaxTok}-token limit — reply cut off`);
       last = skald.lawspeaker(content, totalSearches, priorContent);
-      console.log(`[WARDEN] skald: attempt ${attempt} | ${searches} searches (${totalSearches}/${searchCap}) | $${cost.toFixed(4)} | lawspeaker ${last.verdict}`);
+      console.log(`[WARDEN] skald: attempt ${attempt} | ${searches} searches (${totalSearches}/${searchCap}) | $${cost.toFixed(4)} | out ${outTok} | lawspeaker ${last.verdict}`);
+      if (!last.ok) {   // keep the evidence (2026-11-07): failed replies used to vanish, so causes were guesses
+        try {
+          const dir = path.join(ROOT, 'data', 'skald-failed');
+          fs.mkdirSync(dir, { recursive: true });
+          const raw = content.filter(b => b.type === 'text').map(b => b.text).join('');
+          fs.writeFileSync(path.join(dir, `${dateEt}_${msg.task_id.slice(-9, -5)}_attempt${attempt}.txt`),
+            `task ${msg.task_id} | attempt ${attempt} | stop_reason ${result.stop_reason} | out ${outTok} tokens | ` +
+            `${searches} searches | verdict ${last.verdict}\nproblems:\n- ${last.problems.join('\n- ')}\n` +
+            `translated: ${(last.translated || []).join('; ') || '—'}\n\n===== RAW REPLY TEXT =====\n${raw}\n`);
+        } catch (e) { console.warn(`[WARDEN] skald: could not save the failed reply: ${e.message}`); }
+      }
       if (last.ok) { recordReading(last, content); return true; }
       if (last.thin) bestThin = { lw: last, content };   // keep it; a retry may still reach a full PASS
       // One retry: hand the Lawspeaker's ruling back so the Skald can fix it.
@@ -539,7 +555,9 @@ async function runSkald(msg, sconf) {
       const left = searchCap - totalSearches;
       const text = content.filter(b => b.type === 'text').map(b => b.text).join('');
       messages = [...messages, { role: 'assistant', content: text || '(no text)' },
-        { role: 'user', content: (last.thin ? 'The Lawspeaker passed that reading only as THIN (few sources):\n- ' : 'The Lawspeaker rejected that reading:\n- ') + last.problems.join('\n- ') +
+        { role: 'user', content: (cutOff ? 'Your reply ran out of room and was cut off before the JSON closed. Keep it shorter: ' +
+            '2–3 drivers per market, 6–8 headlines, one short sentence per event, no notes outside the JSON.\n' : '') +
+          (last.thin ? 'The Lawspeaker passed that reading only as THIN (few sources):\n- ' : 'The Lawspeaker rejected that reading:\n- ') + last.problems.join('\n- ') +
           (left > 0 ? `\nYou may run up to ${left} more search(es) if needed.` : '\nThe search budget is spent: fix the reading using only links your earlier searches returned.') +
           '\nReply with ONE corrected JSON object. Only cite URLs your searches returned.' }];
     }
