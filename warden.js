@@ -49,6 +49,13 @@ try {
 } catch (e) {
   console.warn('[WARDEN] cavalier not loaded:', e.message);
 }
+let league = null;
+let leagueFlown = null;      // New York date of the last Ravens' League scan (once per day)
+try {
+  league = require('./runners/ravens-league.js');
+} catch (e) {
+  console.warn('[WARDEN] ravens-league not loaded:', e.message);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -772,6 +779,15 @@ async function tickInner() {
       const cr = await cavalier.runScan(cconf);
       console.log(`[WARDEN] cavalier: ${cr.status}${cr.message ? ' — ' + cr.message : ''}`);
       if (cr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'cavalier', 'emperor', cavalier.summaryLine(cr), msg.priority);
+    }
+    // The Ravens' League (2026-11-09): the Empire's control flies LAST, because it reads every twin's results.
+    // $0, once per NY day. (Separate from the Chancellor's Ravens' Report in ravens.js.)
+    const lconf = registry.ravens_league || {};
+    if (league && lconf.enabled && leagueFlown !== etDay) {
+      leagueFlown = etDay;
+      const lr = await league.runScan(lconf);
+      console.log(`[WARDEN] ravens-league: ${lr.status}${lr.message ? ' — ' + lr.message : ''}`);
+      if (lr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ravens-league', 'emperor', league.summaryLine(lr), msg.priority);
     }
     return;
   }

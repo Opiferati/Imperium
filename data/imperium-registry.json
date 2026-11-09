@@ -74,5 +74,10 @@
     "enabled": true,
     "dir": "C:\\Cavalier",
     "timeout_min": 5
+  },
+  "ravens_league": {
+    "enabled": true,
+    "dir": "C:\\Ravens",
+    "timeout_min": 3
   }
 }
