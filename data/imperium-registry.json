@@ -32,7 +32,7 @@
     "opus": "claude-opus-5-5"
   },
   "budget": {
-    "daily_limit_usd": 2.0,
+    "daily_limit_usd": 2,
     "warn_at_pct": 80
   },
   "routing": {
@@ -68,6 +68,11 @@
     "enabled": true,
     "dir": "C:\\Ecnalanif",
     "python": "python3",
+    "timeout_min": 5
+  },
+  "cavalier": {
+    "enabled": true,
+    "dir": "C:\\Cavalier",
     "timeout_min": 5
   }
 }

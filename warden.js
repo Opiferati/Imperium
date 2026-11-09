@@ -42,6 +42,13 @@ try {
 } catch (e) {
   console.warn('[WARDEN] ecnalanif not loaded:', e.message);
 }
+let cavalier = null;
+let cavalierRidden = null;   // New York date of the last Cavalier scan (once per day)
+try {
+  cavalier = require('./runners/cavalier.js');
+} catch (e) {
+  console.warn('[WARDEN] cavalier not loaded:', e.message);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -757,6 +764,14 @@ async function tickInner() {
       const er = await ecnalanif.runScan(econf);
       console.log(`[WARDEN] ecnalanif: ${er.status}${er.message ? ' — ' + er.message : ''}`);
       if (er.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ecnalanif', 'emperor', ecnalanif.summaryLine(er), msg.priority);
+    }
+    // The Cavalier (2026-11-08, Thesis E): the third twin rides right after Ecnalanif. $0, plain code, once per NY day.
+    const cconf = registry.cavalier || {};
+    if (cavalier && cconf.enabled && cavalierRidden !== etDay) {
+      cavalierRidden = etDay;
+      const cr = await cavalier.runScan(cconf);
+      console.log(`[WARDEN] cavalier: ${cr.status}${cr.message ? ' — ' + cr.message : ''}`);
+      if (cr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'cavalier', 'emperor', cavalier.summaryLine(cr), msg.priority);
     }
     return;
   }
