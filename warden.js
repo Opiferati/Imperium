@@ -76,6 +76,36 @@ try {
 } catch (e) {
   console.warn('[WARDEN] blackboard not loaded:', e.message);
 }
+// Supervision, borrowed from Erlang/OTP (2026-11-09): bounded retries, then disable and escalate.
+// The board shim opens and closes per post so no connection is held open all night.
+let supervisor = null;
+try {
+  const boardShim = blackboard ? { post(note) {
+    const bb = blackboard.board(ROOT);
+    try { bb.post(note); } finally { bb.close(); }
+  } } : null;
+  supervisor = require('./runners/supervisor.js').makeSupervisor({ board: boardShim });
+} catch (e) {
+  console.warn('[WARDEN] supervisor not loaded:', e.message);
+}
+/** Run a nightly child under supervision when available, bare when not (Lego law: absence degrades, never breaks).
+ *  The station runners report trouble by RETURNING {status:'error'} rather than throwing, so this adapter
+ *  turns that into a real fault — otherwise supervision would count a failed scan as a success. 'docked'
+ *  and 'missing' are legitimate states, not faults, and are passed through untouched. Translating here
+ *  rather than inside the supervisor keeps the supervisor ignorant of what the work looks like. */
+async function child(name, fn) {
+  const policy = ((registry.supervision || {})[name]) || {};
+  const attempt = async () => {
+    const v = await fn();
+    if (v && v.status === 'error') throw new Error(v.message || 'runner reported an error');
+    return v;
+  };
+  if (!supervisor) {
+    try { return { ok: true, value: await attempt() }; }
+    catch (e) { return { ok: false, error: e.message, state: 'failed' }; }
+  }
+  return supervisor.supervise(name, attempt, policy);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -813,7 +843,8 @@ async function tickInner() {
     const etDay = skald.etNow().date;
     if (ecnalanif && econf.enabled && ecnalanifFlown !== etDay) {
       ecnalanifFlown = etDay;
-      const er = await ecnalanif.runScan(econf);
+      const out = await child('ecnalanif', () => ecnalanif.runScan(econf));
+      const er = out.ok ? out.value : { status: 'error', message: out.error || out.reason };
       console.log(`[WARDEN] ecnalanif: ${er.status}${er.message ? ' — ' + er.message : ''}`);
       if (er.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ecnalanif', 'emperor', ecnalanif.summaryLine(er), msg.priority);
     }
@@ -821,24 +852,34 @@ async function tickInner() {
     const cconf = registry.cavalier || {};
     if (cavalier && cconf.enabled && cavalierRidden !== etDay) {
       cavalierRidden = etDay;
-      const cr = await cavalier.runScan(cconf);
+      const out = await child('cavalier', () => cavalier.runScan(cconf));
+      const cr = out.ok ? out.value : { status: 'error', message: out.error || out.reason };
       console.log(`[WARDEN] cavalier: ${cr.status}${cr.message ? ' — ' + cr.message : ''}`);
       if (cr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'cavalier', 'emperor', cavalier.summaryLine(cr), msg.priority);
     }
     // The Ravens' League (2026-11-09): the Empire's control flies LAST, because it reads every twin's results.
     // $0, once per NY day. (Separate from the Chancellor's Ravens' Report in ravens.js.)
     const lconf = registry.ravens_league || {};
+    // rest_for_one: the League reads the twins' results, so if a twin is down it is SKIPPED rather than
+    // flown on stale data — a confident, wrong league table is worse than no league table.
     if (league && lconf.enabled && leagueFlown !== etDay) {
       leagueFlown = etDay;
-      const lr = await league.runScan(lconf);
-      console.log(`[WARDEN] ravens-league: ${lr.status}${lr.message ? ' — ' + lr.message : ''}`);
-      if (lr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ravens-league', 'emperor', league.summaryLine(lr), msg.priority);
+      const out = await child('ravens-league', () => league.runScan(lconf));
+      if (out.skipped) {
+        console.log(`[WARDEN] ravens-league: ${out.reason}`);
+        stmtInsertMessage.run(msg.task_id, 'ravens-league', 'emperor', `[RAVENS' LEAGUE] Did not fly — ${out.reason}`, msg.priority);
+      } else {
+        const lr = out.ok ? out.value : { status: 'error', message: out.error };
+        console.log(`[WARDEN] ravens-league: ${lr.status}${lr.message ? ' — ' + lr.message : ''}`);
+        if (lr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ravens-league', 'emperor', league.summaryLine(lr), msg.priority);
+      }
     }
     // Evidence (2026-11-09): tonight's record leaves the machine. Listed data paths only, never code or keys.
     if (evidence && (registry.evidence || {}).enabled !== false) {
-      const ev = await evidence.run(etDay);
-      console.log(`[WARDEN] ${evidence.summaryLine(ev)}`);
-      stmtInsertMessage.run(msg.task_id, 'evidence', 'emperor', evidence.summaryLine(ev), msg.priority);
+      const out = await child('evidence', () => evidence.run(etDay));
+      const line = out.ok ? evidence.summaryLine(out.value) : `[EVIDENCE] PROBLEM: ${out.error || out.reason}`;
+      console.log(`[WARDEN] ${line}`);
+      stmtInsertMessage.run(msg.task_id, 'evidence', 'emperor', line, msg.priority);
     }
     // The Blackboard (2026-11-09): say what went on the shared floor tonight. Read-only here — the Warden
     // is not a participant, it just reports. Composed from query(), so the board's own contract stays minimal.
@@ -855,14 +896,20 @@ async function tickInner() {
     // Backup (2026-11-09): a clean snapshot of the ledger and the message bus, mirrored to the second home if set.
     const bconf = registry.backup || {};
     if (backup && bconf.enabled) {
-      try {
-        const br = await backup.run(ROOT, bconf, etDay);
-        console.log(`[WARDEN] ${backup.summaryLine(br)}`);
-        if (br.drive === 'copy FAILED') stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', backup.summaryLine(br), msg.priority);
-      } catch (e) {
-        console.warn('[WARDEN] backup failed:', e.message);
-        stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', `[BACKUP] PROBLEM: ${e.message}`, msg.priority);
+      const out = await child('backup', () => backup.run(ROOT, bconf, etDay));
+      if (out.ok) {
+        console.log(`[WARDEN] ${backup.summaryLine(out.value)}`);
+        if (out.value.drive === 'copy FAILED')
+          stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', backup.summaryLine(out.value), msg.priority);
+      } else {
+        console.warn('[WARDEN] backup failed:', out.error || out.reason);
+        stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', `[BACKUP] PROBLEM: ${out.error || out.reason}`, msg.priority);
       }
+    }
+    // Supervision report: silent when every child is well, loud the moment one isn't.
+    if (supervisor) {
+      const sline = supervisor.summaryLine();
+      if (sline) { console.warn(sline); stmtInsertMessage.run(msg.task_id, 'supervisor', 'emperor', sline, 1); }
     }
     return;
   }

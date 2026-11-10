@@ -84,8 +84,10 @@ class Board:
     def post(self, topic: str, author: str, value, as_of: str | None = None,
              confidence: float | None = None, source: str | None = None,
              code: str | None = None, expires: str | None = None,
-             supersedes: int | None = None) -> dict:
-        """Write what you learned. Raises on a malformed note: that's a bug, not a condition."""
+             supersedes: int | None = None, if_changed: bool = False) -> dict:
+        """Write what you learned. Raises on a malformed note: that's a bug, not a condition.
+        if_changed=True skips writing a note identical to the current one for the same topic and as_of —
+        not an update (nothing is ever rewritten), just a way to keep the history meaningful."""
         if not topic or not TOPIC_RE.match(topic):
             raise ValueError(f"blackboard: topic must be dotted lowercase, got {topic!r}")
         if not author:
@@ -95,11 +97,19 @@ class Board:
         if supersedes is not None and not self.db.execute(
                 "SELECT 1 FROM notes WHERE id = ?", (supersedes,)).fetchone():
             raise ValueError(f"blackboard: cannot supersede note {supersedes}, it does not exist")
+        payload = json.dumps(value)
+        if if_changed:
+            now = self.db.execute(
+                f"SELECT id, at, value, as_of FROM notes WHERE topic = ? AND kind = 'note' AND {LIVE}"
+                " AND (expires IS NULL OR expires > ?) ORDER BY id DESC LIMIT 1",
+                (topic, now_iso())).fetchone()
+            if now and now["value"] == payload and now["as_of"] == as_of:
+                return {"id": now["id"], "at": now["at"], "unchanged": True}
         at = now_iso()
         cur = self.db.execute(
             "INSERT INTO notes (topic, author, kind, value, as_of, at, confidence, source, code,"
             " expires, supersedes, reason) VALUES (?,?,'note',?,?,?,?,?,?,?,?,NULL)",
-            (topic, author, json.dumps(value), as_of, at, confidence, source, code, expires, supersedes))
+            (topic, author, payload, as_of, at, confidence, source, code, expires, supersedes))
         self.db.commit()
         return {"id": cur.lastrowid, "at": at}
 

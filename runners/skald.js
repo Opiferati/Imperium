@@ -181,7 +181,7 @@ function record(root, conf, dateEt, reading, meta, rawContent) {
   try {
     const bb = require('./blackboard.js').board(root);
     for (const [topic, value] of [['skald.stock_mood', reading.stock_mood], ['skald.crypto_mood', reading.crypto_mood]])
-      bb.post({ topic, author: 'skald', value, as_of: dateEt, source: 'skald reading',
+      bb.post({ topic, author: 'skald', value, as_of: dateEt, source: 'skald reading', if_changed: true,
                 code: RUBRIC_VERSION, confidence: (meta.quality || 'pass') === 'pass' ? 0.9 : 0.5 });
     bb.close();
   } catch (e) { console.warn('[SKALD] blackboard post skipped:', e.message); }

@@ -100,3 +100,22 @@ test('topics lists the floor', () => {
   assert.deepStrictEqual(t.map(r => [r.topic, r.n]), [['a.one', 2], ['b.two', 1]]);
   assert.deepStrictEqual(bb.topics('a').map(r => r.topic), ['a.one']);
 });
+
+test('if_changed keeps a nightly re-run from burying the history of real changes', () => {
+  const bb = fresh();
+  const a = bb.post({ topic: 'cavalier2.exposure', author: 'cavalier2', value: 0.75, as_of: '2026-11-09', if_changed: true });
+  const b = bb.post({ topic: 'cavalier2.exposure', author: 'cavalier2', value: 0.75, as_of: '2026-11-09', if_changed: true });
+  assert.strictEqual(b.id, a.id);
+  assert.strictEqual(b.unchanged, true);
+  assert.strictEqual(bb.history('cavalier2.exposure').length, 1);   // one row, not two
+  // A real change is written; so is the same value on a different day, because that's a new observation.
+  bb.post({ topic: 'cavalier2.exposure', author: 'cavalier2', value: 1.0, as_of: '2026-11-09', if_changed: true });
+  bb.post({ topic: 'cavalier2.exposure', author: 'cavalier2', value: 1.0, as_of: '2026-11-10', if_changed: true });
+  assert.strictEqual(bb.history('cavalier2.exposure').length, 3);
+  assert.deepStrictEqual(bb.history('cavalier2.exposure').map(n => [n.value, n.as_of]),
+    [[0.75, '2026-11-09'], [1.0, '2026-11-09'], [1.0, '2026-11-10']]);
+  // Without the flag, every post is a new row — the default stays dumb and honest.
+  bb.post({ topic: 'plain.topic', author: 'x', value: 1 });
+  bb.post({ topic: 'plain.topic', author: 'x', value: 1 });
+  assert.strictEqual(bb.history('plain.topic').length, 2);
+});

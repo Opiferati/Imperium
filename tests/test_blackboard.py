@@ -108,3 +108,29 @@ class OneFloorTwoAdapters(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IfChanged(unittest.TestCase):
+    def setUp(self):
+        self.bb = board(os.path.join(tempfile.mkdtemp(), "blackboard.db"))
+
+    def tearDown(self):
+        self.bb.close()
+
+    def test_identical_note_is_not_rewritten(self):
+        a = self.bb.post(topic="cavalier2.exposure", author="c2", value=0.75, as_of="2026-11-09", if_changed=True)
+        b = self.bb.post(topic="cavalier2.exposure", author="c2", value=0.75, as_of="2026-11-09", if_changed=True)
+        self.assertEqual((b["id"], b.get("unchanged")), (a["id"], True))
+        self.assertEqual(len(self.bb.history("cavalier2.exposure")), 1)
+
+    def test_a_real_change_and_a_new_day_both_write(self):
+        self.bb.post(topic="t.x", author="a", value=1, as_of="2026-11-09", if_changed=True)
+        self.bb.post(topic="t.x", author="a", value=2, as_of="2026-11-09", if_changed=True)
+        self.bb.post(topic="t.x", author="a", value=2, as_of="2026-11-10", if_changed=True)
+        self.assertEqual([(n["value"], n["as_of"]) for n in self.bb.history("t.x")],
+                         [(1, "2026-11-09"), (2, "2026-11-09"), (2, "2026-11-10")])
+
+    def test_default_stays_dumb_and_honest(self):
+        self.bb.post(topic="plain.topic", author="x", value=1)
+        self.bb.post(topic="plain.topic", author="x", value=1)
+        self.assertEqual(len(self.bb.history("plain.topic")), 2)

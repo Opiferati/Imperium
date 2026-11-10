@@ -86,7 +86,7 @@ function board(root, file) {
     /** Write what you learned. Returns {id, at}. Throws on a malformed note (that's a bug, not a condition). */
     post(note = {}) {
       const { topic, author, value, as_of = null, confidence = null,
-              source = null, code = null, expires = null, supersedes = null } = note;
+              source = null, code = null, expires = null, supersedes = null, if_changed = false } = note;
       if (!topic || !TOPIC_RE.test(topic))
         throw new Error(`blackboard: topic must be dotted lowercase, got ${JSON.stringify(topic)}`);
       if (!author) throw new Error('blackboard: every note needs an author');
@@ -95,8 +95,17 @@ function board(root, file) {
         throw new Error('blackboard: confidence must be between 0 and 1');
       if (supersedes !== null && !getById.get(supersedes))
         throw new Error(`blackboard: cannot supersede note ${supersedes}, it does not exist`);
+      const json = JSON.stringify(value ?? null);
+      // if_changed: don't write a row that says exactly what the board already says. This is NOT an
+      // update — nothing is ever rewritten. It just stops a nightly re-run from burying the history of
+      // real changes under thousands of identical notes. The history becomes "when the belief changed".
+      if (if_changed) {
+        const cur = getCurrent.get(topic, nowIso());
+        if (cur && cur.value === json && (cur.as_of ?? null) === as_of)
+          return { id: cur.id, at: cur.at, unchanged: true };
+      }
       const at = nowIso();
-      const r = insert.run(topic, author, 'note', JSON.stringify(value ?? null), as_of, at,
+      const r = insert.run(topic, author, 'note', json, as_of, at,
                            confidence, source, code, expires, supersedes, null);
       return { id: Number(r.lastInsertRowid), at };
     },

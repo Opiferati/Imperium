@@ -84,5 +84,13 @@
     "enabled": true,
     "keep_days": 14,
     "drive_dir": "G:\\My Drive\\Opie HQ\\Jarlsburg\\Imperium Backups"
+  },
+  "supervision": {
+    "_comment": "Borrowed from Erlang/OTP: bounded retries, then disable and escalate. `after` is rest_for_one.",
+    "ecnalanif": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24 },
+    "cavalier": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24 },
+    "ravens-league": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "after": ["cavalier", "ecnalanif"] },
+    "evidence": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24 },
+    "backup": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24 }
   }
 }
