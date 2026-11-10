@@ -1,0 +1,171 @@
+{
+  "date": "2026-11-10",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.057490900000000004,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 28,
+    "stock_mood": 42,
+    "crypto_drivers": [
+      {
+        "event": "Hotter-than-expected October US CPI revived Fed rate-hike fears and triggered about $700 million in crypto liquidations",
+        "effect": "fear",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/bitcoin-crypto-market-fall-as-hot-us-inflation-triggers-700-million-in-liquidations-202611102102"
+      },
+      {
+        "event": "Persistent spot Bitcoin and Ethereum ETF outflows, with BTC about $1.28 billion out last week",
+        "effect": "fear",
+        "url": "https://www.fool.com/coverage/stock-market-today/2026/11/09/crypto-market-today-nov-9-bitcoin-and-ethereum-lag-as-nasdaq-surges-nearly-3/"
+      },
+      {
+        "event": "Regulators reportedly asked banks to check their systems after the $6.3 billion Binance breach, with the exchange saying it froze about $3 billion of affected assets",
+        "effect": "fear",
+        "url": "https://thepaypers.com/fraud-and-fincrime/news/us-regulators-reportedly-check-bank-systems-after-binance-hack"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Hotter October CPI pushed stocks lower and strengthened bets on a Fed rate hike in December",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-10-dow-sp-500-nasdaq-inflation-data-cpi-090627830.html"
+      },
+      {
+        "event": "Fed officials opened the door to a half-point hike after core inflation beat expectations",
+        "effect": "fear",
+        "url": "https://www.investing.com/news/economy-news/investors-boost-odds-of-halfpoint-fed-hike-as-core-cpi-rise-meets-wallers-bar-5016055"
+      },
+      {
+        "event": "Nvidia sell-off following the board investigation into CEO Jensen Huang weighed on the tech-heavy indexes",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "Tech and chip stocks rebounded sharply on Monday, with the Nasdaq-100 up about 3.4% before Tuesday's pullback",
+        "effect": "greed",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Why is the crypto market down today? Bitcoin, Ethereum in red",
+        "url": "https://crypto.news/why-is-the-crypto-market-down-today-bitcoin-ethereum-in-red/",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum price falls despite BitMine buying another 9,587 ETH",
+        "url": "https://crypto.news/why-is-ethereum-price-down-today-november-10-2026",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Market Today, Nov. 9: Bitcoin and Ethereum Lag as Nasdaq Surges Nearly 3%",
+        "url": "https://www.fool.com/coverage/stock-market-today/2026/11/09/crypto-market-today-nov-9-bitcoin-and-ethereum-lag-as-nasdaq-surges-nearly-3/",
+        "market": "crypto"
+      },
+      {
+        "title": "Why are Bitcoin, Ethereum and Solana Price Crashing Today?",
+        "url": "https://coingape.com/markets/why-are-bitcoin-ethereum-and-solana-price-crashing-today/",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin, crypto market fall as hot US inflation triggers $700 million in liquidations",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/bitcoin-crypto-market-fall-as-hot-us-inflation-triggers-700-million-in-liquidations-202611102102",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance's $6.3 billion hack raises questions about crypto wallet safety",
+        "url": "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+        "market": "crypto"
+      },
+      {
+        "title": "US regulators reportedly check bank systems after Binance hack",
+        "url": "https://thepaypers.com/fraud-and-fincrime/news/us-regulators-reportedly-check-bank-systems-after-binance-hack",
+        "market": "crypto"
+      },
+      {
+        "title": "BTC USD Holds $74,000 Through a Third Day of ETF Outflows: Is the Bottom In For Bitcoin?",
+        "url": "https://finance.yahoo.com/markets/crypto/articles/btc-usd-holds-74-000-100711250.html",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Prices Today: Bitcoin Holds Near USD 74,750 as Zcash and XRP Lead Declines",
+        "url": "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-holds-near-usd-74750-as-zcash-and-xrp-lead-declines",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market today: Dow, S&P 500, Nasdaq slip as hot CPI fuels rate hike odds, Nvidia stock sinks",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-10-dow-sp-500-nasdaq-inflation-data-cpi-090627830.html",
+        "market": "stocks"
+      },
+      {
+        "title": "S&P 500 falls, dragged down by Nvidia sell-off and rate-hike fears after hot inflation data: Live updates",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed officials open door to a half-point hike after inflation beats expectations",
+        "url": "https://www.investing.com/news/economy-news/investors-boost-odds-of-halfpoint-fed-hike-as-core-cpi-rise-meets-wallers-bar-5016055",
+        "market": "stocks"
+      },
+      {
+        "title": "Inflation pressures spread across economy as prices continue to outpace wages",
+        "url": "https://nbc16.com/news/nation-world/inflation-pressures-spread-across-economy-as-prices-continue-to-outpace-wages",
+        "market": "stocks"
+      },
+      {
+        "title": "Inflation ticks up slightly as Federal Reserve weighs rate hike",
+        "url": "https://thehill.com/business/6208608-october-inflation-bls-data-cpi/",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://coinmarketcap.com/top-stories/",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://cointelegraph.com/",
+    "https://fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-extend-decline-with-us-cpi-in-focus-202611101032",
+    "https://crypto.news/",
+    "https://www.coindesk.com/",
+    "https://cryptoslate.com/",
+    "https://www.gncrypto.news/",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-extend-decline-with-us-cpi-in-focus-202611101032",
+    "https://www.fxstreet.com/cryptocurrencies/news/bitcoin-crypto-market-fall-as-hot-us-inflation-triggers-700-million-in-liquidations-202611102102",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/09/crypto-market-today-nov-9-bitcoin-and-ethereum-lag-as-nasdaq-surges-nearly-3/",
+    "https://crypto.news/why-is-ethereum-price-down-today-november-10-2026",
+    "https://crypto.news/why-is-the-crypto-market-down-today-bitcoin-ethereum-in-red/",
+    "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-holds-near-usd-74750-as-zcash-and-xrp-lead-declines",
+    "https://finance.yahoo.com/markets/crypto/articles/btc-usd-holds-74-000-100711250.html",
+    "https://coingape.com/markets/why-are-bitcoin-ethereum-and-solana-price-crashing-today/",
+    "https://www.theunitedindian.com/news/bitcoin-ethereum-price-today-november-10-2026-etf-outflows-us-cpi",
+    "https://finance.yahoo.com/topic/stock-market-news/",
+    "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html",
+    "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-10-dow-sp-500-nasdaq-inflation-data-cpi-090627830.html",
+    "https://www.google.com/finance/",
+    "https://seekingalpha.com/market-news",
+    "https://www.cnbc.com/stocks/",
+    "https://www.bloomberg.com/markets",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://www.investing.com/news/economy-news/investors-boost-odds-of-halfpoint-fed-hike-as-core-cpi-rise-meets-wallers-bar-5016055",
+    "https://cnbc.com/2026/11/09/stock-market-today-live-updates.html",
+    "https://nbc16.com/news/nation-world/inflation-pressures-spread-across-economy-as-prices-continue-to-outpace-wages",
+    "https://thehill.com/business/6208608-october-inflation-bls-data-cpi/",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/22",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://crypto.news/binance-hack-memecoins-near-laundering-elliptic",
+    "https://thepaypers.com/fraud-and-fincrime/news/us-regulators-reportedly-check-bank-systems-after-binance-hack",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl",
+    "https://www.publish0x.com/crypto-markets-and-marginal-gains/this-is-the-way-the-world-ends-not-with-a-bang-but-a-whimper-xokdpxm",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46"
+  ]
+}
