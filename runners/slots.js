@@ -29,7 +29,15 @@ const STATUSES = new Set(['ok', 'thin', 'docked', 'missing', 'error']);
 // The pinout. A card may ask for these and nothing else. Growing this list
 // is how a slot standard rots into a god object, so each addition needs a
 // written reason in "Legion - Slot Standard v1".
-const PINS = ['root', 'conf', 'day', 'board', 'log', 'now'];
+//
+// `infer` added 2026-11-10, and here is the written reason the rule above
+// demands. THESIS_G needs a card to call models. The alternatives were worse:
+// a card doing its own HTTPS would reach past the pinout AND hold an API key,
+// and soldering the thesis into warden.js would undo the morning's work. So
+// the Forge owns every model call — one gate, one meter, no keys in cards —
+// and the card reaches it through a pin like anything else.
+// Appended rather than inserted, so Object.keys(ctx) still equals PINS in order.
+const PINS = ['root', 'conf', 'day', 'board', 'log', 'now', 'infer'];
 
 // What a card may be PERMITTED to do (2026-11-10, taken from IEAS-001's
 // five-property contract: Identity, State, Interface, Responsibilities,
@@ -44,7 +52,7 @@ const PINS = ['root', 'conf', 'day', 'board', 'log', 'now'];
 // the SLOT, not the card's imagination. A card can still require('node:fs')
 // behind the board's back. That is limitation 1 of the standard, and the fix
 // for it is out-of-process cards, not a longer grant list.
-const GRANTS = new Set(['board:read', 'board:write']);
+const GRANTS = new Set(['board:read', 'board:write', 'model:infer']);
 
 /** Why a manifest is refused, or null if it is sound. Refusals are reported,
  *  never thrown: one bad card must not keep the others off the bus. */
@@ -70,6 +78,10 @@ function validate(m, folder) {
   if ((m.needs || []).includes('board')
       && !(m.authority || []).some(g => g.startsWith('board:'))) {
     return 'needs the board pin but claims no board:read or board:write authority';
+  }
+  if ((m.needs || []).includes('infer')
+      && !(m.authority || []).includes('model:infer')) {
+    return 'needs the infer pin but claims no model:infer authority';
   }
   if (m.timeout_min !== undefined && !(Number(m.timeout_min) > 0)) {
     return `timeout_min must be a positive number, not "${m.timeout_min}"`;
@@ -212,15 +224,28 @@ function gateBoard(board, grants) {
  *  this is soldered again, and freezing makes that obvious instead of subtle.
  *  `authority` is not a pin — it SHAPES one, by deciding which board methods the
  *  card actually receives. */
-function context({ root, conf, day, board, log, now, authority } = {}) {
+function context({ root, conf, day, board, log, now, infer, authority } = {}) {
+  const grants = Array.isArray(authority) ? authority : [];
   return Object.freeze({
     root,
     conf: conf || {},
     day,
-    board: gateBoard(board, Array.isArray(authority) ? authority : []),
+    board: gateBoard(board, grants),
     log: log || (() => {}),
     now: now || (() => new Date()),
+    infer: gateInfer(infer, grants),
   });
+}
+
+/** The Forge, gated by the same rule as the board: a card without model:infer is
+ *  not handed a quietly-dead function, it is handed one that refuses out loud.
+ *  Absent when the board has no Forge to offer, so "not authorised" never gets
+ *  blamed for "no inference available tonight". */
+function gateInfer(infer, grants) {
+  if (typeof infer !== 'function') return null;
+  return grants.includes('model:infer')
+    ? infer
+    : () => { throw new Error('not authorised: infer() needs model:infer'); };
 }
 
 /** Run every card in order, each through the Warden's own `child` adapter so
@@ -276,5 +301,5 @@ async function runAll(cards, { child, ctxFor, report }) {
 module.exports = {
   CONTRACT, PINS, GRANTS, STATUSES,
   validate, discover, order, post, context, runAll,
-  gateBoard, requiredMissing, restricted,
+  gateBoard, gateInfer, requiredMissing, restricted,
 };

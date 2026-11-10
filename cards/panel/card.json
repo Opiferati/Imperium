@@ -1,0 +1,11 @@
+{
+  "contract": "legion/2",
+  "name": "panel",
+  "entry": "index.js",
+  "stage": "nightly",
+  "after": ["attempts"],
+  "needs": ["root", "day", "board", "log", "now", "infer"],
+  "authority": ["board:write", "model:infer"],
+  "timeout_min": 8,
+  "purpose": "THESIS_G, the Impostor Watch pointed at the minds. Freezes one observation per stimulus per night. Computes NO verdict — the box opens once, from a separate script, at 60 observations."
+}

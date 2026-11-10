@@ -128,6 +128,15 @@ try {
 } catch (e) {
   console.warn('[WARDEN] deadline not loaded:', e.message);
 }
+
+// The Forge (2026-11-10): one owner of model calls for the bus, so the budget and
+// the accounting live in one place and no card ever holds an API key.
+let forgeMod = null;
+try {
+  forgeMod = require('./runners/forge.js');
+} catch (e) {
+  console.warn('[WARDEN] forge not loaded:', e.message);
+}
 /** Run a nightly child under supervision when available, bare when not (Lego law: absence degrades, never breaks).
  *  The station runners report trouble by RETURNING {status:'error'} rather than throwing, so this adapter
  *  turns that into a real fault — otherwise supervision would count a failed scan as a success. 'docked'
@@ -981,7 +990,24 @@ async function tickInner() {
             day:   etDay,
             board: boardShimFor(),
             log:   (m) => console.log(`[WARDEN] ${c.name}: ${m}`),
-            // The card gets a board shaped to its declared authority, not the raw one.
+            // A Forge per card, so the call cap and the attribution are per card while
+            // the budget gate reads the shared ledger and stays correct globally.
+            // NOTE: the spend ledger is keyed by UTC date, not the New York date — using
+            // etDay here would split a night's spend across two rows and break the gate.
+            infer: forgeMod ? forgeMod.makeForge({
+              call: callAnthropic,
+              estimateCost,
+              logCall: ({ model, input_tokens, output_tokens, cost_usd }) => {
+                stmtLogApiCall.run(msg.task_id, c.name, model, input_tokens, output_tokens, cost_usd);
+                stmtUpsertDaily.run(new Date().toISOString().split('T')[0], cost_usd);
+              },
+              spentToday: () => stmtDailySpend.get().total,
+              limit: registry.budget.daily_limit_usd,
+              models: registry.models,
+              log: (m) => console.warn(`[FORGE] ${c.name}: ${m}`),
+            }).infer : undefined,
+            // The card gets a board and a Forge shaped to its declared authority,
+            // not the raw ones.
             authority: c.manifest.authority,
           }),
           report: (name, r, line) => {

@@ -87,7 +87,11 @@
   },
   "slots": {
     "_comment": "The Legion bus. `required` names cards that MUST be present and loadable; if one is absent or refused, the whole bus enters restricted mode and runs nothing, and the Emperor is told at priority 1. Required-ness lives here rather than in a card's manifest on purpose: a manifest cannot declare the requirement of a folder that has been deleted, which is the case that matters most.",
-    "required": ["attempts"]
+    "required": ["attempts", "panel"]
+  },
+  "panel": {
+    "_comment": "THESIS_G, signed 2026-11-10. Required: the thesis is forward-only, so a night lost to a silently missing card can never be recovered. Every other value the thesis depends on is fixed by the signed charter and lives in the card's code under the charter hash, NOT here, because the operator may change this file at will and may not change a signed charter.",
+    "enabled": true
   },
   "supervision": {
     "_comment": "Borrowed from Erlang/OTP: bounded retries, then disable and escalate. `after` is rest_for_one.",
@@ -96,6 +100,8 @@
     "cavalier": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "timeout_min": 7 },
     "ravens-league": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "after": ["cavalier", "ecnalanif"], "timeout_min": 5 },
     "evidence": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24, "timeout_min": 5 },
-    "backup": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24, "timeout_min": 10 }
+    "backup": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24, "timeout_min": 10 },
+    "_comment_panel": "attempts:1 on purpose — a retry would re-run API calls already paid for and could half-record an observation. One try, then the night abstains and is logged.",
+    "panel": { "restart": "permanent", "attempts": 1, "backoff_s": [], "max_failures": 3, "within_hours": 24, "timeout_min": 8 }
   }
 }
