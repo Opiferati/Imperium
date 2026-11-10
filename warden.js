@@ -91,6 +91,34 @@ try {
 } catch (e) {
   console.warn('[WARDEN] supervisor not loaded:', e.message);
 }
+
+// ── The Legion bus (2026-11-10) ────────────────────────────────────────
+// Cards declare themselves in cards/<name>/card.json and the board finds them.
+// Adding a card takes NO edit to this file: that is the entire point of a slot.
+// If a card ever needs one, the standard has failed and we are soldering again.
+function boardShimFor() {
+  if (!blackboard) return null;
+  // Opens and closes per call, so no board connection is held open all night.
+  return {
+    post(note) { const bb = blackboard.board(ROOT); try { bb.post(note); } finally { bb.close(); } },
+    query(f)   { const bb = blackboard.board(ROOT); try { return bb.query(f); } finally { bb.close(); } },
+  };
+}
+let slots = null;
+let slotsFound = { cards: [], failures: [] };
+try {
+  slots = require('./runners/slots.js');
+  slotsFound = slots.discover(ROOT);
+  try {
+    slotsFound.cards = slots.order(slotsFound.cards);
+  } catch (e) {
+    // A bus that cannot decide an order must not guess one: park every card and
+    // say why, rather than running them in an order nobody declared.
+    slotsFound = { cards: [], failures: [{ name: '(bus)', reason: e.message }] };
+  }
+} catch (e) {
+  console.warn('[WARDEN] slots not loaded:', e.message);
+}
 /** Run a nightly child under supervision when available, bare when not (Lego law: absence degrades, never breaks).
  *  The station runners report trouble by RETURNING {status:'error'} rather than throwing, so this adapter
  *  turns that into a real fault — otherwise supervision would count a failed scan as a success. 'docked'
@@ -909,6 +937,34 @@ async function tickInner() {
         stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', `[BACKUP] PROBLEM: ${out.error || out.reason}`, msg.priority);
       }
     }
+    // The Legion bus (2026-11-10): every card in cards/ runs here, in its declared order,
+    // under the same supervision as a soldered runner. Nothing above this line knows their
+    // names — that is what makes it a slot and not a wire. Cards run AFTER the soldered
+    // stations so a card can read what tonight's twins posted to the board.
+    if (slots && slotsFound.cards.length) {
+      try {
+        await slots.runAll(slotsFound.cards, {
+          child,
+          ctxFor: (c) => slots.context({
+            root:  ROOT,
+            // Registry keys are written with underscores, card folders with hyphens.
+            conf:  registry[c.name] || registry[c.name.replace(/-/g, '_')] || {},
+            day:   etDay,
+            board: boardShimFor(),
+            log:   (m) => console.log(`[WARDEN] ${c.name}: ${m}`),
+          }),
+          report: (name, r, line) => {
+            console.log(`[WARDEN] ${name}: ${r.status}${r.message ? ' — ' + r.message : ''}`);
+            if (r.status !== 'missing') {
+              stmtInsertMessage.run(msg.task_id, name, 'emperor', line, msg.priority);
+            }
+          },
+        });
+      } catch (e) {
+        // The bus itself coming apart must not take the night's soldered work with it.
+        console.warn('[WARDEN] slot bus failed:', e.message);
+      }
+    }
     // Supervision report: silent when every child is well, loud the moment one isn't.
     if (supervisor) {
       const sline = supervisor.summaryLine();
@@ -1282,6 +1338,9 @@ console.log(`Ledger:   ${LEDGER_DB_PATH}`);
 console.log(`Agents:   ${Object.keys(registry.agents).join(', ')}`);
 console.log(`Budget:   $${registry.budget.daily_limit_usd}/day (warn at ${registry.budget.warn_at_pct}%)`);
 console.log(`Tick:     every ${TICK_MS / 1000}s`);
+// Power-on self test for the bus: a PC lists its devices at boot, so does this one.
+// A card that silently fails to load is the failure mode a slot standard invites.
+for (const line of (slots ? slots.post(slotsFound) : [])) console.log(line);
 console.log('─────────────────────────────────────────');
 console.log('Watching... (idle = zero tokens)\n');
 

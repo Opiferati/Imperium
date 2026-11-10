@@ -1,0 +1,9 @@
+{
+  "contract": "legion/1",
+  "name": "testcard",
+  "entry": "index.js",
+  "stage": "nightly",
+  "after": [],
+  "needs": ["day", "board", "log", "now"],
+  "purpose": "Proves the Legion bus is live. Does nothing useful on purpose."
+}
