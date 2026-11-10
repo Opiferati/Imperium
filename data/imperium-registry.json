@@ -83,6 +83,6 @@
   "backup": {
     "enabled": true,
     "keep_days": 14,
-    "drive_dir": ""
+    "drive_dir": "G:\\My Drive\\Opie HQ\\Jarlsburg\\Imperium Backups"
   }
 }

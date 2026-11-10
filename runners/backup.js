@@ -47,6 +47,29 @@ function prune(root, keepDays) {
   return gone.length;
 }
 
+const CMD = '/mnt/c/Windows/System32/cmd.exe';
+
+function safeTarget(driveDir) {
+  // /MIR deletes whatever is in the destination but not in backups\. Refuse any folder that holds something
+  // else, so a wrong path in the registry can never wipe real files. Only our own dated folders are allowed.
+  // The listing is done by Windows, not WSL: a Drive letter like G: has no /mnt path at all.
+  return new Promise(resolve => {
+    execFile(CMD, ['/c', 'dir', '/b', '/a', driveDir], { timeout: 30_000 }, (err, stdout, stderr) => {
+      const out = String(stdout).trim();
+      // cmd says "File Not Found" for an empty folder AND "The system cannot find..." for a missing one.
+      // Either way there is nothing of yours in it, and robocopy creates the folder if it has to.
+      if (err && !out && /not found|cannot find|not find|no such/i.test(String(stderr) + out))
+        return resolve({ ok: true, reason: 'empty or new folder' });
+      if (err && !out) return resolve({ ok: false, reason: `it could not be read (${String(stderr).trim().split('\n')[0] || 'unknown'})` });
+      const entries = out ? out.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
+      const strays = entries.filter(n => !/^\d{4}-\d{2}-\d{2}$/.test(n));
+      resolve(strays.length
+        ? { ok: false, reason: `it holds other files (${strays.slice(0, 3).join(', ')}${strays.length > 3 ? ', …' : ''})` }
+        : { ok: true, reason: `${entries.length} dated folder(s)` });
+    });
+  });
+}
+
 function mirror(root, driveDir) {
   return new Promise(resolve => {
     // /MIR keeps the Drive folder identical to backups\ (including pruned days). Exit codes below 8 mean success.
@@ -59,14 +82,20 @@ async function run(root, conf = {}, day) {
   const snap = snapshot(root, day);
   const pruned = prune(root, conf.keep_days ?? 14);
   let drive = 'not set';
-  if (conf.drive_dir) drive = (await mirror(root, conf.drive_dir)) ? 'copied' : 'copy FAILED';
+  if (conf.drive_dir) {
+    const safe = await safeTarget(conf.drive_dir);
+    if (!safe.ok) drive = `refused (${safe.reason})`;
+    else drive = (await mirror(root, conf.drive_dir)) ? 'copied' : 'copy FAILED';
+  }
   return { ...snap, pruned, drive, drive_dir: conf.drive_dir || null };
 }
 
 function summaryLine(r) {
   const kb = r.done.map(d => `${d.name} ${(d.bytes / 1024).toFixed(0)} KB`).join(', ');
   const where = r.drive === 'copied' ? ` Mirrored to ${r.drive_dir}.`
-    : r.drive === 'not set' ? ' Local only: no second location is set yet.' : ` PROBLEM: the copy to ${r.drive_dir} failed.`;
+    : r.drive === 'not set' ? ' Local only: no second location is set yet.'
+    : r.drive.startsWith('refused') ? ` PROBLEM: would not mirror to ${r.drive_dir} because ${r.drive.slice(9, -1)}. Point backup.drive_dir at a folder of its own.`
+    : ` PROBLEM: the copy to ${r.drive_dir} failed.`;
   return `[BACKUP] Snapshot of ${r.done.length} databases (${kb}).${where}`;
 }
 
