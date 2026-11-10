@@ -1,0 +1,9 @@
+{
+  "contract": "legion/1",
+  "name": "attempts",
+  "entry": "index.js",
+  "stage": "nightly",
+  "after": [],
+  "needs": ["root", "board", "log"],
+  "purpose": "Puts law 9's denominator on the shared floor every night, so a verdict is read beside the number of attempts behind it."
+}
