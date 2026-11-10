@@ -18,3 +18,4 @@ _archive/
 
 node_modules/
 data/blackboard.db*
+__pycache__/

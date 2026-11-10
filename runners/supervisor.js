@@ -131,6 +131,34 @@ function makeSupervisor({ board = null, log = console, now = () => new Date() } 
         + (h.last_error ? ` — ${h.last_error}` : '')).join(' | ');
     },
 
+    /** STIGMERGY, APPLIED TO OURSELVES (Theraulaz & Bonabeau 1999): an agent leaves a trace, and a later
+     *  agent — here, a later instance of this same supervisor — reads the trace and acts on it. Without
+     *  this, restarting the Warden silently forgave every disabled child, and a known-broken agent would
+     *  quietly start running again. Note we deliberately rehydrate ONLY 'disabled', not 'shaky': a latch
+     *  must survive a restart, while a couple of old stumbles are fair to forgive.
+     *  Note also that health traces carry NO half-life. Decay is right for a belief about the present and
+     *  wrong for a safety latch — a fading "this is broken" would silently re-enable it. */
+    rehydrate() {
+      if (!board || typeof board.query !== 'function') return [];
+      let notes = [];
+      try { notes = board.query({ prefix: 'supervisor', limit: 200 }) || []; }
+      catch (e) { log.warn?.(`[SUPERVISOR] could not read health from the board: ${e.message}`); return []; }
+      const woken = [];
+      for (const note of notes) {
+        const m = /^supervisor\.(.+)\.health$/.exec(note.topic || '');
+        const v = note.value || {};
+        if (!m || v.state !== 'disabled' || !v.disabled_at) continue;
+        const c = get(m[1]);
+        if (c.disabledAt) continue;
+        c.disabledAt = v.disabled_at;
+        c.lastError = v.last_error || null;
+        c.failures = Array(Math.max(1, v.failures_in_window || 1)).fill(v.disabled_at);
+        woken.push(m[1]);
+      }
+      if (woken.length) log.warn?.(`[SUPERVISOR] still disabled from before the restart: ${woken.join(', ')}`);
+      return woken;
+    },
+
     /** Opie's override: forgive a child and let it try again. The only way out of 'disabled'. */
     revive(name) {
       const c = children.get(name);

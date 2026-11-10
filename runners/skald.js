@@ -181,7 +181,10 @@ function record(root, conf, dateEt, reading, meta, rawContent) {
   try {
     const bb = require('./blackboard.js').board(root);
     for (const [topic, value] of [['skald.stock_mood', reading.stock_mood], ['skald.crypto_mood', reading.crypto_mood]])
+      // half_life_days: a mood reading is a belief about the present, so the trace must fade. A reader
+      // asking "what is the mood?" needs to know whether the answer is from tonight or from March.
       bb.post({ topic, author: 'skald', value, as_of: dateEt, source: 'skald reading', if_changed: true,
+                half_life_days: 1.5,
                 code: RUBRIC_VERSION, confidence: (meta.quality || 'pass') === 'pass' ? 0.9 : 0.5 });
     bb.close();
   } catch (e) { console.warn('[SKALD] blackboard post skipped:', e.message); }

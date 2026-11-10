@@ -80,11 +80,14 @@ try {
 // The board shim opens and closes per post so no connection is held open all night.
 let supervisor = null;
 try {
-  const boardShim = blackboard ? { post(note) {
-    const bb = blackboard.board(ROOT);
-    try { bb.post(note); } finally { bb.close(); }
-  } } : null;
+  // The shim opens and closes per call, so no board connection is held open all night.
+  const boardShim = blackboard ? {
+    post(note) { const bb = blackboard.board(ROOT); try { bb.post(note); } finally { bb.close(); } },
+    query(f) { const bb = blackboard.board(ROOT); try { return bb.query(f); } finally { bb.close(); } },
+  } : null;
   supervisor = require('./runners/supervisor.js').makeSupervisor({ board: boardShim });
+  // Read our own trace back: a child disabled before the last restart must stay disabled.
+  supervisor.rehydrate();
 } catch (e) {
   console.warn('[WARDEN] supervisor not loaded:', e.message);
 }
