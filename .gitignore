@@ -7,6 +7,7 @@
 data/*.db
 data/*.db-*
 data/warden-heartbeat.json
+backups/
 
 # Logs and generated output
 logs/

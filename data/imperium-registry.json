@@ -79,5 +79,10 @@
     "enabled": true,
     "dir": "C:\\Ravens",
     "timeout_min": 3
+  },
+  "backup": {
+    "enabled": true,
+    "keep_days": 14,
+    "drive_dir": ""
   }
 }

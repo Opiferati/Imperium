@@ -64,6 +64,12 @@ try {
   console.warn('[WARDEN] evidence not loaded:', e.message);
 }
 const LATE_LOOK_HOUR = 22;   // 10 PM New York: CBOE posts the day's VIX close around 9 PM
+let backup = null;
+try {
+  backup = require('./runners/backup.js');
+} catch (e) {
+  console.warn('[WARDEN] backup not loaded:', e.message);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -827,6 +833,18 @@ async function tickInner() {
       const ev = await evidence.run(etDay);
       console.log(`[WARDEN] ${evidence.summaryLine(ev)}`);
       stmtInsertMessage.run(msg.task_id, 'evidence', 'emperor', evidence.summaryLine(ev), msg.priority);
+    }
+    // Backup (2026-11-09): a clean snapshot of the ledger and the message bus, mirrored to the second home if set.
+    const bconf = registry.backup || {};
+    if (backup && bconf.enabled) {
+      try {
+        const br = await backup.run(ROOT, bconf, etDay);
+        console.log(`[WARDEN] ${backup.summaryLine(br)}`);
+        if (br.drive === 'copy FAILED') stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', backup.summaryLine(br), msg.priority);
+      } catch (e) {
+        console.warn('[WARDEN] backup failed:', e.message);
+        stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', `[BACKUP] PROBLEM: ${e.message}`, msg.priority);
+      }
     }
     return;
   }
