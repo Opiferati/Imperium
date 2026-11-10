@@ -19,16 +19,30 @@
 
 const DEFAULT_MIN = 10;
 
-/** How long a child may take, in milliseconds. The supervision policy wins,
- *  then the station's own registry block, then the default. There is
- *  deliberately NO way to opt out: a child with no deadline is the bug this
- *  module exists to close. Registry keys use underscores, card folders use
+/** How long a child may take, in milliseconds, in order of precedence:
+ *
+ *    1. the supervision policy   — the operator's explicit ruling
+ *    2. the station's registry block — also the operator's
+ *    3. `declared`               — the card's own manifest (2026-11-10)
+ *    4. the default
+ *
+ *  The card comes THIRD on purpose. A card declaring its own deadline is useful
+ *  (it travels with the card, no registry entry needed) but a card must not be
+ *  able to grant itself a longer leash than the operator allows. Operator policy
+ *  always outranks a self-declaration.
+ *
+ *  There is deliberately NO way to opt out: a child with no deadline is the bug
+ *  this module exists to close. Registry keys use underscores, card folders use
  *  hyphens, so both spellings are tried. */
-function limitMs(name, policy, registry, defaultMin = DEFAULT_MIN) {
+function limitMs(name, policy, registry, declared, defaultMin = DEFAULT_MIN) {
   const reg  = registry || {};
   const conf = reg[name] || reg[String(name).replace(/-/g, '_')] || {};
-  const mins = [policy && policy.timeout_min, conf.timeout_min, defaultMin]
-    .find(v => Number(v) > 0);
+  const mins = [
+    policy && policy.timeout_min,
+    conf.timeout_min,
+    declared && declared.timeout_min,
+    defaultMin,
+  ].find(v => Number(v) > 0);
   return Math.round(Number(mins) * 60_000);
 }
 

@@ -67,3 +67,36 @@ test('the bell is cleared when work wins, so nothing is left ticking', async () 
   }
   assert.ok(true);
 });
+
+// ── A card's own declared deadline (2026-11-10) ──────────────────────────
+// IEAS-001's "timeout in the envelope", applied to what exists: the deadline
+// travels with the card instead of needing a registry entry. The ordering is
+// the whole point — a card must not be able to grant itself a longer leash.
+
+test('a card declared deadline is used when the operator has not set one', () => {
+  assert.strictEqual(limitMs('attempts', {}, {}, { timeout_min: 2 }), 2 * 60_000);
+});
+
+test('operator supervision policy outranks the card own declaration', () => {
+  assert.strictEqual(
+    limitMs('attempts', { timeout_min: 1 }, {}, { timeout_min: 30 }), 1 * 60_000,
+    'a card asking for thirty minutes does not get thirty minutes',
+  );
+});
+
+test('an operator station block also outranks the card', () => {
+  assert.strictEqual(
+    limitMs('attempts', {}, { attempts: { timeout_min: 3 } }, { timeout_min: 30 }),
+    3 * 60_000,
+  );
+});
+
+test('a card declaring nothing falls through to the default', () => {
+  assert.strictEqual(limitMs('attempts', {}, {}, {}), DEFAULT_MIN * 60_000);
+  assert.strictEqual(limitMs('attempts', {}, {}, undefined), DEFAULT_MIN * 60_000);
+});
+
+test('a card cannot opt out by declaring zero', () => {
+  assert.strictEqual(limitMs('attempts', {}, {}, { timeout_min: 0 }), DEFAULT_MIN * 60_000);
+  assert.strictEqual(limitMs('attempts', {}, {}, { timeout_min: -5 }), DEFAULT_MIN * 60_000);
+});

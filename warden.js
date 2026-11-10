@@ -133,9 +133,11 @@ try {
  *  turns that into a real fault — otherwise supervision would count a failed scan as a success. 'docked'
  *  and 'missing' are legitimate states, not faults, and are passed through untouched. Translating here
  *  rather than inside the supervisor keeps the supervisor ignorant of what the work looks like. */
-async function child(name, fn) {
+async function child(name, fn, declared) {
   const policy = ((registry.supervision || {})[name]) || {};
-  const ms = deadline ? deadline.limitMs(name, policy, registry) : 0;
+  // `declared` is a card's own manifest timeout. It is consulted AFTER operator
+  // policy, so a card cannot hand itself a longer leash than the registry allows.
+  const ms = deadline ? deadline.limitMs(name, policy, registry, declared) : 0;
   const attempt = async () => {
     // A bell on the work (2026-11-10): supervision catches a child that FAILS, this
     // catches one that HANGS — which is worse, because a hang holds the evidence
@@ -955,7 +957,20 @@ async function tickInner() {
     // under the same supervision as a soldered runner. Nothing above this line knows their
     // names — that is what makes it a slot and not a wire. Cards run AFTER the soldered
     // stations so a card can read what tonight's twins posted to the board.
-    if (slots && slotsFound.cards.length) {
+    // Fail closed (2026-11-10): a required card that is absent or refused stops the
+    // WHOLE bus, not just itself — a bus quietly running three of its four cards and
+    // reporting success is the kind of half-truth these laws exist to prevent. It does
+    // not stop the night: the soldered stations above are not on the bus, and halting
+    // their scans would cost a missed close on a live forward test, which is real
+    // damage traded for a configuration fault that can be fixed in the morning.
+    const slotRequired = (registry.slots || {}).required || [];
+    if (slots && slots.restricted(slotsFound, slotRequired)) {
+      const missing = slots.requiredMissing(slotsFound, slotRequired)
+        .map(m => `${m.name} (${m.reason})`).join('; ');
+      const line = `[SLOTS] BUS RESTRICTED — required card(s) absent: ${missing}. No cards ran.`;
+      console.warn(line);
+      stmtInsertMessage.run(msg.task_id, 'slots', 'emperor', line, 1);
+    } else if (slots && slotsFound.cards.length) {
       try {
         await slots.runAll(slotsFound.cards, {
           child,
@@ -966,6 +981,8 @@ async function tickInner() {
             day:   etDay,
             board: boardShimFor(),
             log:   (m) => console.log(`[WARDEN] ${c.name}: ${m}`),
+            // The card gets a board shaped to its declared authority, not the raw one.
+            authority: c.manifest.authority,
           }),
           report: (name, r, line) => {
             console.log(`[WARDEN] ${name}: ${r.status}${r.message ? ' — ' + r.message : ''}`);
@@ -1354,7 +1371,18 @@ console.log(`Budget:   $${registry.budget.daily_limit_usd}/day (warn at ${regist
 console.log(`Tick:     every ${TICK_MS / 1000}s`);
 // Power-on self test for the bus: a PC lists its devices at boot, so does this one.
 // A card that silently fails to load is the failure mode a slot standard invites.
-for (const line of (slots ? slots.post(slotsFound) : [])) console.log(line);
+// Each card's authority and effective deadline are printed so that a card holding
+// more than its job needs is visible here rather than discovered later.
+if (slots) {
+  const effective = (c) => {
+    if (!deadline) return null;
+    const policy = (registry.supervision || {})[c.name] || {};
+    return deadline.pretty(
+      deadline.limitMs(c.name, policy, registry, { timeout_min: c.manifest.timeout_min }));
+  };
+  const opts = { required: (registry.slots || {}).required || [], deadlineFor: effective };
+  for (const line of slots.post(slotsFound, opts)) console.log(line);
+}
 console.log('─────────────────────────────────────────');
 console.log('Watching... (idle = zero tokens)\n');
 

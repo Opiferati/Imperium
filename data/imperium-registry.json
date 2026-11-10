@@ -85,6 +85,10 @@
     "keep_days": 14,
     "drive_dir": "G:\\My Drive\\Opie HQ\\Jarlsburg\\Imperium Backups"
   },
+  "slots": {
+    "_comment": "The Legion bus. `required` names cards that MUST be present and loadable; if one is absent or refused, the whole bus enters restricted mode and runs nothing, and the Emperor is told at priority 1. Required-ness lives here rather than in a card's manifest on purpose: a manifest cannot declare the requirement of a folder that has been deleted, which is the case that matters most.",
+    "required": ["attempts"]
+  },
   "supervision": {
     "_comment": "Borrowed from Erlang/OTP: bounded retries, then disable and escalate. `after` is rest_for_one.",
     "_comment_timeout": "timeout_min is the Warden's bell, set ABOVE each runner's own internal timeout on purpose: a runner that reports its own clean timeout is worth more than one the Warden abandons, so it gets room to fail on its own terms first. There is no way to opt out.",

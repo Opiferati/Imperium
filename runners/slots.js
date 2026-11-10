@@ -15,7 +15,12 @@
 const fs   = require('node:fs');
 const path = require('node:path');
 
-const CONTRACT = 'legion/1';
+// legion/2 (2026-11-10) added `authority` and made it mandatory for any card that
+// needs the board pin, which INVALIDATES a legion/1 card written against the old
+// rules. That is a breaking change, so the version moves. Refusing such a card with
+// "this board speaks legion/2" tells its author the standard changed; refusing it
+// under the old number would have told them they wrote it wrong.
+const CONTRACT = 'legion/2';
 
 // The honest statuses a card may return. Anything else is a fault, because
 // a status the board cannot read is worse than an admitted error.
@@ -25,6 +30,21 @@ const STATUSES = new Set(['ok', 'thin', 'docked', 'missing', 'error']);
 // is how a slot standard rots into a god object, so each addition needs a
 // written reason in "Legion - Slot Standard v1".
 const PINS = ['root', 'conf', 'day', 'board', 'log', 'now'];
+
+// What a card may be PERMITTED to do (2026-11-10, taken from IEAS-001's
+// five-property contract: Identity, State, Interface, Responsibilities,
+// Authority — the one this standard was missing).
+//
+// Unlike the pins, these are ENFORCED where the board can enforce them: the
+// context handed to a card is BUILT to match its grants, so a card without
+// board:write receives a board whose post() refuses out loud. Authority is
+// not a note in a file that something checks later.
+//
+// The honest limit is unchanged: tier 1 shares one process, so this binds
+// the SLOT, not the card's imagination. A card can still require('node:fs')
+// behind the board's back. That is limitation 1 of the standard, and the fix
+// for it is out-of-process cards, not a longer grant list.
+const GRANTS = new Set(['board:read', 'board:write']);
 
 /** Why a manifest is refused, or null if it is sound. Refusals are reported,
  *  never thrown: one bad card must not keep the others off the bus. */
@@ -41,6 +61,19 @@ function validate(m, folder) {
   if (m.needs !== undefined && !Array.isArray(m.needs)) return 'needs must be a list';
   const unknown = (m.needs || []).filter(p => !PINS.includes(p));
   if (unknown.length) return `asks for unknown pin(s): ${unknown.join(', ')}`;
+  if (m.authority !== undefined && !Array.isArray(m.authority)) return 'authority must be a list';
+  const ungranted = (m.authority || []).filter(g => !GRANTS.has(g));
+  if (ungranted.length) return `claims unknown authority: ${ungranted.join(', ')}`;
+  // A pin the card has no authority to use is a contradiction, and the board must
+  // not resolve it quietly in either direction — the card has to say which half it
+  // meant. Silently handing over a dead board would be the worse answer.
+  if ((m.needs || []).includes('board')
+      && !(m.authority || []).some(g => g.startsWith('board:'))) {
+    return 'needs the board pin but claims no board:read or board:write authority';
+  }
+  if (m.timeout_min !== undefined && !(Number(m.timeout_min) > 0)) {
+    return `timeout_min must be a positive number, not "${m.timeout_min}"`;
+  }
   return null;
 }
 
@@ -102,25 +135,89 @@ function order(cards) {
 /** The power-on self test. A PC lists its devices at boot; so does this one.
  *  A card that silently fails to load is the failure mode a slot standard
  *  invites, so every refusal is named out loud with its reason. */
-function post(found) {
+function post(found, opts = {}) {
   const lines = [];
   const n = found.cards.length;
   lines.push(`Slots:    ${n} card(s)`
     + (n ? ` — ${found.cards.map(c => c.name).join(', ')}` : ' — bus empty'));
+  // Authority and the effective deadline, per card. A card quietly holding more
+  // authority than its job needs should be visible at boot, not discovered later.
+  for (const c of found.cards) {
+    const a = (c.manifest.authority || []).join(' ') || 'none';
+    const d = typeof opts.deadlineFor === 'function' ? opts.deadlineFor(c) : null;
+    lines.push(`          ${c.name} — authority: ${a}${d ? ` · deadline ${d}` : ''}`);
+  }
   for (const f of found.failures) {
     lines.push(`          REFUSED ${f.name}: ${f.reason}`);
+  }
+  for (const m of requiredMissing(found, opts.required)) {
+    lines.push(`          !! REQUIRED CARD MISSING — ${m.name}: ${m.reason}`);
+  }
+  if (restricted(found, opts.required)) {
+    lines.push('          BUS RESTRICTED — a required card is absent, so NO cards will run.');
   }
   return lines;
 }
 
+/** Which required cards are not on the bus, and why.
+ *
+ *  Required-ness lives in the REGISTRY, not the manifest, and deliberately so:
+ *  a manifest cannot declare the requirement of a folder that has been deleted,
+ *  and that is the case that matters most. A card quietly vanishing is the
+ *  failure a slot standard invites; only the board's own list catches it. */
+function requiredMissing(found, required) {
+  const present = new Set(found.cards.map(c => c.name));
+  const refused = new Map(found.failures.map(f => [f.name, f.reason]));
+  const out = [];
+  for (const name of (required || [])) {
+    if (present.has(name)) continue;
+    out.push({ name, reason: refused.get(name) || 'not present on the bus' });
+  }
+  return out;
+}
+
+/** Fail closed, but only as far as the fault reaches. A missing required card is
+ *  a configuration fault, so the BUS stops — every card, not just the broken one,
+ *  because a bus running three of its four cards while reporting success is the
+ *  kind of half-truth these laws exist to prevent.
+ *
+ *  It does NOT stop the night. The soldered stations are not on the bus, and
+ *  halting their scans would cost a missed close on a live forward test — real,
+ *  unrecoverable damage to a signed thesis, traded for a configuration problem
+ *  that can be fixed in the morning. Fail closed on what is broken. */
+function restricted(found, required) {
+  return requiredMissing(found, required).length > 0;
+}
+
+/** A board shaped to the card's grants. Authority is not a note that something
+ *  checks later: the card is handed only what it is allowed to call, and anything
+ *  else refuses OUT LOUD rather than silently doing nothing. A method the
+ *  underlying board does not offer is simply absent, so "not authorised" never
+ *  gets blamed for "not implemented". */
+function gateBoard(board, grants) {
+  if (!board) return null;
+  const out = {};
+  const add = (m, grant) => {
+    if (typeof board[m] !== 'function') return;
+    out[m] = grants.includes(grant)
+      ? board[m].bind(board)
+      : () => { throw new Error(`not authorised: ${m}() needs ${grant}`); };
+  };
+  for (const m of ['read', 'query', 'topics', 'history']) add(m, 'board:read');
+  for (const m of ['post', 'retract'])                    add(m, 'board:write');
+  return out;
+}
+
 /** The pinout handed to a card: exactly PINS, frozen. A card that reaches past
- *  this is soldered again, and freezing makes that obvious instead of subtle. */
-function context({ root, conf, day, board, log, now } = {}) {
+ *  this is soldered again, and freezing makes that obvious instead of subtle.
+ *  `authority` is not a pin — it SHAPES one, by deciding which board methods the
+ *  card actually receives. */
+function context({ root, conf, day, board, log, now, authority } = {}) {
   return Object.freeze({
     root,
     conf: conf || {},
     day,
-    board: board || null,
+    board: gateBoard(board, Array.isArray(authority) ? authority : []),
     log: log || (() => {}),
     now: now || (() => new Date()),
   });
@@ -140,7 +237,11 @@ async function runAll(cards, { child, ctxFor, report }) {
       results.push({ name: c.name, ...r });
       continue;
     }
-    const out = await child(c.name, () => c.mod.run(ctx));
+    // The card's own declared deadline travels with it (IEAS-001's "timeout in
+    // the envelope"). Operator policy in the registry still outranks it: a card
+    // asking for twenty minutes does not get to grant itself twenty minutes.
+    const out = await child(c.name, () => c.mod.run(ctx),
+                           { timeout_min: c.manifest.timeout_min });
     // rest_for_one: the board held this card back, so the board speaks for it.
     // A card that did not run does not get to narrate, and the REASON it was
     // held is the only useful thing here — losing it to a generic "docked"
@@ -172,4 +273,8 @@ async function runAll(cards, { child, ctxFor, report }) {
   return results;
 }
 
-module.exports = { CONTRACT, PINS, STATUSES, validate, discover, order, post, context, runAll };
+module.exports = {
+  CONTRACT, PINS, GRANTS, STATUSES,
+  validate, discover, order, post, context, runAll,
+  gateBoard, requiredMissing, restricted,
+};
