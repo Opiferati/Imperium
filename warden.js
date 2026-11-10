@@ -70,6 +70,12 @@ try {
 } catch (e) {
   console.warn('[WARDEN] backup not loaded:', e.message);
 }
+let blackboard = null;        // shared memory: a part, not a runner. Absent is survivable.
+try {
+  blackboard = require('./runners/blackboard.js');
+} catch (e) {
+  console.warn('[WARDEN] blackboard not loaded:', e.message);
+}
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -833,6 +839,18 @@ async function tickInner() {
       const ev = await evidence.run(etDay);
       console.log(`[WARDEN] ${evidence.summaryLine(ev)}`);
       stmtInsertMessage.run(msg.task_id, 'evidence', 'emperor', evidence.summaryLine(ev), msg.priority);
+    }
+    // The Blackboard (2026-11-09): say what went on the shared floor tonight. Read-only here — the Warden
+    // is not a participant, it just reports. Composed from query(), so the board's own contract stays minimal.
+    if (blackboard) {
+      try {
+        const bb = blackboard.board(ROOT);
+        const fresh = bb.query({ since: etDay, limit: 50 });
+        const all = bb.topics().length;
+        console.log(`[BOARD] ${all} topic(s) on the floor, ${fresh.length} note(s) posted today`
+          + (fresh.length ? ': ' + fresh.slice(0, 4).map(n => `${n.topic}=${JSON.stringify(n.value)}`).join(' · ') : '.'));
+        bb.close();
+      } catch (e) { console.warn('[BOARD] unreadable:', e.message); }
     }
     // Backup (2026-11-09): a clean snapshot of the ledger and the message bus, mirrored to the second home if set.
     const bconf = registry.backup || {};

@@ -176,6 +176,15 @@ function record(root, conf, dateEt, reading, meta, rawContent) {
   fs.mkdirSync(arch, { recursive: true });
   fs.writeFileSync(path.join(arch, `${dateEt}.json`), JSON.stringify({ date: dateEt, rubric: RUBRIC_VERSION, ...meta, reading,
     search_results: [...searchResultUrls(rawContent)] }, null, 2));
+  // The Blackboard (2026-11-09): publish what we learned so any agent can find it without asking us.
+  // Best-effort by design — the Skald must keep working if the board is missing or broken.
+  try {
+    const bb = require('./blackboard.js').board(root);
+    for (const [topic, value] of [['skald.stock_mood', reading.stock_mood], ['skald.crypto_mood', reading.crypto_mood]])
+      bb.post({ topic, author: 'skald', value, as_of: dateEt, source: 'skald reading',
+                code: RUBRIC_VERSION, confidence: (meta.quality || 'pass') === 'pass' ? 0.9 : 0.5 });
+    bb.close();
+  } catch (e) { console.warn('[SKALD] blackboard post skipped:', e.message); }
   return g;
 }
 
