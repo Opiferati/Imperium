@@ -119,6 +119,15 @@ try {
 } catch (e) {
   console.warn('[WARDEN] slots not loaded:', e.message);
 }
+
+// A bell on every child's work (2026-11-10). Absence degrades: no module means no
+// bell, exactly as the night ran before, rather than a Warden that will not start.
+let deadline = null;
+try {
+  deadline = require('./runners/deadline.js');
+} catch (e) {
+  console.warn('[WARDEN] deadline not loaded:', e.message);
+}
 /** Run a nightly child under supervision when available, bare when not (Lego law: absence degrades, never breaks).
  *  The station runners report trouble by RETURNING {status:'error'} rather than throwing, so this adapter
  *  turns that into a real fault — otherwise supervision would count a failed scan as a success. 'docked'
@@ -126,8 +135,13 @@ try {
  *  rather than inside the supervisor keeps the supervisor ignorant of what the work looks like. */
 async function child(name, fn) {
   const policy = ((registry.supervision || {})[name]) || {};
+  const ms = deadline ? deadline.limitMs(name, policy, registry) : 0;
   const attempt = async () => {
-    const v = await fn();
+    // A bell on the work (2026-11-10): supervision catches a child that FAILS, this
+    // catches one that HANGS — which is worse, because a hang holds the evidence
+    // commit, the backup and every card on the bus behind it. It does not kill the
+    // work; see runners/deadline.js for that limit, stated plainly.
+    const v = deadline ? await deadline.withDeadline(fn(), ms, name) : await fn();
     if (v && v.status === 'error') throw new Error(v.message || 'runner reported an error');
     return v;
   };

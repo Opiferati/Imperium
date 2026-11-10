@@ -87,10 +87,11 @@
   },
   "supervision": {
     "_comment": "Borrowed from Erlang/OTP: bounded retries, then disable and escalate. `after` is rest_for_one.",
-    "ecnalanif": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24 },
-    "cavalier": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24 },
-    "ravens-league": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "after": ["cavalier", "ecnalanif"] },
-    "evidence": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24 },
-    "backup": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24 }
+    "_comment_timeout": "timeout_min is the Warden's bell, set ABOVE each runner's own internal timeout on purpose: a runner that reports its own clean timeout is worth more than one the Warden abandons, so it gets room to fail on its own terms first. There is no way to opt out.",
+    "ecnalanif": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "timeout_min": 7 },
+    "cavalier": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "timeout_min": 7 },
+    "ravens-league": { "restart": "permanent", "attempts": 2, "backoff_s": [15], "max_failures": 4, "within_hours": 24, "after": ["cavalier", "ecnalanif"], "timeout_min": 5 },
+    "evidence": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24, "timeout_min": 5 },
+    "backup": { "restart": "permanent", "attempts": 2, "backoff_s": [30], "max_failures": 6, "within_hours": 24, "timeout_min": 10 }
   }
 }
