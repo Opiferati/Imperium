@@ -12,6 +12,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 const BUS_DB_PATH = path.join(__dirname, 'data', 'message_bus.db');
 const db = new DatabaseSync(BUS_DB_PATH);
+db.exec('PRAGMA busy_timeout = 5000');
 
 const args = process.argv.slice(2);
 

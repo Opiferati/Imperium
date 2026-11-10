@@ -56,6 +56,14 @@ try {
 } catch (e) {
   console.warn('[WARDEN] ravens-league not loaded:', e.message);
 }
+let evidence = null;
+let lateLookDay = null;      // New York date of the last late look (once per day, after the VIX posts)
+try {
+  evidence = require('./runners/evidence.js');
+} catch (e) {
+  console.warn('[WARDEN] evidence not loaded:', e.message);
+}
+const LATE_LOOK_HOUR = 22;   // 10 PM New York: CBOE posts the day's VIX close around 9 PM
 let skald = null;
 try {
   skald = require('./runners/skald.js');
@@ -138,6 +146,9 @@ try {
 // ── Open databases ─────────────────────────────────────────────────────
 const busDb    = new DatabaseSync(BUS_DB_PATH);
 const ledgerDb = new DatabaseSync(LEDGER_DB_PATH);
+// The dashboard shares these files. Wait up to 5 s for its lock instead of failing ("database is locked", 11-09).
+busDb.exec('PRAGMA busy_timeout = 5000');
+ledgerDb.exec('PRAGMA busy_timeout = 5000');
 
 // ── Prepared statements ────────────────────────────────────────────────
 const stmtGetQueued = busDb.prepare(
@@ -713,6 +724,28 @@ async function tickInner() {
     }
   }
 
+  // The late look (2026-11-09): CBOE posts the day's VIX around 9 PM New York, after the 6 PM run. Once per
+  // weekday evening, re-run the Cavalier's scan so Cavalier II's call for tomorrow is firm, then the Ravens
+  // and the evidence commit. $0, plain code. Changes no rule: the scan recomputes from frozen data either way.
+  if (skald && cavalier && (registry.cavalier || {}).enabled) {
+    const et = skald.etNow();
+    const dow = new Date(et.date + 'T12:00:00Z').getUTCDay();
+    if (et.hour >= LATE_LOOK_HOUR && dow >= 1 && dow <= 5 && lateLookDay !== et.date) {
+      lateLookDay = et.date;
+      const tid = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-LATE';
+      const cr = await cavalier.runScan(registry.cavalier);
+      console.log(`\n[WARDEN] late look: cavalier ${cr.status}`);
+      const f = String(cr.herald || '').split('\n');
+      const k = f.findIndex(l => l.startsWith('CAVALIER II'));
+      if (k >= 0) stmtInsertMessage.run(tid, 'cavalier', 'emperor', `[CAVALIER II — LATE LOOK] ${f.slice(k).join('\n')}`, 2);
+      if (league && (registry.ravens_league || {}).enabled) await league.runScan(registry.ravens_league);
+      if (evidence && (registry.evidence || {}).enabled !== false) {
+        const ev = await evidence.run(et.date + ' late look');
+        console.log(`[WARDEN] ${evidence.summaryLine(ev)}`);
+      }
+    }
+  }
+
   // Claim one queued message
   const msg = stmtGetQueued.get();
 
@@ -788,6 +821,12 @@ async function tickInner() {
       const lr = await league.runScan(lconf);
       console.log(`[WARDEN] ravens-league: ${lr.status}${lr.message ? ' — ' + lr.message : ''}`);
       if (lr.status !== 'missing') stmtInsertMessage.run(msg.task_id, 'ravens-league', 'emperor', league.summaryLine(lr), msg.priority);
+    }
+    // Evidence (2026-11-09): tonight's record leaves the machine. Listed data paths only, never code or keys.
+    if (evidence && (registry.evidence || {}).enabled !== false) {
+      const ev = await evidence.run(etDay);
+      console.log(`[WARDEN] ${evidence.summaryLine(ev)}`);
+      stmtInsertMessage.run(msg.task_id, 'evidence', 'emperor', evidence.summaryLine(ev), msg.priority);
     }
     return;
   }

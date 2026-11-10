@@ -9,6 +9,8 @@ const https = require('node:https');
 const fs    = require('node:fs');
 const path  = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
+// The Warden shares these files. Wait up to 5 s for its lock instead of failing ("database is locked", 11-09).
+function openDb(p) { const d = new DatabaseSync(p); d.exec('PRAGMA busy_timeout = 5000'); return d; }
 
 const ROOT           = __dirname;
 const BUS_DB_PATH    = path.join(ROOT, 'data', 'message_bus.db');
@@ -157,7 +159,7 @@ async function handleRequest(req, res) {
     } catch { /* not started */ }
 
     let dailySpend = 0;
-    const ledgerDb = new DatabaseSync(LEDGER_DB_PATH);
+    const ledgerDb = openDb(LEDGER_DB_PATH);
     try {
       const row = ledgerDb.prepare(
         `SELECT COALESCE(SUM(cost_usd), 0) AS total FROM api_calls WHERE date(called_at) = date('now')`
@@ -187,7 +189,7 @@ async function handleRequest(req, res) {
       const taskId = 'TASK-' +
         new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-' +
         Math.random().toString(36).slice(2, 6).toUpperCase();
-      const db = new DatabaseSync(BUS_DB_PATH);
+      const db = openDb(BUS_DB_PATH);
       try {
         db.prepare(
           `INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
@@ -202,7 +204,7 @@ async function handleRequest(req, res) {
   // ── POST /api/treasury/scan — ask the Warden to run the Finalance v2 scan ──
   if (req.method === 'POST' && url === '/api/treasury/scan') {
     const taskId = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-TRSY';
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       const busy = db.prepare(
         `SELECT COUNT(*) n FROM messages WHERE to_agent='ministry-of-treasury' AND status IN ('queued','in_progress')`).get().n;
@@ -218,7 +220,7 @@ async function handleRequest(req, res) {
 
   // ── Petitions (Edict VIII): GET pending, POST /api/petitions/<id>/approve|deny ──
   if (req.method === 'GET' && url === '/api/petitions') {
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       let rows = [];
       try {
@@ -233,7 +235,7 @@ async function handleRequest(req, res) {
   }
   const pm = url.match(/^\/api\/petitions\/(\d+)\/(approve|deny)$/);
   if (req.method === 'POST' && pm) {
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       const p = db.prepare(`SELECT * FROM petitions WHERE id = ?`).get(+pm[1]);
       if (!p || p.status !== 'pending') { json(res, { error: 'That petition is not pending.' }, 409); return; }
@@ -277,7 +279,7 @@ async function handleRequest(req, res) {
   // ── POST /api/skald/scan — ask the Warden for a Skald reading now ──
   if (req.method === 'POST' && url === '/api/skald/scan') {
     const taskId = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-SKLD';
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       const busy = db.prepare(
         `SELECT COUNT(*) n FROM messages WHERE to_agent='ministry-of-skald' AND status IN ('queued','in_progress')`).get().n;
@@ -294,7 +296,7 @@ async function handleRequest(req, res) {
   // ── GET /api/messages?after=<id> — Emperor-addressed messages ──
   if (req.method === 'GET' && url === '/api/messages') {
     const afterId = parseInt(params.get('after') || '0', 10);
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       const rows = db.prepare(
         `SELECT id, from_agent, content, created_at FROM messages
@@ -312,7 +314,7 @@ async function handleRequest(req, res) {
   // ── GET /api/feed?after=<id> — full conversation feed (all agents) ──
   if (req.method === 'GET' && url === '/api/feed') {
     const afterId = parseInt(params.get('after') || '0', 10);
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       const rows = db.prepare(
         `SELECT id, task_id, from_agent, to_agent, content, status, created_at
@@ -331,7 +333,7 @@ async function handleRequest(req, res) {
 
   // ── GET /api/tasks — last 20 tasks from tasks table + message fallback ──
   if (req.method === 'GET' && url === '/api/tasks') {
-    const db = new DatabaseSync(BUS_DB_PATH);
+    const db = openDb(BUS_DB_PATH);
     try {
       // Try tasks table first
       let rows = [];
@@ -362,7 +364,7 @@ async function handleRequest(req, res) {
 
   // ── GET /api/ministries — agent stats from ledger ──
   if (req.method === 'GET' && url === '/api/ministries') {
-    const ledgerDb = new DatabaseSync(LEDGER_DB_PATH);
+    const ledgerDb = openDb(LEDGER_DB_PATH);
     try {
       const rows = ledgerDb.prepare(
         `SELECT agent_id, COUNT(*) as total_calls,
@@ -429,7 +431,7 @@ async function handleRequest(req, res) {
 
   // ── GET /api/ollama-stats ──
   if (req.method === 'GET' && url === '/api/ollama-stats') {
-    const ledgerDb = new DatabaseSync(LEDGER_DB_PATH);
+    const ledgerDb = openDb(LEDGER_DB_PATH);
     try {
       // Check if ollama_calls table exists
       const tbl = ledgerDb.prepare(
