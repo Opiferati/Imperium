@@ -296,6 +296,32 @@ const stmtTaskOrigin = busDb.prepare(
   if (!now.includes('forseti_fails'))   busDb.exec(`ALTER TABLE tasks ADD COLUMN forseti_fails INTEGER DEFAULT 0`);
 }
 const CRITIC_CONF   = registry.forseti || registry.critic || { model: 'haiku', enabled: true, max_revisions: 2 };
+
+// -- The Intercom (2026-11-11) ----------------------------------------
+// Agent-to-agent mail: INTERCOM.md, signed 2026-11-10, plus Amendment 1,
+// initialed 2026-11-11. DARK BY DEFAULT. Three things must all be true
+// before one part moves: the module loads, registry.intercom.enabled is
+// true, and Amendment 1 is initialed in the spec. Any of them false and
+// the night runs exactly as it ran before - absence degrades, Lego law.
+const ICOM_CONF = registry.intercom || {};
+let intercomMod = null, icom = null, icomWhy = 'off in the registry';
+try {
+  intercomMod = require('./runners/intercom.js');
+} catch (e) {
+  icomWhy = `not loaded: ${e.message}`;
+  console.warn('[WARDEN] intercom not loaded:', e.message);
+}
+if (intercomMod && ICOM_CONF.enabled === true) {
+  try {
+    const s = intercomMod.specCheck(ROOT);
+    if (!s.ok)           icomWhy = `spec: ${s.why}`;
+    else if (!s.amended) icomWhy = 'Amendment 1 is not initialed';
+    else {
+      icom = intercomMod.intercom(ROOT);
+      icomWhy = `open (spec ${s.hash}, amendment initialed)`;
+    }
+  } catch (e) { icomWhy = `could not open: ${e.message}`; }
+}
 const MAX_ATTEMPTS  = 1 + (CRITIC_CONF.max_revisions ?? 2);   // per ministry, per task
 
 // ── Petitions (2026-11-01): a ministry may ask the Emperor to go beyond an order's scope ──
@@ -1396,6 +1422,7 @@ console.log(`Ledger:   ${LEDGER_DB_PATH}`);
 console.log(`Agents:   ${Object.keys(registry.agents).join(', ')}`);
 console.log(`Budget:   $${registry.budget.daily_limit_usd}/day (warn at ${registry.budget.warn_at_pct}%)`);
 console.log(`Tick:     every ${TICK_MS / 1000}s`);
+console.log(`Intercom: ${icom ? icomWhy : `dark - ${icomWhy}`}`);
 // Power-on self test for the bus: a PC lists its devices at boot, so does this one.
 // A card that silently fails to load is the failure mode a slot standard invites.
 // Each card's authority and effective deadline are printed so that a card holding
