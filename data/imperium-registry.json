@@ -85,6 +85,10 @@
     "keep_days": 14,
     "drive_dir": "G:\\My Drive\\Opie HQ\\Jarlsburg\\Imperium Backups"
   },
+  "legion": {
+    "_comment": "Where the slot standard lives. Legion is its own repository as of 2026-11-11; the Imperium consumes it rather than containing it. runners/slots.js is only a resolver. If this directory is missing, the bus degrades to a loud empty bus and the Emperor is told at priority 1 - it does not fail quietly.",
+    "dir": "C:\\Legion"
+  },
   "slots": {
     "_comment": "The Legion bus. `required` names cards that MUST be present and loadable; if one is absent or refused, the whole bus enters restricted mode and runs nothing, and the Emperor is told at priority 1. Required-ness lives here rather than in a card's manifest on purpose: a manifest cannot declare the requirement of a folder that has been deleted, which is the case that matters most.",
     "required": [
