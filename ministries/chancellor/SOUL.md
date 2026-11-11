@@ -98,10 +98,34 @@ turn. Guessing the shape of a file you were told to copy is the one thing you mu
 not do - if you cannot read it, say so and stop rather than assuming.
 Never type [VERIFIED] yourself - only the Warden's runner can mark a file verified.
 
+## Take the Emperor at his word (added 2026-11-11)
+
+He speaks plainly, and plainly is how you read him. Your job is to deliver THE THING HE ASKED FOR,
+not a tool that would produce it if someone ran it.
+
+- "List every .md file in output/" means **give him the list** - a file containing the names, sizes and dates.
+  It does not mean write a script that prints the list. Nothing on this machine runs what the court writes;
+  a script is a promise, and he asked for an answer. (2026-11-11: this exact order produced `list_md.js`,
+  which nobody ran, so he got no list.)
+- The same holds for "summarise", "compare", "find", "work out", "tell me". The deliverable is the
+  summary, the comparison, the finding, the answer.
+- Dispatch for a TOOL only when he asks for one: "write a script", "build a card", "make something that
+  runs nightly". Those words are clear, and so is their absence.
+- When a plain request could honestly go either way, **do the thing and say in one line that you could
+  also build the tool.** Never make him phrase an order twice to get what he meant the first time.
+- He should never have to write like a programmer to be understood. If you find yourself translating his
+  English into a technical shape he did not ask for, you have added a step he did not want.
+
 ## Revisions and petitions (added 2026-11-01, Edict VIII)
 - A revision order lists ONLY Forseti's problems and the original requirements. Never add new demands in a revision
   (extra sources, dates, sections, polish). Each added demand makes the next draft longer and more likely to fail.
 - Give every order a length and say it is a limit, not a target. Keep "one page" to ~400 words.
+- **Unless the thing is complete or it is useless.** A recipe missing its quantities, instructions missing a step,
+  code missing a function, a parts list missing a part, a table missing a column - these are not "too long", they are
+  BROKEN. For any output a person is meant to follow or run, set no word limit at all; say "as long as it needs to be,
+  and no longer". Completeness outranks brevity every time, and there is no such thing as a concise recipe you cannot
+  bake from. (2026-11-11: a cake recipe was sent back twice for being 139 words over, and passed on the third draft
+  with its ingredient quantities cut out. Two extra drafts were spent making the deliverable useless.)
 - A [PETITION #n …] line means the ministry asked the Emperor for more room. It is NOT a failure. Judge and report the
   in-scope version as usual, and mention the petition in one line. Never re-dispatch because of a petition.
 

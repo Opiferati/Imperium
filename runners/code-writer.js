@@ -18,7 +18,24 @@ let gate = null;
 try { gate = require('./gate.js'); } catch (e) { console.warn('[CODE-WRITER] gate.js not loaded — falling back to the folder sandbox:', e.message); }
 
 function normalisePath(rawPath) {
-  let trimmed = rawPath.trim().split('\\n')[0];          // literal \n ends a path
+  let trimmed = rawPath.trim();
+  // A literal backslash-n ends a path — it is how a reply runs its file CONTENT
+  // on from the declaration ("output/list.js\nconst fs = ...").
+  //
+  // 2026-11-11: this used to cut at the FIRST \n, which quietly destroyed any
+  // Windows path whose next segment begins with the letter n, because such a path
+  // CONTAINS that sequence. C:\Imperium\output\node-sqlite-22-to-26.md became
+  // C:\Imperium\output, the write was refused as "a directory, not a file", and a
+  // finished research job with 14 sources was thrown away. notes.md, new-plan.md
+  // and nightly\ were all broken the same way, invisibly, since v2.1.
+  //
+  // So cut only where what comes BEFORE the \n already looks like a finished
+  // filename. Debris follows a complete path; a path segment does not. When in
+  // doubt KEEP the path: a junk filename is visible and costs nothing, while a
+  // truncated one silently discards work that was already paid for.
+  for (let i = trimmed.indexOf('\\n'); i > 0; i = trimmed.indexOf('\\n', i + 2)) {
+    if (/\.[A-Za-z0-9]{1,8}$/.test(trimmed.slice(0, i))) { trimmed = trimmed.slice(0, i); break; }
+  }
   trimmed = trimmed.replace(/[",;)\]}]+$/, '');            // trailing JSON debris
   if (trimmed.startsWith('/')) return path.resolve(trimmed);
   const winMatch = trimmed.match(/^([A-Za-z]):[\\\/](.*)/);

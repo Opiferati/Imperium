@@ -114,6 +114,32 @@ test('trailing JSON debris and a literal backslash-n do not join the path', () =
   assert.strictEqual(cw.normalisePath('output/x.js);'), path.join(R, 'output', 'x.js'));
   assert.strictEqual(cw.normalisePath('output/x.js\\nand more text'),
                      path.join(R, 'output', 'x.js'));
+  assert.strictEqual(cw.normalisePath('C:\\Imperium\\output\\list.js\\nconst fs'),
+                     path.join(R, 'output', 'list.js'), 'content running on from the declaration');
+});
+
+test('a path segment starting with "n" survives — it is not debris', () => {
+  // 2026-11-11, found in anger. The old rule cut at the FIRST literal \n, and a
+  // Windows path CONTAINS that sequence whenever the next segment begins with n.
+  // Intelligence finished a research job with 14 sources, declared
+  // C:\Imperium\output\node-sqlite-22-to-26.md, and the write was refused as
+  // "a directory, not a file" — because the path had been cut back to output.
+  // The work was paid for and thrown away.
+  for (const name of ['node-sqlite-22-to-26.md', 'notes.md', 'new-plan.md', 'nightly-report.md']) {
+    assert.strictEqual(cw.normalisePath(`C:\\Imperium\\output\\${name}`),
+      path.join(R, 'output', name), `${name} must survive the backslash-n rule`);
+  }
+  assert.strictEqual(cw.normalisePath('C:\\Imperium\\output\\nightly\\x.md'),
+    path.join(R, 'output', 'nightly', 'x.md'), 'a whole folder starting with n, too');
+});
+
+test('when in doubt the path is KEPT, because losing work is worse than a junk name', () => {
+  // No extension before the \n, so nothing is cut: the result is an odd filename,
+  // which is visible and harmless. The alternative is a silent truncation onto a
+  // directory, which is what cost a research job.
+  const odd = cw.normalisePath('C:\\Imperium\\output\\LICENSE\\nMIT');
+  assert.ok(odd.startsWith(path.join(R, 'output')), 'still inside output/');
+  assert.notStrictEqual(odd, path.join(R, 'output'), 'and NOT the bare directory');
 });
 
 test('READ: requests are collected, and only at the start of a line', () => {
