@@ -12,6 +12,12 @@ const { DatabaseSync } = require('node:sqlite');
 // The Warden shares these files. Wait up to 5 s for its lock instead of failing ("database is locked", 11-09).
 function openDb(p) { const d = new DatabaseSync(p); d.exec('PRAGMA busy_timeout = 5000'); return d; }
 
+// The Warden's own writer, so an approval can REPLAY what was gated instead of asking
+// an agent to remember it (2026-11-11). Absence degrades: no writer, old behaviour.
+let codeWriter = null;
+try { codeWriter = require('./runners/code-writer.js'); }
+catch (e) { console.warn('[TERMINAL] code-writer not loaded:', e.message); }
+
 const ROOT           = __dirname;
 const BUS_DB_PATH    = path.join(ROOT, 'data', 'message_bus.db');
 const LEDGER_DB_PATH = path.join(ROOT, 'data', 'imperial-ledger.db');
@@ -247,6 +253,40 @@ async function handleRequest(req, res) {
         db.exec(`CREATE TABLE IF NOT EXISTS approvals (id INTEGER PRIMARY KEY AUTOINCREMENT, petition_id INTEGER, task_id TEXT,
                  target TEXT NOT NULL, granted_at TEXT DEFAULT (datetime('now')), used_at TEXT)`);
         db.prepare(`INSERT INTO approvals (petition_id, task_id, target) VALUES (?, ?, ?)`).run(p.id, p.task_id, p.target);
+        // 2026-11-11. This used to dispatch the agent to "write that file again, with the
+        // same content it produced before" - asking a stateless ministry to remember a reply
+        // whose context was gone. On 11-11 Engineering refused to guess and said so, which was
+        // the right answer to the wrong question: the content was never lost. It is sitting in
+        // the message bus. So replay it. No model call, no memory, no chance of a different file
+        // than the one the Emperor approved.
+        if (codeWriter) {
+          try {
+            const said = db.prepare(`SELECT content FROM messages WHERE task_id = ? AND from_agent = ?
+                                     ORDER BY id DESC`).all(p.task_id, p.agent);
+            const needle = String(p.target || '').split('/').pop();
+            const orig = said.find(r => /^[ \t]*(?:\/\/|<!--|#)[ \t]*FILE:/im.test(r.content)
+                                     && (!needle || r.content.includes(needle)));
+            if (orig) {
+              const results = codeWriter.extractAndWrite(orig.content, p.task_id, db);
+              const wrote = results.filter(r => r.success);
+              const still = results.filter(r => r.gated);
+              const line = wrote.length
+                ? `[ASK-FIRST #${p.id} WRITTEN] ${wrote.map(r => `${r.path} (${r.bytes} bytes)`).join(', ')}` +
+                  `, replayed from ${p.agent}'s own reply. Nothing was regenerated.` +
+                  (still.length ? ` Still waiting on approval: ${still.map(r => r.path).join(', ')}.` : '')
+                : `[ASK-FIRST #${p.id}] approved, but nothing was written: ` +
+                  results.map(r => `${r.path} - ${r.error || 'no result'}`).join('; ');
+              db.prepare(`INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
+                          VALUES (?, 'warden', 'emperor', ?, 'queued', 1)`).run(p.task_id, line);
+              db.prepare(`UPDATE petitions SET status='approved', decided_at=datetime('now') WHERE id=?`).run(p.id);
+              json(res, { ok: true, status: 'approved', written: wrote.map(r => r.path) });
+              return;
+            }
+          } catch (e) {
+            console.warn('[TERMINAL] replay failed, falling back to a dispatch:', e.message);
+          }
+        }
+        // Fallback, unchanged: no writer, or the original reply could not be found.
         const gTask = 'TASK-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 15) + '-GATE';
         const gText = `ASK-FIRST #${p.id} APPROVED by the Emperor: ${p.agent} may write ${p.target} once (within 24 hours). ` +
           `Original task: ${p.task_id}. Dispatch ${p.agent} to write that file again, with the same content it produced before.`;

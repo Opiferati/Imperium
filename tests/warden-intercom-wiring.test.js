@@ -52,7 +52,17 @@ test('mail is handed before the model is called, and the voice is read after', (
 });
 
 test('the mail block reaches the prompt the agent is actually given', () => {
-  assert.match(WARDEN, /const systemProm = `\$\{EDICTS\}[^`]*\$\{icomBlock\}`/);
+  // Prompt caching (2026-11-11) split the system prompt into a cached stable prefix and an
+  // uncached tail. The mail MUST be in the tail: it changes every call, and anything that
+  // changes inside the cached prefix means the cache never hits at all.
+  assert.match(WARDEN, /const stableProm\s+= `\$\{EDICTS\}\\n\\n\$\{soul\}\$\{codexBlock\}`/);
+  assert.match(WARDEN, /const volatileProm = `\$\{briefStr\}\$\{ravensBlock\}\$\{icomBlock\}`/);
+  const stable = WARDEN.slice(WARDEN.indexOf('const stableProm'), WARDEN.indexOf('const volatileProm'));
+  for (const v of ['icomBlock', 'ravensBlock', 'briefStr'])
+    assert.ok(!stable.includes(v), `${v} changes every call and must not sit inside the cached prefix`);
+  assert.match(WARDEN, /cache_control: \{ type: 'ephemeral' \}/);
+  const blocks = WARDEN.slice(WARDEN.indexOf('const systemProm = ['), WARDEN.indexOf('const systemProm = [') + 400);
+  assert.ok(blocks.indexOf('stableProm') < blocks.indexOf('volatileProm'), 'stable first, or nothing caches');
 });
 
 test('an Intercom petition is filed as its own kind, not disguised as a scope petition', () => {

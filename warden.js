@@ -540,6 +540,13 @@ function estimateCost(model, inputTok, outputTok) {
 }
 
 // Parse dispatch blocks from Chancellor responses
+// Who a dispatch may be addressed to. registry.agents plus the two ministries the
+// Warden answers for in their own branches, plus the Emperor. Anything else is a
+// typo or a hallucinated colleague, and queueing it only wastes a tick (2026-11-11).
+const DISPATCH_TARGETS = new Set([
+  ...Object.keys(registry.agents || {}), 'emperor', 'ministry-of-treasury', 'ministry-of-skald',
+]);
+
 function parseDispatches(text) {
   const items = [];
   const regex = /```dispatch\s*([\s\S]*?)```/g;
@@ -550,7 +557,10 @@ function parseDispatches(text) {
     if (!tr.parsed) { console.warn('[WARDEN] Malformed dispatch block:', (tr.errors[0] || '').slice(0, 100)); continue; }
     if (tr.repairs.length) console.log(`[WARDEN] dispatch translated (form only): ${tr.repairs.join('; ').slice(0, 200)}`);
     for (const item of tr.value) {
-      if (item && typeof item === 'object' && item.to) items.push(item);
+      if (item && typeof item === 'object' && item.to) {
+        if (DISPATCH_TARGETS.has(item.to)) items.push(item);
+        else console.warn(`[WARDEN] dispatch to "${item.to}" - not an agent of this Empire, skipped`);
+      }
       else console.warn('[WARDEN] Dispatch missing "to" — skipped');
     }
   }
@@ -1143,7 +1153,16 @@ async function tickInner() {
       }
     } catch (e) { console.warn(`[WARDEN] intercom mail for ${msg.to_agent}: ${e.message}`); }
   }
-  const systemProm = `${EDICTS}\n\n${soul}${codexBlock}${briefStr}${ravensBlock}${icomBlock}`;
+  // Prompt caching (2026-11-11). STABLE first and marked: the Edicts, this agent's Soul,
+  // and the Codex change only when a file on disk changes. VOLATILE after the marker and
+  // never cached: the Brief, the Ravens' Report and the mail are rebuilt every call, and
+  // putting them inside the cached prefix would mean the cache never hit at all.
+  const stableProm   = `${EDICTS}\n\n${soul}${codexBlock}`;
+  const volatileProm = `${briefStr}${ravensBlock}${icomBlock}`;
+  const systemProm = [
+    { type: 'text', text: stableProm, cache_control: { type: 'ephemeral' } },
+    ...(volatileProm ? [{ type: 'text', text: volatileProm }] : []),
+  ];
 
   // Build conversation thread
   const thread = buildThread(msg.task_id, msg.to_agent);
