@@ -31,7 +31,7 @@ test('uninitialed means the signed behaviour runs, not the amended one', () => {
   const plain = fresh({ amended: false });
   assert.strictEqual(plain.amended, false);
   // Under the signed spec nobody had declared ears, so a ministry could still be addressed.
-  assert.ok(plain.send(done(SKALD, `agent:${CHAN}`)).ok);
+  assert.ok(plain.send(done(SKALD, `agent:${CHAN}`)).ok);   // the Skald is mute under the roster, not here
   const amd = fresh();
   assert.strictEqual(amd.amended, true);
   assert.match(amd.send(done(SKALD, `agent:${CHAN}`)).why, /has no voice yet/);
@@ -45,9 +45,17 @@ test('the roster matches the amendment table', () => {
   assert.deepStrictEqual(ROSTER.supervisor, { voice: false, ears: true }, 'watches, does not speak');
   for (const a of ['attempts', 'panel', 'testcard'])
     assert.deepStrictEqual(ROSTER[a], { voice: false, ears: false }, a);
-  for (const a of [CHAN, SKALD, 'ministry-of-treasury', 'ministry-of-works',
-                   'ministry-of-intelligence', 'ministry-of-engineering'])
-    assert.deepStrictEqual(ROSTER[a], { voice: false, ears: false }, `${a} waits for step 2`);
+  // Step 2b (2026-11-11) gave ears and a voice to the agents whose code path actually
+  // carries mail. The Chancellor got ears only: he has the bus for orders, and the
+  // Intercom is not an order channel (amendment audit, item 3).
+  assert.deepStrictEqual(ROSTER[CHAN], { voice: false, ears: true }, 'ears, no voice');
+  for (const a of ['ministry-of-works', 'ministry-of-intelligence', 'ministry-of-engineering'])
+    assert.deepStrictEqual(ROSTER[a], { voice: true, ears: true }, a);
+  // The Skald and the Treasury run in their own Warden branches, which never reach the
+  // prompt, so an address to them would be accepted and then never handed - exactly the
+  // silent failure this amendment exists to stop. They stay deaf until their runners are wired.
+  for (const a of [SKALD, 'ministry-of-treasury'])
+    assert.deepStrictEqual(ROSTER[a], { voice: false, ears: false }, `${a} is not wired`);
 });
 
 test('an earless address is refused at send, by name, and counted', () => {
