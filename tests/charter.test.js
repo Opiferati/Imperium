@@ -60,10 +60,16 @@ test('an amendment never trips the lock', () => {
     charter.bodyHash(`${base}\n## AMENDMENT 1 - x\n**Initialed:** Opie\n`));
 });
 
-test("the live INTERCOM spec: signed, and its Amendment 1 is still only a proposal", () => {
-  const fs = require('node:fs');
-  const text = fs.readFileSync(require('node:path').join(__dirname, '..', 'INTERCOM.md'), 'utf8');
-  assert.strictEqual(charter.signed(text).ok, true);
-  assert.strictEqual(charter.bodyHash(text), '42a848a0333f8b5f');
+// The Empire has two signature markers in use: charter.js reads "**Signed:**" (the theses),
+// intercom.js reads "**Signature:**" (its own spec). Each file is locked by the marker it was
+// SIGNED with - rewriting a signed document's marker would change the hash of what was signed -
+// so the right tool is used for each, and this test pins that so the wart cannot bite silently.
+test('the live INTERCOM spec: signed, and its Amendment 1 is still only a proposal', () => {
+  const text = require('node:fs').readFileSync(
+    require('node:path').join(__dirname, '..', 'INTERCOM.md'), 'utf8');
+  assert.strictEqual(charter.signed(text).ok, false, 'charter.js looks for a marker this file does not use');
+  const spec = require('../runners/intercom.js').specCheck(require('node:path').join(__dirname, '..'));
+  assert.deepStrictEqual([spec.ok, spec.who, spec.hash], [true, 'Opie', '42a848a0333f8b5f']);
+  // The amendment check reads only the amendment section, so it works on either marker.
   assert.strictEqual(charter.amendmentInitialed(text, 1), false, 'Opie has not initialed Amendment 1');
 });
