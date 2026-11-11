@@ -281,5 +281,5 @@ Checked against the signed spec, the Empire's laws, the Blackboard, the bus, the
 ### 10. Build order once initialed
 Amendment check first (§8 item 6) · the roster with voice and ears, and refusal at send · handed and acknowledged events, and the unheard report with causes · the Emperor's voice · then step 2's wiring: the mail block, the grammar parser, the petition route, and the alarm verifiers.
 
-**Initialed:** ______________ (Opie)  **Date:** ____________
+**Initialed:** OPIE______________ (Opie)  **Date:** 11/11/2026____________
 *An amendment nobody initialed is a proposal, and a proposal must not change how a run behaves.*

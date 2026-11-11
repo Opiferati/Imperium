@@ -64,12 +64,50 @@ test('an amendment never trips the lock', () => {
 // intercom.js reads "**Signature:**" (its own spec). Each file is locked by the marker it was
 // SIGNED with - rewriting a signed document's marker would change the hash of what was signed -
 // so the right tool is used for each, and this test pins that so the wart cannot bite silently.
-test('the live INTERCOM spec: signed, and its Amendment 1 is still only a proposal', () => {
+test('the live INTERCOM spec is read with its own signature marker', () => {
   const text = require('node:fs').readFileSync(
     require('node:path').join(__dirname, '..', 'INTERCOM.md'), 'utf8');
   assert.strictEqual(charter.signed(text).ok, false, 'charter.js looks for a marker this file does not use');
   const spec = require('../runners/intercom.js').specCheck(require('node:path').join(__dirname, '..'));
   assert.deepStrictEqual([spec.ok, spec.who, spec.hash], [true, 'Opie', '42a848a0333f8b5f']);
-  // The amendment check reads only the amendment section, so it works on either marker.
-  assert.strictEqual(charter.amendmentInitialed(text, 1), false, 'Opie has not initialed Amendment 1');
+});
+
+// -- Fenced code blocks (2026-11-11) -----------------------------------------
+// Found live: INTERCOM Amendment 1 shows an example prompt block containing a line that
+// starts with "##". The lock read that as a new heading, stopped short, and reported the
+// amendment uninitialed minutes after Opie had initialed it. A document must not be able
+// to hide its own signature from the guard.
+test('a ## line inside a code fence does not end the amendment section', () => {
+  const text = [
+    '# A spec', '', '## AMENDMENT 1 - a change', '',
+    'Here is an example:', '', '```', '## YOUR MAIL', '## ANOTHER HEADING-LOOKING LINE', '```', '',
+    '**Initialed:** OPIE  **Date:** 11/11/2026', '',
+  ].join('\n');
+  assert.strictEqual(charter.amendmentInitialed(text, 1), true);
+});
+
+test('a real heading after the fence still ends the section', () => {
+  const text = [
+    '## AMENDMENT 1 - a', '', '```', '## not a heading', '```', '',
+    '## AMENDMENT 2 - b', '**Initialed:** OPIE',
+  ].join('\n');
+  assert.strictEqual(charter.amendmentInitialed(text, 1), false, "amendment 2's initials are not amendment 1's");
+  assert.strictEqual(charter.amendmentInitialed(text, 2), true);
+});
+
+test('masking keeps the line structure, so nothing shifts', () => {
+  const t = 'a\n```\n## x\n```\nb\n';
+  const m = charter.maskFences(t);
+  assert.strictEqual(m.split('\n').length, t.split('\n').length);
+  assert.strictEqual(m.length, t.length);
+  assert.ok(!/\n## /.test(m));
+});
+
+test('the live INTERCOM Amendment 1 is initialed, and the signed body is untouched', () => {
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const text = require('node:fs').readFileSync(path.join(root, 'INTERCOM.md'), 'utf8');
+  assert.strictEqual(charter.amendmentInitialed(text, 1), true, 'Opie initialed it on 2026-11-11');
+  assert.strictEqual(charter.amendmentInitialed(text, 2), false);
+  assert.strictEqual(require('../runners/intercom.js').specCheck(root).hash, '42a848a0333f8b5f');
 });

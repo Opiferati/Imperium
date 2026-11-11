@@ -50,7 +50,17 @@ function signed(text) {
 
 /** Is amendment N present AND initialed? An amendment nobody initialed is a
  *  proposal, and a proposal must not change how a run behaves. */
+/** Markdown fences hide nothing from a regex, so a `## ...` line inside a ``` block
+ *  reads as a new heading and cuts a section short. Found 2026-11-11: INTERCOM
+ *  Amendment 1 shows an example prompt containing such a line, and the lock stopped
+ *  reading before it reached the initials - a document hiding its own signature from
+ *  the guard. Fenced regions are blanked (newlines kept) before any sectioning. */
+function maskFences(text) {
+  return text.replace(/```[\s\S]*?```/g, m => m.replace(/[^\n]/g, ' '));
+}
+
 function amendmentInitialed(text, n) {
+  text = maskFences(text);
   const re = new RegExp(`##+\\s*AMENDMENT\\s+${n}\\b([\\s\\S]*?)(?=\\n##\\s|\\n---|$)`, 'i');
   const m = text.match(re);
   if (!m) return false;
@@ -77,4 +87,4 @@ function check(root, file) {
   return { ok: true, who: s.who, date: s.date, hash: bodyHash(text), text };
 }
 
-module.exports = { SIG_MARK, read, body, bodyHash, signed, amendmentInitialed, check };
+module.exports = { SIG_MARK, read, body, bodyHash, signed, amendmentInitialed, maskFences, check };
