@@ -54,7 +54,17 @@ function amendmentInitialed(text, n) {
   const re = new RegExp(`##+\\s*AMENDMENT\\s+${n}\\b([\\s\\S]*?)(?=\\n##\\s|\\n---|$)`, 'i');
   const m = text.match(re);
   if (!m) return false;
-  return /initial(s|ed)?\s*[:\-]?\s*\S/i.test(m[1]);
+  // 2026-11-10: this used to accept any non-space after the word "initial", which made a BLANK
+  // initials line ("**Initials:** ____  **Date:** ____") read as initialed - the markdown asterisk
+  // counted - and so did prose merely mentioning the word. A guard with a false positive on law 2
+  // is worse than no guard. Now it matches charter.py: an explicit Initials/Initialed field whose
+  // value, stripped of underscores, asterisks, spaces and "(Opie)", still holds a letter or digit.
+  const field = /\*{0,2}initial(?:s|ed)\*{0,2}\s*:\s*([^\n|&]*)/i.exec(m[1]);
+  const val = (field ? field[1] : '')
+    .split(/\*\*Date/i)[0]
+    .replace(/\(Opie\)/ig, '')
+    .replace(/[_*\s]/g, '');
+  return /[A-Za-z0-9]/.test(val);
 }
 
 /** Everything a runner needs in one call, with the reason when it must not run. */

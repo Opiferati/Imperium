@@ -235,5 +235,5 @@ The seal · silent withholding · one question one answer · postage, the reserv
 - **A grammar invites gaming.** A fixed format is easier to probe for what it will accept. Refusals are counted per agent, which is how probing would show.
 - **"Upward is always open" is a free channel.** It cannot reach another agent, so it buys nothing sideways, but it is a way to spend tokens on the Emperor's attention. Counted nightly.
 
-**Initials:** ______________  **Date:** ____________
+**Initialed:** ______________ (Opie)  **Date:** ____________
 *An amendment nobody initialed is a proposal, and a proposal must not change how a run behaves.*
