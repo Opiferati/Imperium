@@ -266,6 +266,11 @@ function sealOf(p) {
  * opts.verifyAlarm(c, ctx)    -> true when the Warden's own records confirm condition c
  * opts.budgetOk()             -> false once the daily dollar budget is spent
  * opts.ranToday(agent, day)   -> true/false/undefined: did this agent run? (unheard causes)
+ * opts.collectsFor            -> the agents something actually calls collect() for. The roster
+ *   says who HAS ears; this says whose ears are wired to anything yet. Found 2026-11-11 in a dry
+ *   run: the initialed roster gives the plain-code runners ears, but nothing collects for them, so
+ *   every alarm produced three "did not run" rows a night. A gap reported as a fault trains the
+ *   Emperor to ignore the report, which is the one thing it cannot survive. Absent = assume all.
  * opts.amended                -> override the Amendment 1 gate (tests only)
  * opts.config, opts.areas, opts.roster -> override the signed values (tests only)
  */
@@ -278,6 +283,7 @@ function intercom(root, file, opts = {}) {
   const verifyAlarm = opts.verifyAlarm || (() => false);   // unverified unless the Warden says so
   const budgetOk    = opts.budgetOk || (() => true);
   const ranToday    = opts.ranToday || (() => undefined);
+  const collectsFor = opts.collectsFor ? new Set(opts.collectsFor) : null;
   // The amendment gate. Uninitialed means the signed behaviour runs, which is what
   // "a proposal must not change how a run behaves" means in code.
   const amended = opts.amended !== undefined ? !!opts.amended
@@ -292,6 +298,7 @@ function intercom(root, file, opts = {}) {
   const canHear  = a => a === 'emperor' ? true : has(a, 'ears');
   const isFree   = a => !!(roster[a] && roster[a].free);
 
+  const specRoot = root;          // kept so every nightly line can carry the spec's hash
   const db = openDb(root, file);
   const insCall = db.prepare('INSERT INTO calls (opener, opened_at, deadline, asked, mode) VALUES (?, ?, ?, ?, ?)');
   const insMsg  = db.prepare('INSERT INTO messages (call_id, author, task, at, day, status) VALUES (?, ?, ?, ?, ?, ?)');
@@ -725,6 +732,7 @@ function intercom(root, file, opts = {}) {
         else if (!deliverable(p))   cause = getMsg.get(p.msg_id).status === 'held'
                                       ? 'condition unmet: the message is held'
                                       : 'condition unmet: still sealed';
+        else if (collectsFor && !collectsFor.has(a)) cause = 'no reading step wired yet';
         else {
           const ran = ranToday(a, day);
           cause = ran === false ? 'did not run'
@@ -784,8 +792,14 @@ function intercom(root, file, opts = {}) {
     const refusals = evs('refused');
     const silence = unheard(day);
 
+    const quiet = !evs('handed').length && !refusals.length && !Object.keys(cuts).length
+      && !silence.unhanded.length && !silence.unacknowledged.length && !stovepipe.length
+      && !evs('bad').length && !evs('held').length && !evs('bell').length
+      && !Object.keys(draws).length && !Object.keys(alarms).length;
+
     return {
-      day, amended, cuts, stovepipe, draws,
+      day, amended, quiet, cuts, stovepipe, draws,
+      spec_hash: specRoot ? specCheck(specRoot).hash : null,
       reserve_left: cfg.reserve + sum('grant', day, 'reserve') - sum('draw', day),
       alarms,
       handed: evs('handed').length,
@@ -815,7 +829,64 @@ function intercom(root, file, opts = {}) {
     amended, roster, config: cfg, close: () => db.close(), _db: db };
 }
 
-module.exports = { intercom, specCheck, sealOf, nyDay, mailBlock, parseIcom,
+// -- The Emperor's nightly line (Amendment 1 section 1) ----------------
+// With silent withholding, an agent that needed a part and never got it will NEVER
+// know. Opie is the only guard against that, so the one thing this must not do is go
+// quiet on a night with something to say: a cheerful silence is exactly what a
+// stovepipe looks like from the outside. Takes report(day) and returns the line.
+/** The line the Emperor actually reads. Everything that needs his attention is named;
+ *  a quiet night says so in one line rather than printing a wall of zeroes. */
+function reportLine(r) {
+  if (r.status === 'error') return `[INTERCOM] PROBLEM: ${r.message}`;
+  if (r.status === 'thin')  return `[INTERCOM] ${r.message} - nothing to report.`;
+  if (r.quiet && !r.unhanded.length && !r.unacknowledged.length)
+    return `[INTERCOM] ${r.day}: silent. Nothing was said, so nothing went unheard.`;
+
+  const L = [`[INTERCOM] ${r.day} - ${r.handed} handed, ${r.acknowledged} acknowledged.`];
+
+  if (r.unacknowledged.length) {
+    L.push(`  HANDED, NO MARK BACK (${r.unacknowledged.length}):`);
+    for (const u of r.unacknowledged.slice(0, 6))
+      L.push(`    part ${u.part} from ${u.from} -> ${u.agent} (${u.code})`);
+    if (r.unacknowledged.length > 6) L.push(`    ...and ${r.unacknowledged.length - 6} more`);
+  }
+  if (r.unhanded.length) {
+    const byCause = {};
+    for (const u of r.unhanded) (byCause[u.cause] = byCause[u.cause] || []).push(`${u.agent}`);
+    L.push(`  NEVER HANDED (${r.unhanded.length}):`);
+    for (const [cause, who] of Object.entries(byCause))
+      L.push(`    ${cause}: ${[...new Set(who)].join(', ')}`);
+  }
+  // The stovepipe alarm: with silent withholding this is the only way it ever surfaces.
+  if (r.stovepipe.length) {
+    L.push(`  STOVEPIPE (${r.stovepipe.length}): someone asked for what had gone to someone else:`);
+    for (const s of r.stovepipe.slice(0, 4))
+      L.push(`    ${s.agent} asked about ${s.topic}; ${s.held_by} had it`);
+  }
+  if (r.bad.length)   L.push(`  BAD SEALS (${r.bad.length}): ${r.bad.map(b => `part ${b.part} (${b.why})`).join('; ')}`);
+  if (r.held.length)  L.push(`  HELD (${r.held.length}): ${r.held.map(h => `msg ${h.msg} ${h.agent} - ${h.why}`).join('; ')}`);
+  if (r.bells.length) L.push(`  RAN OUT OF TURNS (${r.bells.length}): ${r.bells.map(b => `call ${b.call} ${b.agent}`).join('; ')}`);
+
+  const drawn = Object.entries(r.draws || {});
+  if (drawn.length) L.push(`  RESERVE: ${drawn.map(([a, n]) => `${a} drew ${n}`).join(', ')}; ${r.reserve_left} left`);
+  if (r.alarms_verified || r.alarms_unverified)
+    L.push(`  ALARMS: ${r.alarms_verified} verified, ${r.alarms_unverified} unverified`);
+
+  const w = r.watch || {};
+  const watched = [
+    w.refused_no_ears   ? `${w.refused_no_ears} to an agent with no ears` : null,
+    w.refused_no_voice  ? `${w.refused_no_voice} from an agent with no voice` : null,
+    w.refused_citations ? `${w.refused_citations} with a bad citation` : null,
+    w.refused_forwarding ? `${w.refused_forwarding} forwarding attempt(s)` : null,
+    (w.mutual_confirms || []).length ? `${w.mutual_confirms.length} mutual confirmation(s)` : null,
+  ].filter(Boolean);
+  if (watched.length) L.push(`  WATCHED: ${watched.join(', ')}`);
+  if (r.refused) L.push(`  ${r.refused} refusal(s) in all. Spec ${r.spec_hash || 'not read'}, ` +
+                        `amendment ${r.amended ? 'live' : 'a proposal'}.`);
+  return L.join('\n');
+}
+
+module.exports = { intercom, specCheck, sealOf, nyDay, mailBlock, parseIcom, reportLine,
   DEFAULTS, CODES, EMERGENCIES, AREAS, ROSTER, SPEC_FILE, SIG_MARK };
 
 // `node runners/intercom.js spec` - is the spec signed, is Amendment 1 initialed, what is the hash?

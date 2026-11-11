@@ -317,11 +317,30 @@ if (intercomMod && ICOM_CONF.enabled === true) {
     if (!s.ok)           icomWhy = `spec: ${s.why}`;
     else if (!s.amended) icomWhy = 'Amendment 1 is not initialed';
     else {
-      icom = intercomMod.intercom(ROOT);
+      // collectsFor: the agents the Warden actually calls collect() for. Only the generic
+      // agent path below carries mail, so the Skald and the Treasury (own branches) and every
+      // plain-code runner are NOT on it. Their silence is then reported as a known gap rather
+      // than as a fault, which is the difference between a useful report and one he stops reading.
+      icom = intercomMod.intercom(ROOT, null,
+        { verifyAlarm: icomVerify, budgetOk: icomBudgetOk, ranToday: icomRanToday,
+          collectsFor: ['imperial-chancellor', ...MINISTRY_AGENTS] });
       icomWhy = `open (spec ${s.hash}, amendment initialed)`;
     }
   } catch (e) { icomWhy = `could not open: ${e.message}`; }
 }
+
+// -- What the Warden can actually PROVE (Amendment 1 section 8, item 8) --
+// The answers live in runners/icom-facts.js because TWO things need them: the Warden,
+// live during a night, and the Intercom Watch card reading the night afterwards. Two
+// copies would drift, and the first symptom would be the Emperor reading two different
+// numbers for the same night. Declared as functions so they hoist above the Intercom.
+let icomFactsMod = null;
+try { icomFactsMod = require('./runners/icom-facts.js'); }
+catch (e) { console.warn('[WARDEN] icom-facts not loaded:', e.message); }
+const icomFacts = icomFactsMod ? icomFactsMod.makeFacts(ROOT, registry) : null;
+function icomVerify(c)          { return icomFacts ? icomFacts.verifyAlarm(c) : false; }
+function icomRanToday(a, d)     { return icomFacts ? icomFacts.ranToday(a, d) : undefined; }
+function icomBudgetOk()         { return icomFacts ? icomFacts.budgetOk() : true; }
 const MAX_ATTEMPTS  = 1 + (CRITIC_CONF.max_revisions ?? 2);   // per ministry, per task
 
 // ── Petitions (2026-11-01): a ministry may ask the Emperor to go beyond an order's scope ──
@@ -990,6 +1009,18 @@ async function tickInner() {
         console.warn('[WARDEN] backup failed:', out.error || out.reason);
         stmtInsertMessage.run(msg.task_id, 'backup', 'emperor', `[BACKUP] PROBLEM: ${out.error || out.reason}`, msg.priority);
       }
+    }
+    // The Intercom's nightly line (Amendment 1 section 1). It reports from the SAME
+    // configured Intercom the night used, so the Emperor cannot be handed one set of
+    // numbers by the runner and another by something that reopened it with defaults.
+    // With silent withholding this line is the only guard against the wrong agent
+    // being left out, so it is sent even on a night with nothing to say.
+    if (icom && intercomMod) {
+      try {
+        const line = intercomMod.reportLine(icom.report(etDay));
+        console.log(`[WARDEN] ${line.split('\n')[0]}`);
+        stmtInsertMessage.run(msg.task_id, 'warden', 'emperor', line, msg.priority);
+      } catch (e) { console.warn('[WARDEN] intercom report:', e.message); }
     }
     // The Legion bus (2026-11-10): every card in cards/ runs here, in its declared order,
     // under the same supervision as a soldered runner. Nothing above this line knows their
