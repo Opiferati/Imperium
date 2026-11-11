@@ -998,3 +998,59 @@ MINISTRY: testcard | STATUS: complete
 RESULT: [TEST CARD] thin — board unreachable: blackboard: every note needs an author
 COST: $0.00000
 ---
+
+---
+[2026-11-11 03:01] TASK: [CAVALIER II — LATE LOOK] CAVALIER II (Thesis F) — 2026-11-10 close, day 2 of 50
+ID: TASK-202611110300048-LATE
+MINISTRY: cavalier | STATUS: complete
+RESULT: [CAVALIER II — LATE LOOK] CAVALIER II (Thesis F) — 2026-11-10 close, day 2 of 504.   Earth Standard   +1.89%  at 100% → 100%   The Jester       +1.89%  at 100% → 100%   Cavalier II      +1.96%  at  75
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:06] TASK: [ASK-FIRST #1] ministry-of-engineering wants to write cards/diskwatch/card.
+ID: TASK-202611110805030-15TO-GATE1
+MINISTRY: warden | STATUS: complete
+RESULT: [ASK-FIRST #1] ministry-of-engineering wants to write cards/diskwatch/card.json, which is outside output/. Nothing was written. Approve or deny it in the Petitions bar. One approval allows one write o
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:06] TASK: [ASK-FIRST #2] ministry-of-engineering wants to write cards/diskwatch/index.
+ID: TASK-202611110805030-15TO-GATE2
+MINISTRY: warden | STATUS: complete
+RESULT: [ASK-FIRST #2] ministry-of-engineering wants to write cards/diskwatch/index.js, which is outside output/. Nothing was written. Approve or deny it in the Petitions bar. One approval allows one write of
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:06] TASK: Task: Build the Legion bus card "diskwatch" (cards/diskwatch/card.
+ID: TASK-202611110805030-15TO
+MINISTRY: imperial-chancellor | STATUS: complete
+RESULT: Task: Build the Legion bus card "diskwatch" (cards/diskwatch/card.json and cards/diskwatch/index.js) Ministry: ministry-of-engineering Result: [AWAITING APPROVAL] Neither file is written. Both paths a
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:11] TASK: Task: Re-write cards/diskwatch/card.
+ID: TASK-202611110809423-GATE
+MINISTRY: imperial-chancellor | STATUS: complete
+RESULT: Task: Re-write cards/diskwatch/card.json for TASK-202611110805030-15TO (ask-first #1, approved once, within 24 hours) Ministry: ministry-of-engineering Result: [CANNOT COMPLETE] The ministry has no co
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:11] TASK: [BLOCKED: the full original diskwatch order (TASK-202611110805030-15TO) and the 
+ID: TASK-202611110809458-GATE
+MINISTRY: imperial-chancellor | STATUS: complete
+RESULT: [BLOCKED: the full original diskwatch order (TASK-202611110805030-15TO) and the bus card contract, meaning the card.json format or the path to an example card] The ravens show the ASK-FIRST #1 task (
+COST: $0.00000
+---
+
+---
+[2026-11-11 08:13] TASK: [BLOCKED: the contents of cards/testcard/index.
+ID: TASK-202611110812403-5WCN
+MINISTRY: imperial-chancellor | STATUS: complete
+RESULT: [BLOCKED: the contents of cards/testcard/index.js, which the order tells the engineer to read and copy the shape from] The ministries can only write files. They cannot read cards/testcard/index.js, a
+COST: $0.00000
+---
