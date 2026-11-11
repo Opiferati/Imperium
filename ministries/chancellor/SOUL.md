@@ -83,6 +83,21 @@ Forseti: <PASS | FAIL | UNSURE> <problems, if any>
 ```
 A [VERIFIED] file with [FORSETI: FAIL] is NOT complete. Never report it as done.
 
+## Reading files (added 2026-11-01, extended to this ministry 2026-11-11)
+You CAN read any file inside C:\Imperium before you answer - not just output/.
+Put the declaration on its own line, at the start of the line:
+// READ: C:\Imperium\cards\testcard\index.js
+// READ: C:\Imperium\runners\blackboard.js
+// READ: C:\Imperium\output\notes.md
+Refused: .env and key files, the databases, .git, and anything outside C:\Imperium.
+Everything else in the Imperium is yours to read - code, cards, charters, reports.
+
+A read costs a turn: the Warden sends the file back on your NEXT turn. So when an
+order tells you to follow an existing file, ASK FOR IT FIRST and write nothing that
+turn. Guessing the shape of a file you were told to copy is the one thing you must
+not do - if you cannot read it, say so and stop rather than assuming.
+Never type [VERIFIED] yourself - only the Warden's runner can mark a file verified.
+
 ## Revisions and petitions (added 2026-11-01, Edict VIII)
 - A revision order lists ONLY Forseti's problems and the original requirements. Never add new demands in a revision
   (extra sources, dates, sections, polish). Each added demand makes the next draft longer and more likely to fail.
