@@ -22,7 +22,8 @@ function fresh(opts = {}) {
 const done = (from, to, extra = {}) => ({ from, parts: [{ to, code: 'DONE', ...extra }] });
 
 test('the signed defaults are the ones in the spec', () => {
-  assert.deepStrictEqual(DEFAULTS, { base: 5, reserve: 25, drawCap: 10, alarmLimit: 3, lineMax: 200, deadlineMin: 10 });
+  assert.deepStrictEqual(DEFAULTS, { base: 5, reserve: 25, drawCap: 10, alarmLimit: 3, lineMax: 200,
+    deadlineMin: 10, backstopHours: 26 });
   assert.deepStrictEqual(AREAS.prices, [TREAS, 'cavalier', 'ecnalanif', 'ravens-league']);
 });
 
@@ -107,7 +108,7 @@ test('a part is opened once: seen again after opening is Bad', () => {
   assert.ok(ic.open(CHAN, r.parts[0]).ok);
   const again = ic.open(CHAN, r.parts[0]);
   assert.strictEqual(again.bad, true);
-  assert.match(again.why, /seen again/);
+  assert.match(again.why, /handed again/);
 });
 
 test('no forwarding: only the Warden cuts a fresh copy, and it keeps the original author', () => {
@@ -310,7 +311,7 @@ test('log before deliver: the logged row always precedes the open', () => {
   const r = ic.send(done(SKALD, `agent:${CHAN}`));
   ic.open(CHAN, r.parts[0]);
   const logged = ic.events('logged').find(e => e.msg_id === r.id);
-  const opened = ic.events('opened').find(e => e.part_id === r.parts[0]);
+  const opened = ic.events('handed').find(e => e.part_id === r.parts[0]);
   assert.ok(logged && opened && logged.id < opened.id);
 });
 

@@ -4,15 +4,17 @@
 // between the Empire's agents. A part, not a runner. STANDALONE: nothing
 // in the Warden calls this yet, by design (INTERCOM.md, section 17).
 //
-// Built from INTERCOM.md, signed by Opie on 2026-11-10, body hash
-// 42a848a0333f8b5f. Every rule below traces to a section of that spec.
+// Built from INTERCOM.md, signed by Opie 2026-11-10, body hash
+// 42a848a0333f8b5f, plus AMENDMENT 1, initialed by Opie 2026-11-11.
+// Every rule below traces to a section of one of those two.
 //
 //   send(msg)                 -> {ok, id, call, parts, held, stamps, draws} | {ok:false, why}
-//   pending(agent)            -> part ids this agent may open now
-//   open(agent, id, {task})   -> {ok, part} | {ok:false, why, bad?}
-//   collect(agent, {task})    -> the agent's cut copy (opens everything pending)
-//   recopy(id, agent, by)     -> a fresh sealed copy, cut by the Warden only
-//   grant / release / unseal  -> the Emperor's and the Warden's levers
+//   pending(agent)            -> part ids this agent may be handed now
+//   hand(agent, id, {task})   -> {ok, part} | {ok:false, why, bad?}     (was: open)
+//   collect(agent, {task})    -> the agent's cut copy (hands everything pending)
+//   acknowledge(agent, ids)   -> the agent's own mark that it read them
+//   runEnded(agent, by)       -> a turn-deadline call has run out of turns
+//   recopy / grant / release / unseal  -> the Warden's and Emperor's levers
 //   tally(day)                -> the crier's Open tallies
 //   report(day)               -> the Emperor's nightly report, as data
 //
@@ -20,13 +22,14 @@
 // not try to prevent every mistake. Every mistake must be cheap, visible and
 // traceable. So nothing here throws at an agent: a refusal is a logged row.
 //
-// APPEND-ONLY. Rows are only ever inserted. A part's state (sealed, opened,
-// bad), a message's release and every stamp are EVENTS, so the history of what
-// happened is the data. Its own database file, so a broken Intercom cannot
-// take down the message bus or the Blackboard.
+// AMENDMENT 1 (2026-11-11) in one line: the Warden CARRIES, it does not read.
+// Delivery reads the envelope and hashes the content to check its seal; it
+// never branches on what the content says. "Handed" is the carrier's act,
+// "acknowledged" is the agent's own. Unheard is the gap between them.
 //
-// Its caller is the Warden. An agent never holds this object: the Warden opens
-// parts on an agent's behalf, which is the moment "opened" is recorded.
+// APPEND-ONLY. Rows are only ever inserted. A part's state is a sequence of
+// EVENTS, so the history of what happened is the data. Its own database file,
+// so a broken Intercom cannot take down the message bus or the Blackboard.
 // ----------------------------------------------------------------------
 const { DatabaseSync } = require('node:sqlite');
 const path   = require('node:path');
@@ -38,7 +41,8 @@ const SIG_MARK  = '**Signature:**';
 const BUSY_MS   = 5000;
 
 // Section 18, accepted at signing. Change these only by a dated amendment.
-const DEFAULTS = { base: 5, reserve: 25, drawCap: 10, alarmLimit: 3, lineMax: 200, deadlineMin: 10 };
+const DEFAULTS = { base: 5, reserve: 25, drawCap: 10, alarmLimit: 3, lineMax: 200,
+                   deadlineMin: 10, backstopHours: 26 };
 
 // Section 6. The whole vocabulary. Agents cannot send free sentences.
 const CODES = ['ASK', 'ANSWER', 'CONFIRM', 'DISAGREE', 'NEED SOURCE', 'STALE', 'THIN',
@@ -59,6 +63,31 @@ const AREAS = {
   measurement: ['attempts', 'panel'],
 };
 
+// AMENDMENT 1 section 3. What each name actually HAS. An address to an agent with
+// no ears is refused when the message is sent - loudly at the mouth, rather than
+// silently in a tray nobody ever reaches into.
+//   voice: may send.      ears: may be handed a part.      free: pays no postage.
+// The six AI agents are mute and deaf until step 2 wires the prompt grammar; flipping
+// them is step 2's visible act, not something this module assumes.
+const ROSTER = {
+  emperor:                    { voice: true,  ears: true,  free: true },
+  'imperial-chancellor':      { voice: false, ears: false },
+  'ministry-of-intelligence': { voice: false, ears: false },
+  'ministry-of-works':        { voice: false, ears: false },
+  'ministry-of-engineering':  { voice: false, ears: false },
+  'ministry-of-skald':        { voice: false, ears: false },
+  'ministry-of-treasury':     { voice: false, ears: false },
+  cavalier:                   { voice: true,  ears: true },
+  ecnalanif:                  { voice: true,  ears: true },
+  'ravens-league':            { voice: true,  ears: true },
+  evidence:                   { voice: true,  ears: true },
+  backup:                     { voice: true,  ears: true },
+  supervisor:                 { voice: false, ears: true },   // watches; does not speak
+  attempts:                   { voice: false, ears: false },  // cards speak to the board,
+  panel:                      { voice: false, ears: false },  // never to the post
+  testcard:                   { voice: false, ears: false },
+};
+
 const LEVELS   = ['open', 'addressed', 'sealed'];
 // Section 1: only board notes, logged records or frozen evidence. Never a file an agent wrote itself.
 const CITE_RE  = /^(note:\d+|log:[A-Za-z0-9._\/-]+|evidence:[A-Za-z0-9._\/-]+)$/;
@@ -68,7 +97,8 @@ const UNTIL_RE = /^[a-z0-9]+([:._-][a-z0-9]+)*$/;
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS calls (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  opener TEXT NOT NULL, opened_at TEXT NOT NULL, deadline TEXT NOT NULL, asked TEXT NOT NULL
+  opener TEXT NOT NULL, opened_at TEXT NOT NULL, deadline TEXT NOT NULL, asked TEXT NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'clock'
 );
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,26 +137,34 @@ function openDb(root, file) {
   db.exec(`PRAGMA busy_timeout = ${BUSY_MS}`);
   try { db.exec('PRAGMA journal_mode = WAL'); } catch { /* default journal is fine */ }
   db.exec(SCHEMA);
+  // A database written before Amendment 1 has no `mode` column. Add it rather than
+  // refuse to open: the rows already there were all clock-deadline calls.
+  try { db.exec("ALTER TABLE calls ADD COLUMN mode TEXT NOT NULL DEFAULT 'clock'"); }
+  catch { /* already there */ }
   return db;
 }
 
-/** Law 1 and 2 for the spec itself: is INTERCOM.md signed, and what is the hash
- *  of the body that was signed? The signature line is outside the hash, so
- *  signing does not change the hash of what was signed. */
+/** Laws 1 and 2 for the spec itself: is INTERCOM.md signed, what is the hash of the
+ *  body that was signed, and has Opie initialed Amendment 1? The signature line is
+ *  outside the hash, so signing does not change the hash of what was signed, and
+ *  amendments live after it so they never trip the lock either.
+ *  Amendment 1 section 8, item 6: amended behaviour must not run uninitialed. */
 function specCheck(root, file = SPEC_FILE) {
   let text;
   try { text = fs.readFileSync(path.join(root, file), 'utf8'); }
-  catch (e) { return { ok: false, why: `spec unreadable: ${e.message}` }; }
+  catch (e) { return { ok: false, why: `spec unreadable: ${e.message}`, amended: false }; }
   const i = text.indexOf(SIG_MARK);
   const hash = sha(i < 0 ? text : text.slice(0, i)).slice(0, 16);
-  if (i < 0) return { ok: false, why: 'no signature line in the spec', hash };
+  let amended = false;
+  try { amended = require('./charter.js').amendmentInitialed(text, 1); } catch { /* no lock, no amendment */ }
+  if (i < 0) return { ok: false, why: 'no signature line in the spec', hash, amended };
   const end = text.indexOf('\n', i);
   const line = text.slice(i + SIG_MARK.length, end < 0 ? undefined : end);
   const who = (line.split('**Date:**')[0] || '').replace(/[_\s]/g, '');
-  if (!who) return { ok: false, why: 'the spec is unsigned', hash };
+  if (!who) return { ok: false, why: 'the spec is unsigned', hash, amended };
   const date = line.includes('**Date:**') ? line.split('**Date:**')[1].replace(/[_\s]/g, '') : '';
-  if (!date) return { ok: false, why: `signed by ${who} but undated`, hash };
-  return { ok: true, who, date, hash };
+  if (!date) return { ok: false, why: `signed by ${who} but undated`, hash, amended };
+  return { ok: true, who, date, hash, amended };
 }
 
 function parseTo(to) {
@@ -148,18 +186,35 @@ function sealOf(p) {
  * opts.now()                  -> Date (injected so tests own the clock)
  * opts.verifyAlarm(c, ctx)    -> true when the Warden's own records confirm condition c
  * opts.budgetOk()             -> false once the daily dollar budget is spent
- * opts.config, opts.areas     -> override the signed defaults (tests only)
+ * opts.ranToday(agent, day)   -> true/false/undefined: did this agent run? (unheard causes)
+ * opts.amended                -> override the Amendment 1 gate (tests only)
+ * opts.config, opts.areas, opts.roster -> override the signed values (tests only)
  */
 function intercom(root, file, opts = {}) {
   const cfg    = { ...DEFAULTS, ...(opts.config || {}) };
   const areas  = opts.areas || AREAS;
-  const roster = new Set(Object.values(areas).flat());
+  const roster = opts.roster || ROSTER;
+  const names  = new Set([...Object.keys(roster), ...Object.values(areas).flat()]);
   const now    = opts.now || (() => new Date());
   const verifyAlarm = opts.verifyAlarm || (() => false);   // unverified unless the Warden says so
   const budgetOk    = opts.budgetOk || (() => true);
-  const db = openDb(root, file);
+  const ranToday    = opts.ranToday || (() => undefined);
+  // The amendment gate. Uninitialed means the signed behaviour runs, which is what
+  // "a proposal must not change how a run behaves" means in code.
+  const amended = opts.amended !== undefined ? !!opts.amended
+    : (root ? !!specCheck(root).amended : false);
 
-  const insCall = db.prepare('INSERT INTO calls (opener, opened_at, deadline, asked) VALUES (?, ?, ?, ?)');
+  const has = (agent, what) => {
+    const r = roster[agent];
+    if (!r) return !amended;          // unknown name: before the amendment nobody declared anything
+    return !amended || !!r[what];
+  };
+  const canSpeak = a => a === 'emperor' ? true : has(a, 'voice');
+  const canHear  = a => a === 'emperor' ? true : has(a, 'ears');
+  const isFree   = a => !!(roster[a] && roster[a].free);
+
+  const db = openDb(root, file);
+  const insCall = db.prepare('INSERT INTO calls (opener, opened_at, deadline, asked, mode) VALUES (?, ?, ?, ?, ?)');
   const insMsg  = db.prepare('INSERT INTO messages (call_id, author, task, at, day, status) VALUES (?, ?, ?, ?, ?, ?)');
   const insPart = db.prepare(`INSERT INTO parts (msg_id, call_id, idx, author, to_kind, to_name, level, untrusted,
       code, line, number, cite, topic, condition, verified, until, origin, seal, at, day)
@@ -173,16 +228,18 @@ function intercom(root, file, opts = {}) {
     WHERE m.call_id = ? AND p.code = 'ANSWER'`);
   const qEvMsg    = db.prepare('SELECT 1 FROM events WHERE kind = ? AND msg_id = ? LIMIT 1');
   const qEvPart   = db.prepare('SELECT 1 FROM events WHERE kind = ? AND part_id = ? LIMIT 1');
-  const qOpenedBy = db.prepare(`SELECT 1 FROM events WHERE kind = 'opened' AND part_id = ? AND agent = ? LIMIT 1`);
+  const qByAgent  = db.prepare('SELECT 1 FROM events WHERE kind = ? AND part_id = ? AND agent = ? LIMIT 1');
   const qUnsealed = db.prepare(`SELECT 1 FROM events WHERE kind = 'unsealed' AND detail = ? LIMIT 1`);
   const qExposed  = db.prepare(`SELECT 1 FROM events WHERE kind = 'exposed' AND agent = ? AND detail = ? LIMIT 1`);
+  const qBell     = db.prepare(`SELECT 1 FROM events WHERE kind = 'bell' AND call_id = ? AND agent = ? LIMIT 1`);
   const qSumAgent = db.prepare('SELECT COALESCE(SUM(n), 0) s FROM events WHERE kind = ? AND day = ? AND agent = ?');
   const qSumAll   = db.prepare('SELECT COALESCE(SUM(n), 0) s FROM events WHERE kind = ? AND day = ?');
   const qAlarmDup = db.prepare(`SELECT 1 FROM parts WHERE author = ? AND code = 'ALARM' AND condition = ? AND day = ? LIMIT 1`);
   const qAlarmsToday = db.prepare(`SELECT COUNT(*) c FROM parts WHERE author = ? AND code = 'ALARM' AND day = ?`);
-  // Forwarding (section 3): a free-text line this agent opened from somebody else, sent on as its own.
-  const qOpenedLine = db.prepare(`SELECT 1 FROM events e JOIN parts p ON p.id = e.part_id
-    WHERE e.kind = 'opened' AND e.agent = ? AND p.line = ? AND p.author != ? LIMIT 1`);
+  const qOpenTurnCalls = db.prepare(`SELECT * FROM calls WHERE mode = 'turn'`);
+  // Forwarding (section 3): a free-text line this agent was handed from somebody else, sent on as its own.
+  const qHandedLine = db.prepare(`SELECT 1 FROM events e JOIN parts p ON p.id = e.part_id
+    WHERE e.kind = 'handed' AND e.agent = ? AND p.line = ? AND p.author != ? LIMIT 1`);
 
   function ev(kind, f = {}) {
     const at = now();
@@ -196,13 +253,16 @@ function intercom(root, file, opts = {}) {
   }
   const scopeOf = (task, day) => (task ? `task:${task}` : `day:${day}`);
 
-  /** Who may hear this part. Alarms go UP, never sideways (section 8, rule 4). */
+  /** Who may hear this part. Alarms go UP, never sideways (section 8, rule 4).
+   *  Under Amendment 1, an agent with no ears is not a recipient at all. */
   function recipients(p) {
-    if (p.code === 'ALARM') return ['emperor', ...(areas.health || [])].filter(a => a !== p.author);
-    if (p.to_kind === 'emperor') return ['emperor'];
-    if (p.to_kind === 'agent') return [p.to_name];
-    if (p.to_kind === 'area') return (areas[p.to_name] || []).filter(a => a !== p.author);
-    return [...roster].filter(a => a !== p.author);
+    let list;
+    if (p.code === 'ALARM')            list = ['emperor', ...(areas.health || [])];
+    else if (p.to_kind === 'emperor')  list = ['emperor'];
+    else if (p.to_kind === 'agent')    list = [p.to_name];
+    else if (p.to_kind === 'area')     list = (areas[p.to_name] || []);
+    else                               list = [...names];
+    return list.filter(a => a !== p.author && canHear(a));
   }
 
   /** Validate one part and put it in stored shape. Returns {part} or {why}. */
@@ -223,9 +283,13 @@ function intercom(root, file, opts = {}) {
     } else if (code !== 'ANSWER') {            // an ANSWER is addressed by its call, not by its sender
       const to = parseTo(r.to);
       if (!to) return { why: `bad address ${JSON.stringify(r.to ?? null)}` };
-      if (to.kind === 'agent' && !roster.has(to.name)) return { why: `unknown agent ${to.name}` };
+      if (to.kind === 'agent' && !names.has(to.name)) return { why: `unknown agent ${to.name}` };
       if (to.kind === 'area' && !areas[to.name]) return { why: `unknown area ${to.name}` };
       if (to.kind === 'agent' && to.name === from) return { why: 'a part cannot be addressed to its own author' };
+      // AMENDMENT 1 section 3: refused at the mouth, naming the agent.
+      if (to.kind === 'agent' && !canHear(to.name)) return { why: `${to.name} has no ears yet` };
+      if (to.kind === 'area' && !(areas[to.name] || []).some(a => a !== from && canHear(a)))
+        return { why: `nobody in area ${to.name} has ears yet` };
       p.to_kind = to.kind; p.to_name = to.name;
     }
 
@@ -260,11 +324,16 @@ function intercom(root, file, opts = {}) {
   }
 
   const answeredBy = id => qAnswered.all(id).map(r => r.author);
+  /** A turn-deadline call is out of time when the asked agent's run has ended (AMENDMENT 1 §7). */
+  function outOfTime(call, agent) {
+    if (now().toISOString() > call.deadline) return true;            // the 26-hour backstop
+    return call.mode === 'turn' && !!qBell.get(call.id, agent);
+  }
   function callComplete(id) {
     const c = getCall.get(id);
     if (!c) return false;
     const got = answeredBy(id);
-    return JSON.parse(c.asked).every(a => got.includes(a)) || now().toISOString() > c.deadline;
+    return JSON.parse(c.asked).every(a => got.includes(a) || outOfTime(c, a));
   }
   const sum = (kind, day, agent) =>
     Number(agent === undefined ? qSumAll.get(kind, day).s : qSumAgent.get(kind, day, agent).s);
@@ -274,13 +343,16 @@ function intercom(root, file, opts = {}) {
     const at = now(), day = nyDay(at), iso = at.toISOString();
     const from = msg.from;
     if (!from) return refuse(null, 'no author');
-    if (!roster.has(from)) return refuse(from, `unknown sender ${from}`);
-    if (!budgetOk()) return refuse(from, 'daily budget spent');
+    if (!names.has(from)) return refuse(from, `unknown sender ${from}`);
+    if (!canSpeak(from)) return refuse(from, `${from} has no voice yet`);
+    const free = isFree(from);                       // the Emperor pays nothing and is never held
+    if (!free && !budgetOk()) return refuse(from, 'daily budget spent');
     const raw = Array.isArray(msg.parts) ? msg.parts : [];
     if (!raw.length) return refuse(from, 'a message needs at least one part');
     const task = msg.task ? String(msg.task) : null;
 
-    // The stamp follows the reader (section 3): exposed to Untrusted this task -> everything is Untrusted.
+    // The stamp follows the reader (section 3): handed an Untrusted part this task ->
+    // everything this agent sends for the rest of it is Untrusted, whatever the wording.
     const taint = !!qExposed.get(from, scopeOf(task, day));
     const parts = [];
     for (const [i, r] of raw.entries()) {
@@ -295,14 +367,14 @@ function intercom(root, file, opts = {}) {
     if (asks.length > 1) return refuse(from, 'one question per message');
     if (answers.length > 1) return refuse(from, 'one answer per message');
     if (asks.length && answers.length) return refuse(from, 'a message asks or answers, not both');
-    let call = null, asked = null;
+    let call = null, asked = null, mode = 'clock';
     if (answers.length) {
       call = msg.call != null ? getCall.get(Number(msg.call)) : null;
       if (!call) return refuse(from, 'an ANSWER must name the call it answers');
       const expected = JSON.parse(call.asked);
       if (!expected.includes(from)) return refuse(from, 'that question was not asked of this agent');
       if (answeredBy(call.id).includes(from)) return refuse(from, 'the line is closed: this call already has its answer');
-      if (iso > call.deadline) {
+      if (outOfTime(call, from)) {
         ev('bell', { agent: from, call: call.id, detail: 'answer arrived after the deadline' });
         return refuse(from, 'deadline passed');
       }
@@ -314,11 +386,14 @@ function intercom(root, file, opts = {}) {
     if (asks.length) {
       asked = recipients(asks[0]).filter(a => a !== 'emperor');
       if (!asked.length) return refuse(from, 'nobody to ask at that address');
+      // AMENDMENT 1 §7: agents run once a night, so a wall clock would expire nearly every
+      // call unanswered. A turn call is due by the end of the asked agent's next run.
+      mode = (amended && msg.dueNextRun) ? 'turn' : 'clock';
     }
 
     // No forwarding, ever (section 3). If B needs what A received, B asks the Warden for a fresh copy.
     for (const p of parts)
-      if (p.line && qOpenedLine.get(from, p.line, from))
+      if (p.line && qHandedLine.get(from, p.line, from))
         return refuse(from, `part ${p.idx + 1}: forwarding is not allowed; ask the Warden for a fresh copy`);
 
     // Alarms carry conditions (section 8).
@@ -331,13 +406,14 @@ function intercom(root, file, opts = {}) {
       a.verified = verifyAlarm(a.condition, { from, task }) ? 1 : 0;
     }
     let holdWhy = null;
-    if (alarms.length && Number(qAlarmsToday.get(from, day).c) + alarms.length > cfg.alarmLimit)
+    if (!free && alarms.length && Number(qAlarmsToday.get(from, day).c) + alarms.length > cfg.alarmLimit)
       holdWhy = `alarm limit of ${cfg.alarmLimit} a day reached`;
 
-    // Postage (section 7). Verified alarms and reports to the Emperor are free.
-    const cost = parts.filter(p => !(p.code === 'ALARM' && p.verified) && p.to_kind !== 'emperor').length;
+    // Postage (section 7). Verified alarms, reports to the Emperor, and the Emperor himself are free.
+    const cost = free ? 0
+      : parts.filter(p => !(p.code === 'ALARM' && p.verified) && p.to_kind !== 'emperor').length;
     let stamps = 0, draws = 0;
-    if (!holdWhy) {
+    if (!holdWhy && cost) {
       const baseLeft = Math.max(0, cfg.base + sum('grant', day, from) - sum('stamp', day, from));
       stamps = Math.min(cost, baseLeft);
       const need = cost - stamps;
@@ -355,8 +431,9 @@ function intercom(root, file, opts = {}) {
       let callId = call ? call.id : null;
       if (asks.length) {
         const mins = Number(msg.deadlineMin) > 0 ? Number(msg.deadlineMin) : cfg.deadlineMin;
-        callId = Number(insCall.run(from, iso, new Date(at.getTime() + mins * 60000).toISOString(),
-          JSON.stringify(asked)).lastInsertRowid);
+        const due = mode === 'turn' ? at.getTime() + cfg.backstopHours * 3600000 : at.getTime() + mins * 60000;
+        callId = Number(insCall.run(from, iso, new Date(due).toISOString(),
+          JSON.stringify(asked), mode).lastInsertRowid);
       }
       const msgId = Number(insMsg.run(callId, from, task, iso, day, holdWhy ? 'held' : 'sent').lastInsertRowid);
       const ids = [];
@@ -377,7 +454,8 @@ function intercom(root, file, opts = {}) {
           detail: `Message ${msgId} from ${from} is held: ${holdWhy}. Grant stamps or release it.` });
       }
       db.exec('COMMIT');
-      return { ok: true, id: msgId, call: callId, parts: ids, held: !!holdWhy, why: holdWhy || undefined, stamps, draws };
+      return { ok: true, id: msgId, call: callId, mode, parts: ids,
+               held: !!holdWhy, why: holdWhy || undefined, stamps, draws };
     } catch (e) {
       db.exec('ROLLBACK');
       throw e;
@@ -407,7 +485,10 @@ function intercom(root, file, opts = {}) {
     return v;
   }
 
-  function open(agent, partId, ctx = {}) {
+  /** HANDED (Amendment 1 §1): the carrier places the part in front of the agent. The seal is
+   *  checked by hashing the bytes and the address is read; nothing here branches on what the
+   *  content SAYS. This is the moment the Warden can honestly record, because it is its own act. */
+  function hand(agent, partId, ctx = {}) {
     const p = getPart.get(Number(partId));
     if (!p) return refuse(agent, `no part ${partId}`);
     const bad = why => {
@@ -417,18 +498,33 @@ function intercom(root, file, opts = {}) {
     };
     if (isBad(p.id)) return refuse(agent, `part ${p.id} is marked Bad`);
     if (sealOf(p) !== p.seal) return bad('fingerprint does not match');
-    if (!recipients(p).includes(agent)) return bad('opened by the wrong party');
+    if (!recipients(p).includes(agent)) return bad('handed to the wrong party');
     if (!deliverable(p)) return refuse(agent, `part ${p.id} is not deliverable yet`);
-    if (qOpenedBy.get(p.id, agent)) return bad('seen again after opening');
+    if (qByAgent.get('handed', p.id, agent)) return bad('handed again after it was already handed');
     const scope = scopeOf(ctx.task ? String(ctx.task) : null, nyDay(now()));
-    ev('opened', { agent, part: p.id, msg: p.msg_id, call: p.call_id, detail: scope });
+    ev('handed', { agent, part: p.id, msg: p.msg_id, call: p.call_id, detail: scope });
     if (p.untrusted) ev('exposed', { agent, part: p.id, detail: scope });
     return { ok: true, part: view(p) };
   }
 
+  /** ACKNOWLEDGED (Amendment 1 §1): the agent's OWN mark that it read the part. Law 5 applies -
+   *  this is never inferred, never defaulted, never filled in because delivery probably worked.
+   *  Acknowledging something never handed to you is refused: that would be a receipt for nothing. */
+  function acknowledge(agent, partIds) {
+    const ids = (Array.isArray(partIds) ? partIds : [partIds]).map(Number);
+    const marked = [], ignored = [];
+    for (const id of ids) {
+      if (!qByAgent.get('handed', id, agent)) { ignored.push(id); refuse(agent, `cannot acknowledge part ${id}: it was never handed to ${agent}`); continue; }
+      if (qByAgent.get('acknowledged', id, agent)) { ignored.push(id); continue; }   // repeating a SEEN mark is harmless
+      ev('acknowledged', { agent, part: id });
+      marked.push(id);
+    }
+    return { ok: true, marked, ignored };
+  }
+
   function pending(agent) {
     return db.prepare(`SELECT * FROM parts WHERE level != 'open'
-        AND id NOT IN (SELECT part_id FROM events WHERE kind = 'opened' AND agent = ? AND part_id IS NOT NULL)
+        AND id NOT IN (SELECT part_id FROM events WHERE kind = 'handed' AND agent = ? AND part_id IS NOT NULL)
         AND id NOT IN (SELECT part_id FROM events WHERE kind = 'bad' AND part_id IS NOT NULL)
         ORDER BY id`).all(agent)
       .filter(p => recipients(p).includes(agent) && deliverable(p))
@@ -437,7 +533,20 @@ function intercom(root, file, opts = {}) {
 
   /** The agent's cut copy: only its parts, with no count of anything withheld. */
   function collect(agent, ctx = {}) {
-    return pending(agent).map(id => open(agent, id, ctx)).filter(r => r.ok).map(r => r.part);
+    return pending(agent).map(id => hand(agent, id, ctx)).filter(r => r.ok).map(r => r.part);
+  }
+
+  /** A turn-deadline call runs out of turns when the asked agent's run ends (Amendment 1 §7). */
+  function runEnded(agent, by) {
+    if (by !== 'warden' && by !== 'emperor') return refuse(by || null, 'only the Warden closes a turn');
+    let rung = 0;
+    for (const c of qOpenTurnCalls.all()) {
+      if (!JSON.parse(c.asked).includes(agent)) continue;
+      if (answeredBy(c.id).includes(agent) || qBell.get(c.id, agent)) continue;
+      ev('bell', { agent, call: c.id, detail: `run ended with no answer from ${agent}` });
+      rung++;
+    }
+    return { ok: true, rung };
   }
 
   // ---------------------------------------------- the Warden's and Emperor's levers
@@ -447,7 +556,8 @@ function intercom(root, file, opts = {}) {
     const o = getPart.get(Number(partId));
     if (!o) return refuse(by, `no part ${partId}`);
     if (o.code === 'ALARM') return refuse(by, 'alarms are not recopied');
-    if (toAgent !== 'emperor' && !roster.has(toAgent)) return refuse(by, `unknown agent ${toAgent}`);
+    if (toAgent !== 'emperor' && !names.has(toAgent)) return refuse(by, `unknown agent ${toAgent}`);
+    if (!canHear(toAgent)) return refuse(by, `${toAgent} has no ears yet`);
     const at = now(), iso = at.toISOString(), day = nyDay(at);
     const msgId = Number(insMsg.run(null, o.author, null, iso, day, 'sent').lastInsertRowid);
     const p = { ...o, msg_id: msgId, idx: 0, to_kind: toAgent === 'emperor' ? 'emperor' : 'agent',
@@ -462,7 +572,7 @@ function intercom(root, file, opts = {}) {
   /** Emperor's grant (section 7): more stamps for one agent, or for the reserve, today. */
   function grant(target, n, by) {
     if (by !== 'emperor') return refuse(by || null, 'only the Emperor grants stamps');
-    if (target !== 'reserve' && !roster.has(target)) return refuse(by, `unknown agent ${target}`);
+    if (target !== 'reserve' && !names.has(target)) return refuse(by, `unknown agent ${target}`);
     if (!Number.isInteger(n) || n <= 0) return refuse(by, 'a grant is a whole number of stamps');
     ev('grant', { agent: target, n, detail: `granted by ${by}` });
     return { ok: true };
@@ -498,7 +608,7 @@ function intercom(root, file, opts = {}) {
       const scope = p.to_kind === 'area' ? `area ${p.to_name}` : 'the Empire';
       const key = `${scope}|${p.topic || ''}`;
       if (!groups.has(key)) groups.set(key, { scope, topic: p.topic,
-        of: p.to_kind === 'area' ? areas[p.to_name].length : roster.size, voices: new Map() });
+        of: p.to_kind === 'area' ? areas[p.to_name].length : names.size, voices: new Map() });
       groups.get(key).voices.set(p.author, p.code);
     }
     const out = [];
@@ -510,6 +620,42 @@ function intercom(root, file, opts = {}) {
           text: `${n} of ${g.of} in ${g.scope} flagged ${code}${g.topic ? ` on ${g.topic}` : ''}` });
     }
     return out;
+  }
+
+  // ------------------------------------------------------------- unheard
+  /** AMENDMENT 1 §1-2. Two different silences, and the cause of each named, because a bare
+   *  count cannot tell a sleeping agent from an ignoring one.
+   *    unhanded        - nobody ever put it in front of them
+   *    unacknowledged  - it was handed over and no mark came back
+   *  A cause this module cannot know from its own records says so, rather than guessing. */
+  function unheard(day = nyDay(now())) {
+    const rows = db.prepare(`SELECT * FROM parts WHERE day = ? AND level != 'open' ORDER BY id`).all(day);
+    const unhanded = [], unacknowledged = [];
+    for (const p of rows) {
+      for (const a of recipients(p)) {
+        if (a === 'emperor') continue;                       // the Emperor is not an agent with a run
+        if (qByAgent.get('handed', p.id, a)) {
+          if (!qByAgent.get('acknowledged', p.id, a))
+            unacknowledged.push({ part: p.id, agent: a, from: p.author, code: p.code,
+              cause: 'handed, no mark came back' });
+          continue;
+        }
+        let cause;
+        if (isBad(p.id))            cause = 'Bad: a wrong-party hand spoiled it';
+        else if (!canHear(a))       cause = 'no ears';
+        else if (!deliverable(p))   cause = getMsg.get(p.msg_id).status === 'held'
+                                      ? 'condition unmet: the message is held'
+                                      : 'condition unmet: still sealed';
+        else {
+          const ran = ranToday(a, day);
+          cause = ran === false ? 'did not run'
+                : ran === true  ? 'ran, nothing handed'
+                : 'unknown: no run record for this agent';
+        }
+        unhanded.push({ part: p.id, agent: a, from: p.author, code: p.code, cause });
+      }
+    }
+    return { day, unhanded, unacknowledged };
   }
 
   // --------------------------------------------- the Emperor's report (data)
@@ -557,16 +703,24 @@ function intercom(root, file, opts = {}) {
       if (c.author < c.to_name && confirms.some(d => d.author === c.to_name && d.to_name === c.author))
         mutual.push([c.author, c.to_name]);
     const refusals = evs('refused');
+    const silence = unheard(day);
 
     return {
-      day, cuts, stovepipe, draws,
+      day, amended, cuts, stovepipe, draws,
       reserve_left: cfg.reserve + sum('grant', day, 'reserve') - sum('draw', day),
       alarms,
+      handed: evs('handed').length,
+      acknowledged: evs('acknowledged').length,
+      unhanded: silence.unhanded,
+      unacknowledged: silence.unacknowledged,
+      bells: evs('bell').map(e => ({ call: e.call_id, agent: e.agent, why: e.detail })),
       held: evs('held').map(e => ({ msg: e.msg_id, agent: e.agent, why: e.detail })),
       bad: evs('bad').map(e => ({ part: e.part_id, agent: e.agent, why: e.detail })),
       watch: { asks, need_source: needs, mutual_confirms: mutual,
         refused_citations: refusals.filter(e => /citation/.test(e.detail || '')).length,
-        refused_forwarding: refusals.filter(e => /forwarding/.test(e.detail || '')).length },
+        refused_forwarding: refusals.filter(e => /forwarding/.test(e.detail || '')).length,
+        refused_no_ears: refusals.filter(e => /has no ears/.test(e.detail || '')).length,
+        refused_no_voice: refusals.filter(e => /has no voice/.test(e.detail || '')).length },
       refused: refusals.length,
       tells: evs('tell').map(e => e.detail),
     };
@@ -577,18 +731,20 @@ function intercom(root, file, opts = {}) {
                 : db.prepare('SELECT * FROM events ORDER BY id').all();
   }
 
-  return { send, open, pending, collect, recopy, grant, release, unseal, tally, report, events,
-    config: cfg, close: () => db.close(), _db: db };
+  return { send, hand, open: hand, pending, collect, acknowledge, runEnded,
+    recopy, grant, release, unseal, tally, unheard, report, events,
+    amended, roster, config: cfg, close: () => db.close(), _db: db };
 }
 
 module.exports = { intercom, specCheck, sealOf, nyDay,
-  DEFAULTS, CODES, EMERGENCIES, AREAS, SPEC_FILE, SIG_MARK };
+  DEFAULTS, CODES, EMERGENCIES, AREAS, ROSTER, SPEC_FILE, SIG_MARK };
 
-// `node runners/intercom.js spec` - is the spec signed, and what is its hash?
+// `node runners/intercom.js spec` - is the spec signed, is Amendment 1 initialed, what is the hash?
 if (require.main === module) {
   const root = path.join(__dirname, '..');
   const s = specCheck(root);
   console.log(s.ok ? `INTERCOM.md signed by ${s.who} on ${s.date}, body hash ${s.hash}`
                    : `INTERCOM.md NOT usable: ${s.why}${s.hash ? ` (body hash ${s.hash})` : ''}`);
+  console.log(`Amendment 1: ${s.amended ? 'initialed - amended behaviour is live' : 'a proposal - signed behaviour runs'}`);
   process.exit(s.ok ? 0 : 1);
 }
