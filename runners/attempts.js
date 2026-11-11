@@ -19,7 +19,11 @@ const fs   = require('node:fs');
 const path = require('node:path');
 
 const REL  = path.join('library', 'attempts.jsonl');
-const KINDS = new Set(['tested_idea', 'variant', 'window', 'abandoned', 'unknown']);
+// `build` (2026-11-11) is recorded but NEVER counted in the denominator. An
+// architecture decision is not a measured idea, and letting one into `n` would
+// tighten the honest p-bar on the trading theses for no reason at all. Law 9
+// says count every attempt; it means every attempt at an EDGE.
+const KINDS = new Set(['tested_idea', 'variant', 'window', 'abandoned', 'build', 'unknown']);
 
 function file(root) { return path.join(root, REL); }
 
@@ -71,9 +75,12 @@ function expectedFalsePasses(n, alpha = 0.05) {
 /** The denominator, and the honest caveat on it. */
 function summary(root, alpha = 0.05) {
   const all = read(root).filter(e => !e.broken);
-  const decided = all.filter(e => e.outcome === 'PASS' || e.outcome === 'KILL');
   const unknowns = all.filter(e => e.kind === 'unknown');
-  const counted = all.filter(e => e.kind !== 'unknown');
+  const builds   = all.filter(e => e.kind === 'build');
+  const counted = all.filter(e => e.kind !== 'unknown' && e.kind !== 'build');
+  // Decided is drawn from `counted`, not from everything (fixed 2026-11-11):
+  // an entry that is not in the denominator must not be in the numerator either.
+  const decided = counted.filter(e => e.outcome === 'PASS' || e.outcome === 'KILL');
   const n = counted.length;
   return {
     total: n,
@@ -89,6 +96,8 @@ function summary(root, alpha = 0.05) {
     // was not told. Marked, not guessed.
     unrecorded: unknowns.map(e => ({ what: e.what, span: e.span || null })),
     is_floor: unknowns.length > 0,
+    // Recorded for the record, deliberately outside every number above.
+    builds: builds.length,
   };
 }
 
@@ -106,6 +115,10 @@ function summaryLine(s) {
   }
   if (s.is_floor) {
     line += ' FLOOR ONLY — exploration predating the register was never written down.';
+  }
+  if (s.builds) {
+    line += ` Plus ${s.builds} build decision(s) on record — architecture, not measured ideas,`
+          + ` and deliberately outside the denominator.`;
   }
   return line;
 }

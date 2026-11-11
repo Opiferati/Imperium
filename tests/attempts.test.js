@@ -132,6 +132,50 @@ test('passes and kills are counted separately from running', () => {
   assert.strictEqual(s.running, 1);
 });
 
+// ── `build`: on the record, outside the denominator (2026-11-11) ─────────
+
+test('a build decision is recorded but never counted in the denominator', () => {
+  const root = tmpRoot();
+  A.record(root, idea('a', { outcome: 'KILL' }));
+  A.record(root, idea('b', { outcome: 'RUNNING' }));
+  A.record(root, { id: 'B1', kind: 'build', what: 'adopted an outside design', outcome: 'ADOPTED' });
+  const s = A.summary(root);
+  assert.strictEqual(s.total, 2, 'architecture is not an attempt at an edge');
+  assert.strictEqual(s.builds, 1, 'but it is on the record');
+  assert.strictEqual(A.read(root).length, 3, 'all three lines are in the file');
+  assert.strictEqual(s.honest_threshold, 0.05 / 2,
+    'the p-bar for the theses must not move because a part was renamed');
+});
+
+test('a build does not turn the register into a floor', () => {
+  const root = tmpRoot();
+  A.record(root, idea('a', { outcome: 'KILL' }));
+  A.record(root, { id: 'B1', kind: 'build', what: 'a decision' });
+  const s = A.summary(root);
+  assert.strictEqual(s.is_floor, false, 'a build is written down, so nothing is missing');
+  assert.strictEqual(s.unrecorded.length, 0);
+});
+
+test('a build carrying an outcome is not counted as decided', () => {
+  const root = tmpRoot();
+  A.record(root, idea('a', { outcome: 'KILL' }));
+  A.record(root, { id: 'B1', kind: 'build', what: 'retired a post', outcome: 'KILL' });
+  const s = A.summary(root);
+  assert.strictEqual(s.total, 1);
+  assert.strictEqual(s.decided, 1, 'out of the denominator means out of the numerator too');
+  assert.strictEqual(s.kills, 1);
+});
+
+test('the court is told about builds separately, in words that cannot be misread', () => {
+  const root = tmpRoot();
+  A.record(root, idea('a', { outcome: 'KILL' }));
+  A.record(root, { id: 'B1', kind: 'build', what: 'a decision' });
+  const line = A.summaryLine(A.summary(root));
+  assert.match(line, /1 formal attempt/);
+  assert.match(line, /1 build decision/);
+  assert.match(line, /outside the denominator/);
+});
+
 // ── The real register ────────────────────────────────────────────────────
 test('the live register admits it is a floor', () => {
   const s = A.summary(path.join(__dirname, '..'));
@@ -141,4 +185,26 @@ test('the live register admits it is a floor', () => {
     + 'rather than present its count as complete');
   assert.ok(s.unrecorded.some(u => /144/.test(u.what)),
     'the 144 figure is recorded as spoken-of-but-unevidenced, not entered as fact');
+});
+
+test('the live register holds the two corrections logged 2026-11-11', () => {
+  const root = path.join(__dirname, '..');
+  const all = A.read(root);
+  const forseti = all.find(e => e.id === 'BUILD-2026-11-01-critic-to-forseti');
+  const protocol = all.find(e => e.id === 'BUILD-2026-11-01-protocol-retired');
+
+  assert.ok(forseti, 'the Critic came from an outside design and was renamed, not dropped');
+  assert.strictEqual(forseti.kind, 'build');
+  assert.strictEqual(forseti.outcome, 'ADOPTED');
+  assert.match(forseti.correction, /renamed/i, 'and the mis-reading is recorded with the fact');
+
+  assert.ok(protocol, 'a post that was never used is still part of the record');
+  assert.strictEqual(protocol.outcome, 'RETIRED');
+  assert.match(protocol.correction, /0 calls EVER|never sat in/i);
+
+  // The whole reason these are `build` and not `tested_idea`.
+  const s = A.summary(root);
+  assert.strictEqual(s.builds, 2);
+  assert.ok(!/BUILD-/.test(JSON.stringify(s.by_station)),
+    'a build never reaches the per-station attempt counts');
 });
