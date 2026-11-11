@@ -333,6 +333,9 @@ let gate = null;
 try { gate = require('./runners/gate.js'); gate.ensureTables(busDb); }
 catch (e) { console.warn('[WARDEN] gate.js not loaded:', e.message); }
 const stmtGatePetition = busDb.prepare(`INSERT INTO petitions (task_id, agent, request, kind, target) VALUES (?, ?, ?, 'gate', ?)`);
+// The Intercom's alteration clause (Amendment 1 section 6): the codebook cannot say it
+// sideways, so the agent asks. The in-codebook version is sent either way; not a failure.
+const stmtIcomPetition = busDb.prepare(`INSERT INTO petitions (task_id, agent, request, kind) VALUES (?, ?, ?, 'icom')`);
 const stmtGatePending  = busDb.prepare(`SELECT id FROM petitions WHERE kind='gate' AND status='pending' AND target=?`);
 const PETITION_RE = /\[PETITION:\s*([^\]\n]{3,300})\]/i;
 
@@ -1096,7 +1099,20 @@ async function tickInner() {
     catch (e) { ravensBlock = `\n\n## THE RAVENS' REPORT\nThe ravens could not fly this time (${e.message}). Say you have no live data rather than guessing.`; }
   }
   const briefStr   = msg.to_agent === 'imperial-chancellor' ? briefBlock() : '';
-  const systemProm = `${EDICTS}\n\n${soul}${codexBlock}${briefStr}${ravensBlock}`;
+  // The Intercom's ears (Amendment 1 section 5). collect() hands the parts, which is the
+  // Warden's own act and so the moment it can honestly record. If the API call then fails,
+  // the parts read as handed with no mark back - which is true, and the report says so.
+  let icomBlock = '';
+  if (icom && intercomMod) {
+    try {
+      const mail = icom.collect(msg.to_agent, { task: msg.task_id });
+      if (mail.length) {
+        icomBlock = `\n\n${intercomMod.mailBlock(mail)}`;
+        console.log(`[WARDEN]    intercom: ${mail.length} part(s) handed to ${msg.to_agent}`);
+      }
+    } catch (e) { console.warn(`[WARDEN] intercom mail for ${msg.to_agent}: ${e.message}`); }
+  }
+  const systemProm = `${EDICTS}\n\n${soul}${codexBlock}${briefStr}${ravensBlock}${icomBlock}`;
 
   // Build conversation thread
   const thread = buildThread(msg.task_id, msg.to_agent);
@@ -1196,6 +1212,41 @@ async function tickInner() {
     }
 
     // Run code-writer — extract FILE: blocks and write to disk
+    // -- The Intercom's voice (Amendment 1 sections 5 and 6) --
+    // The reply is read for [ICOM ...] lines and those lines are stripped, so nothing is
+    // chronicled twice. Every send goes through the module's own limits: a refusal is a
+    // logged row and a note on the deliverable, never a thrown error and never silence.
+    if (icom && intercomMod) {
+      try {
+        const said = intercomMod.parseIcom(responseText);
+        const notes = [];
+        if (said.seen.length) {
+          const ack = icom.acknowledge(msg.to_agent, said.seen);
+          if (ack.marked.length)
+            console.log(`[WARDEN]    intercom: ${msg.to_agent} acknowledged ${ack.marked.join(', ')}`);
+        }
+        for (const p of said.parts) {
+          const r = icom.send({ from: msg.to_agent, task: msg.task_id, call: p.call,
+                                dueNextRun: true, parts: [p] });
+          notes.push(r.ok ? `[ICOM ${p.code} sent${r.held ? ` but HELD: ${r.why}` : ''}]`
+                          : `[ICOM ${p.code} refused: ${r.why}]`);
+          console.log(`[WARDEN]    intercom: ${msg.to_agent} ${r.ok ? 'sent' : 'refused'} ${p.code}` +
+                      `${r.ok ? '' : ` - ${r.why}`}`);
+        }
+        for (const b of said.bad) notes.push(`[ICOM not understood: ${b.why}]`);
+        for (const q of said.petitions) {
+          const pid = stmtIcomPetition.run(msg.task_id, msg.to_agent, q).lastInsertRowid;
+          stmtInsertMessage.run(`${msg.task_id}-ICOM${pid}`, 'warden', 'emperor',
+            `[ICOM-PETITION #${pid}] ${msg.to_agent} says the codebook cannot carry this sideways: ` +
+            `${q}. Nothing was sent. Approve or deny it in the Petitions bar.`, msg.priority);
+          notes.push(`[ICOM-PETITION #${pid} filed with the Emperor - nothing was sent]`);
+          console.log(`[WARDEN]    intercom petition #${pid} from ${msg.to_agent}`);
+        }
+        if (said.seen.length || said.parts.length || said.bad.length || said.petitions.length)
+          responseText = said.clean + (notes.length ? `\n\n---\n${notes.join('\n')}` : '');
+      } catch (e) { console.warn(`[WARDEN] intercom voice for ${msg.to_agent}: ${e.message}`); }
+    }
+
     let verifiedFiles = [];
     if (codeWriter) {
       try {

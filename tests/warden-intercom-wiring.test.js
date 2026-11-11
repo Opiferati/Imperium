@@ -1,0 +1,109 @@
+'use strict';
+// Step 2: the Intercom wired into the Warden, DARK. warden.js cannot be started in a test -
+// it opens the live databases and begins dispatching - so these assert the two things a test
+// can honestly prove about it: that every use site sits behind the switch, and that the switch
+// ships off. The behaviour itself is tested against the module in the other three files.
+const { test } = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const ROOT = path.join(__dirname, '..');
+const WARDEN = fs.readFileSync(path.join(ROOT, 'warden.js'), 'utf8');
+const REGISTRY = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'imperium-registry.json'), 'utf8'));
+
+test('it ships dark: the registry switch is explicitly false', () => {
+  assert.ok(REGISTRY.intercom, 'the key exists, so its state is never a guess');
+  assert.strictEqual(REGISTRY.intercom.enabled, false);
+});
+
+test('nothing opens unless the switch is true AND the amendment is initialed', () => {
+  const block = WARDEN.slice(WARDEN.indexOf('const ICOM_CONF'), WARDEN.indexOf('console.log(`Bus:'));
+  assert.match(block, /ICOM_CONF\.enabled === true/, 'strictly true, not merely truthy');
+  assert.match(block, /if \(!s\.ok\)/, 'an unsigned spec does not open');
+  assert.match(block, /else if \(!s\.amended\)/, 'an uninitialed amendment does not open');
+});
+
+test('every Intercom use site is behind the switch', () => {
+  // Each place the Warden touches the Intercom must be inside `if (icom && intercomMod)`.
+  const guards = [...WARDEN.matchAll(/if \(icom && intercomMod\) \{/g)].map(m => m.index);
+  assert.ok(guards.length >= 2, 'the ears site and the voice site');
+  for (const m of WARDEN.matchAll(/icom\.(collect|acknowledge|send|hand|report|unheard)\(/g)) {
+    const before = WARDEN.slice(0, m.index);
+    const lastGuard = Math.max(...guards.filter(g => g < m.index), -1);
+    assert.notStrictEqual(lastGuard, -1, `icom.${m[1]}() at ${m.index} is not behind a guard`);
+    // the guard must still be open: no unguarded gap with its own closing brace at column 4
+    assert.ok(before.length - lastGuard < 2500, `icom.${m[1]}() is too far from its guard to be inside it`);
+  }
+});
+
+test('the banner states the Intercom either way, so its state is never assumed', () => {
+  assert.match(WARDEN, /console\.log\(`Intercom: \$\{icom \? icomWhy : `dark - \$\{icomWhy\}`\}`\);/);
+});
+
+test('mail is handed before the model is called, and the voice is read after', () => {
+  const handed = WARDEN.indexOf('icom.collect(msg.to_agent');
+  const called = WARDEN.indexOf('await callAnthropic(model, systemProm');
+  const voice  = WARDEN.indexOf('intercomMod.parseIcom(responseText)');
+  assert.ok(handed > 0 && called > 0 && voice > 0, 'all three sites exist');
+  assert.ok(handed < called, 'the mail must be in the prompt before the call');
+  assert.ok(called < voice, 'the reply must exist before it is read');
+});
+
+test('the mail block reaches the prompt the agent is actually given', () => {
+  assert.match(WARDEN, /const systemProm = `\$\{EDICTS\}[^`]*\$\{icomBlock\}`/);
+});
+
+test('an Intercom petition is filed as its own kind, not disguised as a scope petition', () => {
+  assert.match(WARDEN, /INSERT INTO petitions \(task_id, agent, request, kind\) VALUES \(\?, \?, \?, 'icom'\)/);
+  assert.match(WARDEN, /ICOM-PETITION #\$\{pid\}/);
+  assert.match(WARDEN, /Nothing was sent/, 'a petition sends nothing sideways');
+});
+
+test('a failure in the Intercom cannot take down a turn', () => {
+  // Both sites catch and warn. A night must not be lost to the mail.
+  const sites = WARDEN.split('if (icom && intercomMod) {').slice(1);
+  for (const s of sites) assert.match(s.slice(0, 2500), /catch \(e\) \{ console\.warn/);
+});
+
+// -- the round trip the wiring performs, run against the real module ---------
+test('a ministry turn, end to end: handed, acknowledged, answered', () => {
+  const { intercom, mailBlock, parseIcom } = require('../runners/intercom.js');
+  const ic = intercom(null, path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'wiring-')), 'ic.db'),
+    { amended: true, ranToday: () => true });
+  const WORKS = 'ministry-of-works';
+
+  // the Emperor asks; the Warden builds the prompt block (the ears site)
+  const q = ic.send({ from: 'emperor', parts: [{ to: `agent:${WORKS}`, code: 'ASK', line: 'where is the report?' }] });
+  const mail = ic.collect(WORKS, { task: 'TASK-1' });
+  const block = mailBlock(mail);
+  assert.ok(block.includes('## YOUR MAIL'));
+
+  // the ministry replies the way the block tells it to (the voice site)
+  const reply = `The report is in output/.\n\n[ICOM SEEN ${mail[0].id}]\n[ICOM ANSWER call:${q.call} | output/works/report.md]`;
+  const said = parseIcom(reply);
+  assert.deepStrictEqual(ic.acknowledge(WORKS, said.seen).marked, [mail[0].id]);
+  const sent = ic.send({ from: WORKS, task: 'TASK-1', call: said.parts[0].call, dueNextRun: true, parts: said.parts });
+  assert.ok(sent.ok, sent.why);
+  assert.strictEqual(said.clean, 'The report is in output/.');
+
+  // the Emperor is handed the answer, and nothing is left unheard
+  assert.strictEqual(ic.collect('emperor')[0].line, 'output/works/report.md');
+  const rep = ic.report();
+  assert.strictEqual(rep.unacknowledged.length, 0);
+  assert.strictEqual(rep.unhanded.length, 0);
+  ic.close();
+});
+
+test('the Chancellor has ears but no voice, and the refusal says exactly that', () => {
+  const { intercom, parseIcom } = require('../runners/intercom.js');
+  const ic = intercom(null, path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'wiring2-')), 'ic.db'), { amended: true });
+  const said = parseIcom('[ICOM ASK to:agent:ministry-of-works | do the thing]');
+  const r = ic.send({ from: 'imperial-chancellor', parts: said.parts });
+  assert.strictEqual(r.why, 'imperial-chancellor has no voice yet');
+  // he still hears
+  assert.ok(ic.send({ from: 'ministry-of-works', parts: [{ to: 'agent:imperial-chancellor', code: 'DONE' }] }).ok);
+  assert.strictEqual(ic.pending('imperial-chancellor').length, 1);
+  ic.close();
+});
