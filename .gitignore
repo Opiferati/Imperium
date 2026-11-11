@@ -19,3 +19,4 @@ _archive/
 node_modules/
 data/blackboard.db*
 __pycache__/
+tests/.tmp-*/

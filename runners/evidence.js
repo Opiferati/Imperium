@@ -18,6 +18,10 @@ const REPOS = [
   { name: 'Ecnalanif', dir: 'C:\\Ecnalanif', paths: ['data', 'state'] },
   { name: 'Cavalier',  dir: 'C:\\Cavalier',  paths: ['data', 'state'] },
   { name: 'Ravens',    dir: 'C:\\Ravens',    paths: ['state'] },
+  // No paths = push-only. Legion is the slot standard, not nightly data: it must
+  // never be auto-committed, but its deliberate commits should still leave the
+  // machine the same night. See commitOne().
+  { name: 'Legion',    dir: 'C:\\Legion' },
 ];
 
 const toWsl = p => '/mnt/' + p[0].toLowerCase() + '/' + p.slice(3).replace(/\\/g, '/');
@@ -31,16 +35,25 @@ function git(dir, args, timeout = 90_000) {
 
 async function commitOne(repo, label) {
   if (!fs.existsSync(toWsl(repo.dir) + '/.git')) return { name: repo.name, status: 'missing' };
-  const paths = repo.paths.filter(p => fs.existsSync(toWsl(repo.dir) + '/' + p));
-  if (!paths.length) return { name: repo.name, status: 'nothing' };
-  const add = await git(repo.dir, ['add', '-A', '--', ...paths]);
-  if (add.code) return { name: repo.name, status: 'error', message: add.err.split('\n').pop() };
-  const staged = await git(repo.dir, ['diff', '--cached', '--quiet', '--', ...paths]);
+  // PUSH-ONLY (2026-11-11). A repo with no evidence paths is source, not nightly
+  // data — Legion is the standard itself. Such a repo must never be swept into an
+  // automatic "Daily evidence" commit: a change to a contract earns a written
+  // message, by hand, from whoever changed it. What this entry buys is the other
+  // half — that deliberate commits still reach GitHub the same night rather than
+  // sitting on one machine until somebody remembers.
+  const pushOnly = !repo.paths || repo.paths.length === 0;
   let committed = false;
-  if (staged.code === 1) {                       // 1 = there are staged changes in the evidence paths
-    const c = await git(repo.dir, ['commit', '-q', '-m', `Daily evidence: ${label}`, '--', ...paths]);
-    if (c.code) return { name: repo.name, status: 'error', message: c.err.split('\n').pop() };
-    committed = true;
+  if (!pushOnly) {
+    const paths = repo.paths.filter(p => fs.existsSync(toWsl(repo.dir) + '/' + p));
+    if (!paths.length) return { name: repo.name, status: 'nothing' };
+    const add = await git(repo.dir, ['add', '-A', '--', ...paths]);
+    if (add.code) return { name: repo.name, status: 'error', message: add.err.split('\n').pop() };
+    const staged = await git(repo.dir, ['diff', '--cached', '--quiet', '--', ...paths]);
+    if (staged.code === 1) {                     // 1 = there are staged changes in the evidence paths
+      const c = await git(repo.dir, ['commit', '-q', '-m', `Daily evidence: ${label}`, '--', ...paths]);
+      if (c.code) return { name: repo.name, status: 'error', message: c.err.split('\n').pop() };
+      committed = true;
+    }
   }
   const hasRemote = (await git(repo.dir, ['remote'])).out.length > 0;
   if (!hasRemote) return { name: repo.name, status: committed ? 'committed (no remote)' : 'nothing' };
@@ -70,4 +83,6 @@ function summaryLine(results) {
   return s;
 }
 
-module.exports = { run, summaryLine, REPOS };
+// commitOne is exported for tests only (2026-11-11): run() walks the REAL five
+// repos, so a test that called it would commit and push this machine's work.
+module.exports = { run, summaryLine, REPOS, commitOne };
