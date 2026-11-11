@@ -168,7 +168,7 @@
     }
   },
   "intercom": {
-    "_comment": "The Intercom (INTERCOM.md + Amendment 1): agent-to-agent mail. Dark until this is true AND Amendment 1 is initialed. Turning it on needs a Warden restart; turning it off again is this one line. While false the night runs exactly as it did before.",
-    "enabled": false
+    "_comment": "The Intercom (INTERCOM.md + Amendment 1): agent-to-agent mail. LIT 2026-11-11 08:25 ET, after Amendment 1 was initialed and 92 tests passed. Turning it off again is this one line plus a restart. What it is FOR is measured, not assumed: INTERCOM.md s16 says whether it helps is a measurement, and it cannot be measured on an empty bus - it was lit before the Empire's workload went up, so that the mail has traffic to carry and the nightly report has something real to show.",
+    "enabled": true
   }
 }
