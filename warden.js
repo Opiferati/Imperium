@@ -303,6 +303,19 @@ const CRITIC_CONF   = registry.forseti || registry.critic || { model: 'haiku', e
 // before one part moves: the module loads, registry.intercom.enabled is
 // true, and Amendment 1 is initialed in the spec. Any of them false and
 // the night runs exactly as it ran before - absence degrades, Lego law.
+// Ministry agents whose responses route up to the Chancellor (not back to themselves).
+// MOVED HERE 2026-11-11: this used to sit ~100 lines further down, and the Intercom
+// block below reads it AT LOAD TIME for collectsFor. const is in the temporal dead zone
+// until its declaration runs, so the Intercom could never open - it died with
+// "Cannot access MINISTRY_AGENTS before initialization" and reported itself dark.
+// Nobody found out for a day because the flag was false, which is the whole argument
+// against shipping a subsystem that has never once run.
+const MINISTRY_AGENTS = new Set([
+  'ministry-of-intelligence',
+  'ministry-of-works',
+  'ministry-of-engineering'
+]);   // ministry-of-protocol retired 2026-11-01 (never called)
+
 const ICOM_CONF = registry.intercom || {};
 let intercomMod = null, icom = null, icomWhy = 'off in the registry';
 try {
@@ -410,13 +423,6 @@ function taskTitle(raw) {
   } catch {}
   return String(t).replace(/\s+/g, ' ').trim().slice(0, 120);
 }
-
-// Ministry agents whose responses route up to the Chancellor (not back to themselves)
-const MINISTRY_AGENTS = new Set([
-  'ministry-of-intelligence',
-  'ministry-of-works',
-  'ministry-of-engineering'
-]);   // ministry-of-protocol retired 2026-11-01 (never called)
 
 // ── Ledger statements ──────────────────────────────────────────────────
 const stmtLogApiCall = ledgerDb.prepare(
