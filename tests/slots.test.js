@@ -433,9 +433,23 @@ test('every real card declares authority, and only grants that exist', () => {
   const found = slots.discover(path.join(__dirname, '..'));
   assert.ok(found.cards.length > 0);
   for (const c of found.cards) {
-    const a = c.manifest.authority || [];
-    assert.ok(Array.isArray(a) && a.length > 0, `${c.name} declares no authority`);
+    // 2026-11-11. This used to demand a.length > 0 of every card. That was true of the
+    // first three cards only because each happened to need a grant - an accident, not a
+    // rule, and the opposite of least privilege: it would force a read-only card to claim
+    // an authority it has no use for. What the standard actually requires is that the key
+    // be DECLARED, and that a card hold a grant for every privileged pin it reaches for.
+    // A card with no authority is legal, and must then need no privileged pin.
+    const a = c.manifest.authority;
+    assert.ok(Array.isArray(a), `${c.name} does not declare authority (the key is missing)`);
     for (const g of a) assert.ok(slots.GRANTS.has(g), `${c.name} claims unknown grant ${g}`);
+    const needs = c.manifest.needs || [];
+    if (needs.includes('board'))
+      assert.ok(a.some(g => g.startsWith('board:')), `${c.name} needs the board with no board grant`);
+    if (needs.includes('infer'))
+      assert.ok(a.includes('model:infer'), `${c.name} needs infer with no model:infer grant`);
+    if (a.length === 0)
+      for (const p of ['board', 'infer'])
+        assert.ok(!needs.includes(p), `${c.name} claims no authority but needs the ${p} pin`);
   }
 });
 

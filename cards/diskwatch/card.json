@@ -1,0 +1,11 @@
+{
+  "contract": "legion/2",
+  "name": "diskwatch",
+  "entry": "index.js",
+  "stage": "nightly",
+  "after": [],
+  "needs": ["root", "log"],
+  "authority": [],
+  "timeout_min": 1,
+  "purpose": "Reads, and never writes, how much free and total disk space the Imperium drive has and how much free space the Google Drive mount has, reporting the plain facts each night."
+}
