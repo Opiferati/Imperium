@@ -1,0 +1,178 @@
+{
+  "date": "2026-11-11",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.057576100000000005,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 36,
+    "stock_mood": 50,
+    "crypto_drivers": [
+      {
+        "event": "Hotter-than-expected October US CPI inflation report triggered about $723M in crypto liquidations and pushed Bitcoin under $74K",
+        "effect": "fear",
+        "url": "https://crypto.news/why-is-bitcoin-price-down-today-cpi-liquidations/"
+      },
+      {
+        "event": "Spot Bitcoin ETFs recorded about $95M in net outflows, led by BlackRock's IBIT, as selling continued",
+        "effect": "fear",
+        "url": "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-outflow-doge-whales-dump-750-million-tokens-zcash-price-falls-below-usd-1000"
+      },
+      {
+        "event": "Deutsche Bank launched institutional crypto custody, and short liquidations helped Bitcoin reclaim $74,500 with ETH, XRP and SOL rallying",
+        "effect": "greed",
+        "url": "https://www.cryptotimes.io/2026/11/11/crypto-market-up-bitcoin-price-reclaims-74k-as-eth-xrp-sol-rally-on-deutsche-bank-custody-launch/"
+      },
+      {
+        "event": "North Korea-linked launderers used throwaway NEAR memecoins to move about $430K from the $6.4B Binance hack",
+        "effect": "fear",
+        "url": "https://crypto.news/binance-hack-memecoins-near-laundering-elliptic"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Hot October inflation data raised Fed rate-hike bets, with officials floating a possible half-point hike next month",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "Chicago Fed President Goolsbee called the October inflation report borderline disturbing as the Fed weighs more hikes",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html"
+      },
+      {
+        "event": "Nvidia sell-off after CEO Jensen Huang's reported affair with an alleged Chinese spy, which dragged the major indexes lower",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "CoreWeave's better-than-expected earnings reignited the AI trade and lifted semiconductor stocks, with the Nasdaq and S&P 500 rising",
+        "effect": "greed",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-november-11-dow-sp-500-nasdaq-nvidia-treasurys-veterans-day-140638547.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Why is Bitcoin price down today? Hot CPI triggers $723M liquidations",
+        "url": "https://crypto.news/why-is-bitcoin-price-down-today-cpi-liquidations/",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Market Up: Bitcoin Price Reclaims $74K as ETH, XRP, SOL Rally on Deutsche Bank Custody Launch",
+        "url": "https://www.cryptotimes.io/2026/11/11/crypto-market-up-bitcoin-price-reclaims-74k-as-eth-xrp-sol-rally-on-deutsche-bank-custody-launch/",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Today: Bitcoin, Ethereum and XRP struggle to find footing amid spot ETF outflows",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-struggle-to-find-footing-amid-spot-etf-outflows-202611111005",
+        "market": "crypto"
+      },
+      {
+        "title": "Here's why Ethereum price is falling, but could ETH rebound before hitting $2,000?",
+        "url": "https://crypto.news/why-is-ethereum-price-down-today-cpi-etf-liquidations/",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance hack launderers use memecoins to move $430K, Elliptic says",
+        "url": "https://crypto.news/binance-hack-memecoins-near-laundering-elliptic",
+        "market": "crypto"
+      },
+      {
+        "title": "Cryptohack Roundup: CoinDCX Loses $16M",
+        "url": "https://www.bankinfosecurity.com/cryptohack-roundup-coindcx-loses-16m-a-33244",
+        "market": "crypto"
+      },
+      {
+        "title": "Asian Crypto Exchanges Tighten Security as Hack Incidents Rise",
+        "url": "https://www.cryptobreaking.com/asian-crypto-exchanges-tighten-security/",
+        "market": "crypto"
+      },
+      {
+        "title": "Digital asset market on hack alert, focus on review of Naver-Dunamu tie-up",
+        "url": "https://www.digitaltoday.co.kr/en/view/124412/digital-asset-market-on-hack-alert-focus-on-review-of-naver-dunamu-tie-up",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market today: Dow, S&P 500, Nasdaq rise as chip stock rally rekindles AI trade",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-november-11-dow-sp-500-nasdaq-nvidia-treasurys-veterans-day-140638547.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market today: Dow, S&P 500, Nasdaq slip as hot CPI fuels rate hike odds, Nvidia stock sinks",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-10-dow-sp-500-nasdaq-inflation-data-cpi-090627830.html",
+        "market": "stocks"
+      },
+      {
+        "title": "S&P 500 falls, dragged down by Nvidia sell-off and rate-hike fears after hot inflation data",
+        "url": "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "As higher prices seep into broader economy, Fed officials consider faster hikes",
+        "url": "https://www.ksl.com/article/51645171/as-higher-prices-seep-into-broader-economy-fed-officials-consider-faster-hikes",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed's Goolsbee calls inflation report 'borderline disturbing' as central bank weighs more hikes",
+        "url": "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Inflation spreads across economy, putting pressure on Fed to accelerate rate hikes",
+        "url": "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://coinmarketcap.com/top-stories/",
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.analyticsinsight.net/news/crypto-news-today-bitcoin-outflow-doge-whales-dump-750-million-tokens-zcash-price-falls-below-usd-1000",
+    "https://crypto.news/",
+    "https://cointelegraph.com/",
+    "https://www.theblock.co/news",
+    "https://www.investing.com/news/cryptocurrency-news",
+    "https://www.coindesk.com/",
+    "https://www.coingecko.com/",
+    "https://www.kucoin.com/news/flash/bitcoin-ethereum-and-xrp-face-critical-price-levels-amid-market-volatility",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-struggle-to-find-footing-amid-spot-etf-outflows-202611111005",
+    "https://fxstreet.com/cryptocurrencies/news/ethereum-price-forecast-eth-sees-mild-gains-following-ai-stock-rebound-202611112007",
+    "https://crypto.news/why-is-bitcoin-price-down-today-cpi-liquidations/",
+    "https://www.inkl.com/news/bitcoin-price-today-why-is-btc-down-to-lowest-in-2-months-ethereum-price-crashes-too",
+    "https://crypto.news/why-is-ethereum-price-down-today-cpi-etf-liquidations/",
+    "https://www.coingabbar.com/en/why-is-crypto-market-down-today-cpi-crash-btc-eth-xrp",
+    "https://www.cryptotimes.io/2026/11/11/crypto-market-up-bitcoin-price-reclaims-74k-as-eth-xrp-sol-rally-on-deutsche-bank-custody-launch/",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://benzinga.com/z/19762277",
+    "https://www.cnbc.com/2026/11/10/stock-market-today-live-updates.html",
+    "https://finance.yahoo.com/topic/stock-market-news/",
+    "https://stockanalysis.com/news/",
+    "https://www.cnbc.com/2026/11/09/stock-market-today-live-updates.html",
+    "https://www.google.com/finance/",
+    "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-november-11-dow-sp-500-nasdaq-nvidia-treasurys-veterans-day-140638547.html",
+    "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-november-10-dow-sp-500-nasdaq-inflation-data-cpi-090627830.html",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://www.ksl.com/article/51645171/as-higher-prices-seep-into-broader-economy-fed-officials-consider-faster-hikes",
+    "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+    "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/22",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/30",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/27",
+    "https://www.pymnts.com/legal/bank-regulation/2026/binance-heist-triggers-alarm-among-banking-regulators/",
+    "https://www.bankinfosecurity.com/cryptohack-roundup-coindcx-loses-16m-a-33244",
+    "https://www.cnbc.com/2026/10/29/circle-tether-freeze-funds-impacted-by-potential-binance-security-issue.html",
+    "https://www.cryptobreaking.com/asian-crypto-exchanges-tighten-security/",
+    "https://crypto.news/binance-hack-memecoins-near-laundering-elliptic",
+    "https://www.digitaltoday.co.kr/en/view/124412/digital-asset-market-on-hack-alert-focus-on-review-of-naver-dunamu-tie-up",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46"
+  ]
+}
