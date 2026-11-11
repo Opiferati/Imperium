@@ -13,9 +13,46 @@ const ROOT = path.join(__dirname, '..');
 const WARDEN = fs.readFileSync(path.join(ROOT, 'warden.js'), 'utf8');
 const REGISTRY = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'imperium-registry.json'), 'utf8'));
 
-test('it ships dark: the registry switch is explicitly false', () => {
+test('the switch is explicit, either way', () => {
+  // 2026-11-11. This used to assert `enabled === false`, which pinned a DECISION
+  // rather than an invariant — and the decision was reversed the moment the
+  // Intercom was lit. A test that fails when you deliberately change your mind is
+  // not protecting anything; it is just a second place to edit.
+  //
+  // What is worth pinning is that the state is never a GUESS: the key exists and
+  // is a real boolean. A missing key and a false key read the same at a glance
+  // and mean different things — one is a decision, the other is an oversight.
   assert.ok(REGISTRY.intercom, 'the key exists, so its state is never a guess');
-  assert.strictEqual(REGISTRY.intercom.enabled, false);
+  assert.strictEqual(typeof REGISTRY.intercom.enabled, 'boolean',
+    'not a string, not undefined — the switch says plainly which way it is set');
+});
+
+test('the flag alone cannot open the Intercom', () => {
+  // The real invariant, and the one that matters: enabled:true is necessary and
+  // NOT sufficient. The Warden opens the Intercom only if the module loads AND
+  // the switch is true AND Amendment 1 is initialed. Flipping a registry line
+  // must never be able to route around a signature.
+  assert.match(WARDEN, /ICOM_CONF\.enabled === true/,
+    'the switch is checked by identity, so a truthy string cannot open it');
+  assert.match(WARDEN, /amendment|amended/i,
+    'and the amendment is checked too, in the same gate');
+  const block = WARDEN.slice(WARDEN.indexOf('const ICOM_CONF'),
+                             WARDEN.indexOf('const ICOM_CONF') + 1400);
+  assert.ok(block.includes('Amendment 1 is not initialed'),
+    'an uninitialed amendment keeps it dark and says so by name');
+});
+
+test('the Intercom block can reach what it reads at load time', () => {
+  // Found by lighting it: the block reads MINISTRY_AGENTS for collectsFor, and the
+  // const sat ~100 lines further down. A const is in the temporal dead zone until
+  // its declaration runs, so open() threw every time and the Intercom reported
+  // itself dark. 92 tests passed against the module; none booted the Warden.
+  const decl  = WARDEN.indexOf('const MINISTRY_AGENTS');
+  const reads = WARDEN.indexOf('...MINISTRY_AGENTS');
+  assert.ok(decl !== -1 && reads !== -1, 'both the declaration and the use exist');
+  assert.ok(decl < reads,
+    'MINISTRY_AGENTS must be declared BEFORE the Intercom block that reads it — '
+    + 'otherwise the Intercom cannot open at all, and says so only at boot');
 });
 
 test('nothing opens unless the switch is true AND the amendment is initialed', () => {
