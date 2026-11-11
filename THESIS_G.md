@@ -132,5 +132,5 @@ As of writing, the register stands at 8 formal attempts, 0 PASS, 4 KILL, 3 runni
 
 By signing, the Jarl fixes the claim, the statistic, the fleet, the seeds, the checkpoint and the verdict conditions above. Nothing is built until this line is signed.
 
-**Signed:** _______________________  **Date:** ____________
+**Signed:** __Opie_____________________  **Date:** __11/10/2026__________
 
