@@ -206,7 +206,7 @@ function restricted(found, required) {
  *  else refuses OUT LOUD rather than silently doing nothing. A method the
  *  underlying board does not offer is simply absent, so "not authorised" never
  *  gets blamed for "not implemented". */
-function gateBoard(board, grants) {
+function gateBoard(board, grants, name) {
   if (!board) return null;
   const out = {};
   const add = (m, grant) => {
@@ -217,6 +217,16 @@ function gateBoard(board, grants) {
   };
   for (const m of ['read', 'query', 'topics', 'history']) add(m, 'board:read');
   for (const m of ['post', 'retract'])                    add(m, 'board:write');
+  // The bus says who is speaking, not the card (2026-11-10). The board refuses a note
+  // with no author, and a card that names its own author could name someone else's.
+  // So when the bus knows the card's name, every note and retraction is stamped with
+  // it here, overriding whatever the card wrote.
+  if (name && grants.includes('board:write')) {
+    if (typeof board.post === 'function')
+      out.post = note => board.post({ ...(note || {}), author: name });
+    if (typeof board.retract === 'function')
+      out.retract = (id, o) => board.retract(id, { ...(o || {}), author: name });
+  }
   return out;
 }
 
@@ -224,13 +234,13 @@ function gateBoard(board, grants) {
  *  this is soldered again, and freezing makes that obvious instead of subtle.
  *  `authority` is not a pin — it SHAPES one, by deciding which board methods the
  *  card actually receives. */
-function context({ root, conf, day, board, log, now, infer, authority } = {}) {
+function context({ root, conf, day, board, log, now, infer, authority, name } = {}) {
   const grants = Array.isArray(authority) ? authority : [];
   return Object.freeze({
     root,
     conf: conf || {},
     day,
-    board: gateBoard(board, grants),
+    board: gateBoard(board, grants, name),
     log: log || (() => {}),
     now: now || (() => new Date()),
     infer: gateInfer(infer, grants),

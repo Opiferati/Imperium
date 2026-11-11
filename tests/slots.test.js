@@ -438,3 +438,39 @@ test('every real card declares authority, and only grants that exist', () => {
     for (const g of a) assert.ok(slots.GRANTS.has(g), `${c.name} claims unknown grant ${g}`);
   }
 });
+
+// -- The bus names the author (2026-11-10) ------------------------------------
+// Found the night Thesis G launched: every card posted without an author, the board
+// refused every note, and one card swallowed the refusal. The earlier tests used a fake
+// board that accepted anything, so they passed. These use the REAL board.
+function realBoard() {
+  const dir = require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'slots-bb-'));
+  return require('../runners/blackboard.js').board(null, require('node:path').join(dir, 'blackboard.db'));
+}
+
+test('the bus stamps the card name as author, so the real board accepts the note', () => {
+  const bb = realBoard();
+  const ctx = slots.context({ day: '2026-11-10', board: bb, authority: ['board:write'], name: 'testcard',
+    now: () => new Date('2026-11-10T12:00:00Z') });
+  const r = testcard.run(ctx);
+  assert.strictEqual(r.status, 'ok', r.message);
+  assert.strictEqual(bb.read('testcard.heartbeat').author, 'testcard');
+});
+
+test('a card cannot speak under another name: the bus overrides the author it wrote', () => {
+  const bb = realBoard();
+  const ctx = slots.context({ board: bb, authority: ['board:write'], name: 'grabby' });
+  ctx.board.post({ topic: 'skald.stock_mood', author: 'skald', value: 99 });
+  assert.strictEqual(bb.read('skald.stock_mood').author, 'grabby');
+});
+
+test('with no card name the pin is unchanged, and the real board still demands an author', () => {
+  const bb = realBoard();
+  const ctx = slots.context({ board: bb, authority: ['board:write'] });
+  assert.throws(() => ctx.board.post({ topic: 't.x', value: 1 }), /every note needs an author/);
+});
+
+test('the name does not buy write access: no board:write, no post', () => {
+  const ctx = slots.context({ board: realBoard(), authority: ['board:read'], name: 'reader' });
+  assert.throws(() => ctx.board.post({ topic: 't.x', value: 1 }), /not authorised/);
+});

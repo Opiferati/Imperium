@@ -989,6 +989,7 @@ async function tickInner() {
             conf:  registry[c.name] || registry[c.name.replace(/-/g, '_')] || {},
             day:   etDay,
             board: boardShimFor(),
+            name:  c.name,   // the bus stamps this as the author of the card's board notes
             log:   (m) => console.log(`[WARDEN] ${c.name}: ${m}`),
             // A Forge per card, so the call cap and the attribution are per card while
             // the budget gate reads the shared ledger and stays correct globally.

@@ -11,7 +11,9 @@ const fs = require('node:fs');
 
 const GIT = '/mnt/c/Program Files/Git/cmd/git.exe';
 const REPOS = [
-  { name: 'Imperium',  dir: 'C:\\Imperium',  paths: ['data/skald-mood.csv', 'data/skald-archive', 'library/chronicles', 'Art'] },
+  { name: 'Imperium',  dir: 'C:\\Imperium',  paths: ['data/skald-mood.csv', 'data/skald-archive', 'library/chronicles', 'Art',
+            // Thesis G's observation log and launch lock (added 2026-11-10: they were being frozen but never left the machine)
+            'library/thesis_g.jsonl', 'state'] },
   { name: 'Finalance', dir: 'C:\\Finalance', paths: ['data/v2_prices'] },
   { name: 'Ecnalanif', dir: 'C:\\Ecnalanif', paths: ['data', 'state'] },
   { name: 'Cavalier',  dir: 'C:\\Cavalier',  paths: ['data', 'state'] },
