@@ -1,0 +1,170 @@
+{
+  "date": "2026-11-12",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.0573067,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 24,
+    "stock_mood": 36,
+    "crypto_drivers": [
+      {
+        "event": "Nvidia CEO Jensen Huang's abrupt resignation spilled into crypto, pushing Bitcoin below $72,000 and Ethereum under $2,000 to their lowest levels since August",
+        "effect": "fear",
+        "url": "https://cryptonews.com/news/jensen-huang-resigns-nvda-bitcoin-below-72k"
+      },
+      {
+        "event": "Persistent spot Bitcoin ETF outflows and long liquidations kept sellers in control, with Bitcoin testing support near $73,000",
+        "effect": "fear",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-struggle-to-find-footing-amid-spot-etf-outflows-202611111005"
+      },
+      {
+        "event": "MSCI's decision to drop Strategy and other bitcoin-holding companies from global indexes put fund flows at risk and weighed on sentiment",
+        "effect": "fear",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-trade-under-pressure-as-bottom-signals-remain-elusive-202611121002"
+      },
+      {
+        "event": "Crypto Fear and Greed Index fell to 28, deep in fear, as the market stayed gloomy",
+        "effect": "fear",
+        "url": "https://www.coingabbar.com/en/crypto-news-bitcoin-ethereum-pi-coin-price-msci-fear-index"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Nvidia's CEO resignation erased about $500 billion in market value, with the stock diving as much as 16% before closing down 4.3%",
+        "effect": "fear",
+        "url": "https://www.nbcnews.com/business/markets/nvidia-stock-huang-resigns-rcna608958"
+      },
+      {
+        "event": "Hotter-than-expected October inflation, with Chicago Fed President Goolsbee calling the report borderline disturbing, raised rate-hike expectations",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html"
+      },
+      {
+        "event": "Officials considering faster rate hikes as inflation rose to 4% in October and price pressures spread beyond energy and AI",
+        "effect": "fear",
+        "url": "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/"
+      },
+      {
+        "event": "Analyst downgrades and a possible CEO removal weighed on Nvidia shares ahead of its November 17 earnings",
+        "effect": "fear",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-nvidia-stock-sliding-today-93CH-5020774"
+      },
+      {
+        "event": "Retail investors made a record opening-hour bid for Nvidia shares after the resignation news, partly cushioning the day's losses",
+        "effect": "neutral",
+        "url": "https://www.cbc.ca/news/business/livestory/nividia-jensen-huang-affairs-ceo-9.7418886"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Jensen Huang resigns and Nvidia crashes as Bitcoin falls below $72K",
+        "url": "https://cryptonews.com/news/jensen-huang-resigns-nvda-bitcoin-below-72k",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin plunges to $71K as Huang resignation sends Nvidia into a $2 trillion wipeout",
+        "url": "https://cryptoslate.com/bitcoin-plunges-to-71k-as-jensen-huang-abruptly-resigns-sending-nvidia-into-2-trillion-wipeout",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin, Ethereum and XRP trade under pressure as bottom signals stay elusive",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-trade-under-pressure-as-bottom-signals-remain-elusive-202611121002",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin tests the road to $60K as Ethereum loses $2,000 and gold falls",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/bitcoin-tests-the-road-to-60k-zone-ethereum-loses-2-000-and-gold-enters-free-fall-202611121719",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin holds near $73,600 as Fear and Greed falls to 28",
+        "url": "https://www.coingabbar.com/en/crypto-news-bitcoin-ethereum-pi-coin-price-msci-fear-index",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin and Ethereum struggle to find footing amid spot ETF outflows",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-struggle-to-find-footing-amid-spot-etf-outflows-202611111005",
+        "market": "crypto"
+      },
+      {
+        "title": "Nvidia stock falls after Huang resigns, weighing on broader market",
+        "url": "https://www.nbcnews.com/business/markets/nvidia-stock-huang-resigns-rcna608958",
+        "market": "stocks"
+      },
+      {
+        "title": "Why is NVIDIA stock sliding today?",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-nvidia-stock-sliding-today-93CH-5020774",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed's Goolsbee calls inflation report 'borderline disturbing' as central bank weighs more hikes",
+        "url": "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html",
+        "market": "stocks"
+      },
+      {
+        "title": "As higher prices seep into broader economy, Fed officials consider faster hikes",
+        "url": "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/",
+        "market": "stocks"
+      },
+      {
+        "title": "Inflation spreads across economy, putting pressure on Fed to accelerate rate hikes",
+        "url": "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+        "market": "stocks"
+      },
+      {
+        "title": "Nvidia's CEO resignation after affair with suspected Chinese spy rattles markets, tech world",
+        "url": "https://www.cbc.ca/news/business/livestory/nividia-jensen-huang-affairs-ceo-9.7418886",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://bravenewcoin.com/insights/crypto-news-today-bitcoin-loses-72k-as-550b-vanishes-from-cryptocurrency-market",
+    "https://crypto.news/",
+    "https://cointelegraph.com/",
+    "https://www.coindesk.com/",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://openpr.com/news/4688833/crypto-news-today-bitcoin-faces-1-28b-etf-outflows-as-december",
+    "https://www.coindesk.com/markets",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-and-xrp-struggle-to-find-footing-amid-spot-etf-outflows-202611111005",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-trade-under-pressure-as-bottom-signals-remain-elusive-202611121002",
+    "https://www.fxstreet.com/cryptocurrencies/news/bitcoin-tests-the-road-to-60k-zone-ethereum-loses-2-000-and-gold-enters-free-fall-202611121719",
+    "https://www.tmgm.com/en/analysis/market-news/article/crypto-today-bitcoin-ethereum-xrp-trade-under-pressure-as-bottom-signals-remain-elusive-202611121002",
+    "https://cryptoslate.com/bitcoin-plunges-to-71k-as-jensen-huang-abruptly-resigns-sending-nvidia-into-2-trillion-wipeout",
+    "https://www.coingabbar.com/en/crypto-news-bitcoin-ethereum-pi-coin-price-msci-fear-index",
+    "https://cryptonews.com/news/jensen-huang-resigns-nvda-bitcoin-below-72k",
+    "https://www.google.com/finance/",
+    "https://www.investing.com/news/stock-market-news/why-is-nvidia-stock-sliding-today-93CH-5020774",
+    "https://www.cbc.ca/news/business/livestory/nividia-jensen-huang-affairs-ceo-9.7418886",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://www.nbcnews.com/business/markets/nvidia-stock-huang-resigns-rcna608958",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://tagteam.harvard.edu/hub_feeds/4600/feed_items/13706195",
+    "https://tagteam.harvard.edu/hub_feeds/4600/feed_items/13705639/about",
+    "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/",
+    "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+    "https://stmaartenmediacenter.com/as-higher-prices-seep-into-broader-economy-fed-officials-consider-faster-hikes/",
+    "https://www.cnbc.com/2026/11/11/goolsbee-october-inflation-fed-rates-disturbing-distressing.html",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/22",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/30",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://www.bankinfosecurity.com/cryptohack-roundup-coindcx-loses-16m-a-33244",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46",
+    "https://blockonomi.com/crypto-exchange-binance-confirms-6-34b-hack-losses-fully-covered-publishes-new-reserves/",
+    "https://www.mexc.com/en-GB/news/239025",
+    "https://www.mexc.com/en-PH/news/239025"
+  ]
+}
