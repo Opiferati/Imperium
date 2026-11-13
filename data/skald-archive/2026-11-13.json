@@ -1,0 +1,181 @@
+{
+  "date": "2026-11-13",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.0575922,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 18,
+    "stock_mood": 42,
+    "crypto_drivers": [
+      {
+        "event": "Bitcoin fell below $70,000 overnight after hotter-than-expected inflation data raised expectations of a Fed rate hike and leveraged longs were liquidated",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/crypto/articles/why-bitcoin-falling-today-183502609.html"
+      },
+      {
+        "event": "Bitcoin and Ethereum sell-off driven by weak institutional demand, US Bitcoin and Ethereum ETF withdrawals, and liquidity drying up",
+        "effect": "fear",
+        "url": "https://crypto.news/why-is-crypto-market-crashing-bitcoin-ethereum-xrp/"
+      },
+      {
+        "event": "Ether fell below $2,000 while US ether ETFs saw outflows and a staking exit queue kept growing",
+        "effect": "fear",
+        "url": "https://cryptoticker.io/en/ethereum-price-1958-dollars-staking-exit-queue-november-13-2026"
+      },
+      {
+        "event": "Bitcoin on course for a fifth straight weekly loss, with bears described as tightening their grip after the sell-off deepened",
+        "effect": "fear",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-extend-losses-as-bears-tighten-their-grip-202611130929"
+      },
+      {
+        "event": "South Korea's financial regulator plans to let exchanges freeze withdrawals when hacking is suspected, after a GOPAX suspension and a small hot-wallet breach",
+        "effect": "neutral",
+        "url": "https://cointelegraph.com/news/south-korea-crypto-withdrawal-freezes-suspected-hacks"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Nvidia shares slid after CEO Jensen Huang resigned amid reports of multiple affairs, with analysts warning of a possible further correction",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/12/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "Hot inflation data and hawkish Fed commentary pushed Treasury yields up and raised the prospect of faster rate hikes",
+        "effect": "fear",
+        "url": "https://axios.com/2026/11/12/inflation-rates-fed-iran-tariffs"
+      },
+      {
+        "event": "AMD and Broadcom sold off as the AI chip rotation unwound after Nvidia began to stabilise",
+        "effect": "fear",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-advanced-micro-devices-stock-sliding-today-93CH-5025995"
+      },
+      {
+        "event": "Despite Friday's dip, the Nasdaq and broad indexes still notched weekly gains, their best week since August",
+        "effect": "neutral",
+        "url": "https://www.cnbc.com/2026/11/12/stock-market-today-live-updates.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Why Bitcoin Is Falling Today",
+        "url": "https://finance.yahoo.com/markets/crypto/articles/why-bitcoin-falling-today-183502609.html",
+        "market": "crypto"
+      },
+      {
+        "title": "Why Is Crypto Crashing? The 3 Reasons Behind This Brutal Sell-Off",
+        "url": "https://cryptoticker.io/en/why-is-crypto-crashing-3-reasons/",
+        "market": "crypto"
+      },
+      {
+        "title": "Why are Bitcoin, Ethereum and XRP crashing as crypto liquidity dries up?",
+        "url": "https://crypto.news/why-is-crypto-market-crashing-bitcoin-ethereum-xrp/",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum price at $1,958: exit queue grows to 269,951 ETH as ETF outflows reach $696 million",
+        "url": "https://cryptoticker.io/en/ethereum-price-1958-dollars-staking-exit-queue-november-13-2026",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Today: Bitcoin, Ethereum, XRP extend losses as bears tighten their grip",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-extend-losses-as-bears-tighten-their-grip-202611130929",
+        "market": "crypto"
+      },
+      {
+        "title": "Top 7 weekly crypto losers: RAIN, ZEC, BTW lead declines as market sell-off intensifies",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/top-7-weekly-crypto-losers-rain-zec-btw-lead-declines-as-market-sell-off-intensifies-202611132245",
+        "market": "crypto"
+      },
+      {
+        "title": "South Korea to permit crypto withdrawal freezes during hacking threats",
+        "url": "https://cointelegraph.com/news/south-korea-crypto-withdrawal-freezes-suspected-hacks",
+        "market": "crypto"
+      },
+      {
+        "title": "Nasdaq falls on Friday as Nvidia sells off, but index notches best week since August",
+        "url": "https://www.cnbc.com/2026/11/12/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stubborn inflation raises prospect of more aggressive Federal Reserve rate hikes",
+        "url": "https://axios.com/2026/11/12/inflation-rates-fed-iran-tariffs",
+        "market": "stocks"
+      },
+      {
+        "title": "Why is Advanced Micro Devices stock sliding today?",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-advanced-micro-devices-stock-sliding-today-93CH-5025995",
+        "market": "stocks"
+      },
+      {
+        "title": "Wholesale prices rose 0.3% in October, putting annual rate at 6.5%, the highest in nearly four years",
+        "url": "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed likely to need to raise rates amid worsening inflation: Daly",
+        "url": "https://investing.com/news/economy-news/fed-likely-to-need-to-raise-rates-amid-worsening-inflation-daly-5026338",
+        "market": "stocks"
+      },
+      {
+        "title": "As higher prices seep into broader economy, Fed officials consider faster hikes",
+        "url": "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed's Williams says central bank has 'work to do' to get inflation back on target",
+        "url": "https://investing.com/news/economy-news/feds-williams-says-central-bank-has-work-to-do-to-get-inflation-back-on-target-5023897",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://coinmarketcap.com/top-stories/",
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://bravenewcoin.com/insights/crypto-news-today-bitcoin-loses-72k-as-550b-vanishes-from-cryptocurrency-market",
+    "https://crypto.news/",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://cointelegraph.com/",
+    "https://www.coindesk.com/",
+    "https://finance.yahoo.com/markets/crypto/articles/why-bitcoin-falling-today-183502609.html",
+    "https://www.coindesk.com/markets",
+    "https://www.fxstreet.com/cryptocurrencies/news/top-3-price-predictions-bitcoin-ethereum-ripple-btc-eth-and-xrp-extend-losses-as-downside-momentum-dominates-202611130342",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-extend-losses-as-bears-tighten-their-grip-202611130929",
+    "https://www.fxstreet.com/cryptocurrencies/news/top-7-weekly-crypto-losers-rain-zec-btw-lead-declines-as-market-sell-off-intensifies-202611132245",
+    "https://crypto.news/why-is-crypto-market-crashing-bitcoin-ethereum-xrp/",
+    "https://cryptoticker.io/en/ethereum-price-1958-dollars-staking-exit-queue-november-13-2026",
+    "https://cryptoticker.io/en/why-is-crypto-crashing-3-reasons/",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://www.cnbc.com/2026/11/12/stock-market-today-live-updates.html",
+    "https://www.google.com/finance/",
+    "https://seekingalpha.com/market-news",
+    "https://www.investing.com/news/stock-market-news/why-is-advanced-micro-devices-stock-sliding-today-93CH-5025995",
+    "https://www.investing.com/news/stock-market-news/why-is-hut-8-stock-sliding-today-93CH-5026220",
+    "https://www.cbc.ca/news/business/livestory/nividia-jensen-huang-affairs-ceo-9.7418886",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/",
+    "https://axios.com/2026/11/12/inflation-rates-fed-iran-tariffs",
+    "https://investing.com/news/economy-news/feds-williams-says-central-bank-has-work-to-do-to-get-inflation-back-on-target-5023897",
+    "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+    "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+    "https://www.cnbc.com/2026/11/13/chicago-feds-goolsbee-says-central-bank-has-definitely-got-work-to-do-on-inflation.html",
+    "https://investing.com/news/economy-news/fed-likely-to-need-to-raise-rates-amid-worsening-inflation-daly-5026338",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://www.bankinfosecurity.com/cryptohack-roundup-coindcx-loses-16m-a-33244",
+    "https://cointelegraph.com/news/south-korea-crypto-withdrawal-freezes-suspected-hacks",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46",
+    "https://www.mexc.com/en-GB/news/239025",
+    "https://www.mexc.com/en-PH/news/239025"
+  ]
+}
