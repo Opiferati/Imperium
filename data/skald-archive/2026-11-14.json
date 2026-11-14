@@ -1,0 +1,166 @@
+{
+  "date": "2026-11-14",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.057408,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 22,
+    "stock_mood": 38,
+    "crypto_drivers": [
+      {
+        "event": "Bitcoin fell below $70,000 to its lowest level since August as the selloff gathered pace, with over $1.2 billion in liquidations",
+        "effect": "fear",
+        "url": "https://www.coindesk.com/markets/2026/11/13/bitcoin-dips-below-usd70-000-as-selloff-gathers-pace"
+      },
+      {
+        "event": "Spot Bitcoin and Ethereum ETFs saw heavy withdrawals, with about $1.46 billion lost in one week alongside a shrinking stablecoin liquidity picture",
+        "effect": "fear",
+        "url": "https://coinpaper.com/38863/why-is-bitcoin-crashing-btc-breaks-below-64-k-as-ethereum-falls-toward-1-800"
+      },
+      {
+        "event": "Ethereum slipped below $2,000 and then toward $1,800 after hot US producer inflation data and ETF outflows",
+        "effect": "fear",
+        "url": "https://fxstreet.com/cryptocurrencies/news/ethereum-price-forecast-eth-stays-below-2-000-pressured-by-inflation-and-ai-decline-202611132113"
+      },
+      {
+        "event": "Bitcoin hit a three-month low near $65,000 as the dollar rallied on rate-hike expectations, while one analyst described a possible bottom",
+        "effect": "neutral",
+        "url": "https://coinpedia.org/news/crypto-news-bitcoin-ethereum-and-xrp-hit-make-or-break-levels-after-brutal-sell-off"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Nvidia's CEO resignation and a steep weekly slide that pushed the chipmaker's market value below $4 trillion, dragging the Nasdaq lower",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-13-dow-sp-500-nasdaq-nvidia-ppi-141451558.html"
+      },
+      {
+        "event": "Wall Street's fear gauge jumped on Friday amid broader inflation worries and the Nvidia turmoil",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-13-dow-sp-500-nasdaq-nvidia-ppi-141451558.html"
+      },
+      {
+        "event": "Producer prices rose 6.5% year over year in October, the highest in nearly four years, keeping a Fed rate increase on the table",
+        "effect": "fear",
+        "url": "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html"
+      },
+      {
+        "event": "Cerebras stock jumped after record third-quarter revenue and a raised full-year outlook",
+        "effect": "greed",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-13-dow-sp-500-nasdaq-nvidia-ppi-141451558.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Bitcoin dips below $70,000 as selloff gathers pace",
+        "url": "https://www.coindesk.com/markets/2026/11/13/bitcoin-dips-below-usd70-000-as-selloff-gathers-pace",
+        "market": "crypto"
+      },
+      {
+        "title": "Why Is Bitcoin Crashing? BTC Breaks Below $64K as Ethereum Falls Toward $1,800",
+        "url": "https://coinpaper.com/38863/why-is-bitcoin-crashing-btc-breaks-below-64-k-as-ethereum-falls-toward-1-800",
+        "market": "crypto"
+      },
+      {
+        "title": "Why are Bitcoin, Ethereum and XRP crashing as crypto liquidity dries up?",
+        "url": "https://crypto.news/why-is-crypto-market-crashing-bitcoin-ethereum-xrp/",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum Price Forecast: ETH stays below $2,000, pressured by inflation and AI decline",
+        "url": "https://fxstreet.com/cryptocurrencies/news/ethereum-price-forecast-eth-stays-below-2-000-pressured-by-inflation-and-ai-decline-202611132113",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto News: Bitcoin, Ethereum And XRP Hit Make-Or-Break Levels After Brutal Sell-Off",
+        "url": "https://coinpedia.org/news/crypto-news-bitcoin-ethereum-and-xrp-hit-make-or-break-levels-after-brutal-sell-off",
+        "market": "crypto"
+      },
+      {
+        "title": "South Korea to permit crypto withdrawal freezes during hacking threats",
+        "url": "https://cointelegraph.com/news/south-korea-crypto-withdrawal-freezes-suspected-hacks",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market today: Dow rises, S&P 500 and Nasdaq slip to cap volatile week, Nvidia stock plunge deepens",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-13-dow-sp-500-nasdaq-nvidia-ppi-141451558.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Wholesale prices rose 0.3% in October, putting annual rate at 6.5%, the highest in nearly four years",
+        "url": "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stubborn inflation raises prospect of more aggressive Federal Reserve rate hikes",
+        "url": "https://axios.com/2026/11/12/inflation-rates-fed-iran-tariffs",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed's Jefferson Says Inflation Will Determine Rate Decisions",
+        "url": "https://www.bloomberg.com/news/articles/2026-11-14/fed-s-jefferson-says-inflation-will-determine-rate-decisions",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed's Williams says central bank has 'work to do' to get inflation back on target",
+        "url": "https://investing.com/news/economy-news/feds-williams-says-central-bank-has-work-to-do-to-get-inflation-back-on-target-5023897",
+        "market": "stocks"
+      },
+      {
+        "title": "Why is Advanced Micro Devices stock sliding today?",
+        "url": "https://www.investing.com/news/stock-market-news/why-is-advanced-micro-devices-stock-sliding-today-93CH-5025995",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://cointelegraph.com/",
+    "https://crypto.news/",
+    "https://www.coindesk.com/markets/2026/11/13/bitcoin-dips-below-usd70-000-as-selloff-gathers-pace",
+    "https://www.coindesk.com/",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://cryptonews.net/news/market/33753519",
+    "https://coinpedia.org/news/crypto-news-bitcoin-ethereum-and-xrp-hit-make-or-break-levels-after-brutal-sell-off",
+    "https://fxstreet.com/cryptocurrencies/news/ethereum-price-forecast-eth-stays-below-2-000-pressured-by-inflation-and-ai-decline-202611132113",
+    "https://www.fxstreet.com/cryptocurrencies/news/top-3-price-predictions-bitcoin-ethereum-ripple-btc-eth-and-xrp-extend-losses-as-downside-momentum-dominates-202611130342",
+    "https://kucoin.com/news/flash/bitcoin-ethereum-and-xrp-hit-key-levels-after-sharp-sell-off",
+    "https://crypto.news/why-is-crypto-market-crashing-bitcoin-ethereum-xrp/",
+    "https://coinpedia.org/news/crypto-news-bitcoin-ethereum-and-xrp-hit-make-or-break-levels-after-brutal-sell-off/",
+    "https://cryptoticker.io/en/bitcoin-price-breaks-below-200-week-moving-average/",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://coinpaper.com/38863/why-is-bitcoin-crashing-btc-breaks-below-64-k-as-ethereum-falls-toward-1-800",
+    "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-13-dow-sp-500-nasdaq-nvidia-ppi-141451558.html",
+    "https://finance.yahoo.com/topic/stock-market-news/",
+    "https://www.google.com/finance/",
+    "https://www.investing.com/news/stock-market-news/why-is-advanced-micro-devices-stock-sliding-today-93CH-5025995",
+    "https://www.investing.com/news/stock-market-news/why-is-hut-8-stock-sliding-today-93CH-5026220",
+    "https://www.investing.com/news/stock-market-news/why-is-bloom-energy-stock-sliding-today-93CH-5026026",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://www.washingtontimes.com/news/2026/nov/11/higher-prices-seep-broader-economy-federal-reserve-officials-consider/",
+    "https://investing.com/news/economy-news/feds-williams-says-central-bank-has-work-to-do-to-get-inflation-back-on-target-5023897",
+    "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+    "https://axios.com/2026/11/12/inflation-rates-fed-iran-tariffs",
+    "https://thenationaldesk.com/news/americas-news-now/inflation-spreads-across-economy-putting-pressure-on-fed-to-accelerate-rate-hikes",
+    "https://www.bloomberg.com/news/articles/2026-11-14/fed-s-jefferson-says-inflation-will-determine-rate-decisions",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://www.bankinfosecurity.com/cryptohack-roundup-coindcx-loses-16m-a-33244",
+    "https://cointelegraph.com/news/south-korea-crypto-withdrawal-freezes-suspected-hacks",
+    "https://www.cnn.com/2026/10/30/tech/binance-crypto-heist-hnk-intl",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46",
+    "https://www.mexc.com/en-GB/news/239025",
+    "https://www.mexc.com/en-PH/news/239025"
+  ]
+}
