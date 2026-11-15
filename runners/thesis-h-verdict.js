@@ -7,10 +7,9 @@
 // (rule 9), the exact conditional binomial interval, and the verdict ladder.
 //
 // open() refuses, in this order: before the opening date; while any item in
-// PENDING_RULINGS is unsettled; after a verdict has already been sealed. The
-// rulings list names every place the charter does not say exactly what to do.
-// Each is settled only by a dated, initialed amendment, and only then is the
-// rest of open() written. Nothing here reads a quake file until open() runs.
+// PENDING_RULINGS is unsettled; after a verdict has already been sealed; and,
+// until the scoring of episodes, windows and controls is written to Amendment 2,
+// always. Nothing here reads a quake file until open() runs.
 // ══════════════════════════════════════════════════════════════════════
 
 const fs   = require('node:fs');
@@ -18,18 +17,24 @@ const path = require('node:path');
 
 const DAY_MS = 86400000;
 
-// Every open question, by number, so a ruling can be pointed at exactly.
+// Every question the charter left open, by number, so a ruling can be pointed at
+// exactly. R1-R10 were settled by Amendment 2 (CM 2026-11-15), items 1-10.
+const SETTLED = Object.freeze({
+  R1:  'Amendment 2 item 1: a late call counts if made by midnight UTC on t+1, marked late; otherwise the day abstains',
+  R2:  'Amendment 2 item 2: an abstained day is not quiet and breaks the 3-day run',
+  R3:  'Amendment 2 item 3: 3-day blocks never cross a test window or an abstained day; leftovers under 3 days dropped',
+  R4:  'Amendment 2 item 4: whole-day shifts 1..period-1, mulberry32 seeded 20261114, a tie counts as the Jester beating it',
+  R5:  "Amendment 2 item 5: GFZ Potsdam final Kp and NOAA archived event reports, same calendar days 11 years earlier; Feb 29, 2028 skipped",
+  R6:  'Amendment 2 item 6: 2026-11-15 through 2028-11-14 UTC; a window or block past the end is dropped',
+  R7:  'Amendment 2 item 7: the next snapshot stands in; none within 5 days and the window abstains',
+  R8:  'Amendment 2 item 8: USGS type "earthquake" only',
+  R9:  'Amendment 2 item 9: k = test-period days / scored episodes, rounded down, from day one',
+  R10: 'Amendment 2 item 10: great-circle distance between epicentres, depth ignored',
+});
+
+// Still open. Each is settled only by a dated, initialed amendment.
 const PENDING_RULINGS = Object.freeze([
-  'R1 late or missed 00:30 call: how late a first read may be and still count',
-  'R2 a day that abstained or waits on a ruling: does it count toward the 3 quiet days before an episode',
-  'R3 benchmark blocks: cut across the test windows in one run, or restart after each',
-  'R4 Jester: the range of the random shift, the random-number generator, and how ties count',
-  'R5 Squire: which 11-years-earlier solar record (source), and the leap day',
-  'R6 the test period: first and last day, and windows that run past the end',
-  'R7 a missed quake snapshot: which later snapshot stands in for it',
-  'R8 which USGS event types count (earthquake only, or explosions too)',
-  'R9 Static Twin: the value of k',
-  'R10 the 300 km rule: distance between epicentres on the surface',
+  'R11 a flare that peaked on the day with no readable class, on a day nothing else triggers: an incomplete read (Amendment 2 item 1) or its own ruling',
 ]);
 
 // ── rule 7: mainshocks only ───────────────────────────────────────────
@@ -128,7 +133,7 @@ function open(root, { now = Date.now() } = {}) {
   try { at = opensAt(root); } catch { return { ok: false, why: 'not launched' }; }
   if (now < at) return { ok: false, why: `sealed until ${new Date(at).toISOString()}` };
   if (PENDING_RULINGS.length) return { ok: false, why: `rulings still pending: ${PENDING_RULINGS.length}` };
-  return { ok: false, why: 'the one look is written only after the rulings are amended in' };
+  return { ok: false, why: 'the one look (episodes, windows, controls) is not written yet' };
 }
 
-module.exports = { PENDING_RULINGS, km, mainshocks, clopperPearson, binomCdf, rateRatio, ladder, strongFormDead, open, opensAt };
+module.exports = { SETTLED, PENDING_RULINGS, km, mainshocks, clopperPearson, binomCdf, rateRatio, ladder, strongFormDead, open, opensAt };

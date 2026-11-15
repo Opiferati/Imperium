@@ -4,14 +4,18 @@
 //
 // Charter: THESIS_H.md at the Imperium root, a byte-for-byte snapshot of the
 // Claude Doc "Thesis H Charter: Sunspots and Earthquakes" (signed CM 11/14/2026,
-// Amendment 1 CM 2026-11-15). The lock is the SHA-256 of that whole file, so it
-// covers Amendment 1. Every run checks it and refuses on a mismatch.
+// Amendment 1 CM 2026-11-15, Amendment 2 CM 2026-11-15). The lock is the SHA-256
+// of that whole file, so it covers every amendment. Every run checks it and refuses
+// on a mismatch; an amendment is taken in only by an append-only re-lock.
 //
 // What this file does, and nothing more:
 //   1. The solar call (rules 1-2). At 00:30 UTC on day t+1 it reads the NOAA
 //      planetary Kp product and the GOES X-ray flare list, freezes both raw
 //      bodies, and freezes one call for day t: TRIGGER, QUIET, ABSTAIN, or
 //      PENDING (a case the charter does not settle; it waits for a ruling).
+//      Amendment 2 item 1: if the 00:30 read fails or can't settle the call, the
+//      first read later that same UTC day (t+1) that can counts, marked late;
+//      none by midnight UTC and the day abstains.
 //   2. The quake snapshot (rules 6-8). Once a UTC day at 00:30 it reads the
 //      USGS M6+ catalog for the 45 days before that day and freezes it. The
 //      verdict later takes, for each window, the first snapshot taken 10 days
@@ -61,7 +65,6 @@ const KP_TRIGGER    = 7.00;          // Amendment 1: one of the eight values >= 
 const SNAPSHOT_DAYS = 45;            // 3-day window + 30-day look-back + slack
 const WARMUP_DAYS   = 30;            // "quakes from the 30 days before launch"
 const RETRY_MS      = 5 * 60000;     // a failed read is retried every 5 minutes, each failure logged
-const GIVE_UP_DAYS  = 8;             // the Kp and flare products hold 7 days; after that a day can't be read
 const STATUS_EVERY  = 10 * 60000;
 const FETCH_TIMEOUT = 20000;
 
@@ -222,13 +225,19 @@ function covers(source, read, t) {
 }
 
 /**
- * The call for day t, from the first read of each source made at or after
- * 00:30 UTC on t+1. Only the cases the charter settles get TRIGGER or QUIET.
- * Everything else is PENDING with its reason, so a ruling, not this code, decides it.
+ * The call for day t. Rule 2 and Amendment 2 item 1: the reads that count are
+ * those made from 00:30 UTC on t+1 up to midnight UTC ending t+1. For each
+ * source the first such read that can settle the call counts; one made after
+ * 00:30:59 is marked late. A source with no such read by midnight abstains the
+ * day. A Kp read settles the call when it holds all 8 values for t, or a value
+ * of 7.00 or more (the day is then a trigger whatever the rest), or when the
+ * flare list already shows an X1.0+ flare that day (rule 1: either is enough).
+ * The one case the amendments do not settle (a flare with no readable class on
+ * a day nothing else triggers) stays PENDING with its reason.
  */
-function decide(t, kpRead, kpJson, flRead, flJson, givingUp) {
+function decide(t, kpRead, kpJson, flRead, flJson) {
   const callAt = dayMs(t) + DAY_MS + CALL_OFFSET;
-  const onTime = r => !!r && r.read_at - callAt < ON_TIME_MS;
+  const late   = r => !!r && r.read_at - callAt >= ON_TIME_MS;
   const kpVals = kpJson ? (kpByDay(kpJson)[t] || []) : null;
   const kpMax  = kpVals && kpVals.length ? Math.max(...kpVals.map(v => v.kp)) : null;
   const fl     = flJson ? flaresOn(flJson, t) : null;
@@ -237,21 +246,19 @@ function decide(t, kpRead, kpJson, flRead, flJson, givingUp) {
   const reasons = [];
 
   let call;
-  if (!kpRead && !flRead) { call = 'ABSTAIN'; reasons.push('neither NOAA source could be read for this day'); }
-  else if (!kpRead || !flRead) {
-    if (kpHit || flHit) { call = 'PENDING'; reasons.push(`${!kpRead ? 'Kp' : 'flare list'} could not be read, but the other source shows a trigger`); }
-    else { call = 'ABSTAIN'; reasons.push(`${!kpRead ? 'Kp' : 'flare list'} could not be read for this day`); }
-  } else {
-    if (!onTime(kpRead) || !onTime(flRead)) reasons.push(`first read after 00:30 UTC (Kp ${iso(kpRead.read_at)}, flares ${iso(flRead.read_at)})`);
-    if (fl.unclassified.length && !kpHit && !flHit) reasons.push('a flare peaked this day with no readable class');
-    if (kpVals.length < 8 && !kpHit && !flHit) reasons.push(`only ${kpVals.length} of 8 Kp values published at the call`);
-    if (reasons.length) call = 'PENDING';
-    else call = (kpHit || flHit) ? 'TRIGGER' : 'QUIET';
-  }
+  if (!kpRead || !flRead) {
+    call = 'ABSTAIN';
+    const missing = [!kpRead && 'Kp', !flRead && 'flare list'].filter(Boolean).join(' and ');
+    reasons.push(`no ${missing} read that could settle the call by midnight UTC on the call day (Amendment 2, item 1)`);
+  } else if (fl.unclassified.length && !kpHit && !flHit) {
+    call = 'PENDING';
+    reasons.push('a flare peaked this day with no readable class (R11, waits on a ruling)');
+  } else call = (kpHit || flHit) ? 'TRIGGER' : 'QUIET';
+  const isLate = late(kpRead) || late(flRead);
   return {
-    call, reasons, giving_up: !!givingUp,
-    kp: kpRead ? { read_at: iso(kpRead.read_at), sha256: kpRead.sha256, raw: kpRead.raw, values: kpVals, count: kpVals.length, max: kpMax, on_time: onTime(kpRead) } : null,
-    flares: flRead ? { read_at: iso(flRead.read_at), sha256: flRead.sha256, raw: flRead.raw, x: fl.x, unclassified: fl.unclassified, peaked_this_day: fl.count, on_time: onTime(flRead) } : null,
+    call, reasons, late: isLate,
+    kp: kpRead ? { read_at: iso(kpRead.read_at), sha256: kpRead.sha256, raw: kpRead.raw, values: kpVals, count: kpVals.length, max: kpMax, late: late(kpRead) } : null,
+    flares: flRead ? { read_at: iso(flRead.read_at), sha256: flRead.sha256, raw: flRead.raw, x: fl.x, unclassified: fl.unclassified, peaked_this_day: fl.count, late: late(flRead) } : null,
     trigger: { kp: kpHit, flare: flHit },
   };
 }
@@ -391,24 +398,30 @@ async function solarStep(root, info, lock, { now, fetchImpl }) {
   }
 
   const reads = readLines(readsFile(root));
+  const bodyOf = (src, r) => {
+    if (fresh[src] && fresh[src].row.sha256 === r.sha256 && fresh[src].row.read_at === r.read_at) return fresh[src].json;
+    return JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root, r.raw))).toString('utf8'));
+  };
   const results = [];
   for (const t of open) {
     const callAt = dayMs(t) + DAY_MS + CALL_OFFSET;
-    const first = src => reads.filter(r => r.source === src && r.read_at >= callAt && covers(src, r, t)).sort((a, b) => a.read_at - b.read_at)[0] || null;
-    const k = first('kp'), f = first('flares');
-    const givingUp = at >= dayMs(t) + GIVE_UP_DAYS * DAY_MS;
-    if ((!k || !f) && !givingUp) continue;   // keep retrying: the 7-day products still hold this day
-    const body = src => {
-      const r = src === 'kp' ? k : f;
-      if (!r) return null;
-      if (fresh[src] && fresh[src].row.sha256 === r.sha256 && fresh[src].row.read_at === r.read_at) return fresh[src].json;
-      return JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root, r.raw))).toString('utf8'));
-    };
-    const d = decide(t, k, body('kp'), f, body('flares'), givingUp);
+    const dayEnd = dayMs(t) + 2 * DAY_MS;          // Amendment 2 item 1: "later that same day", midnight UTC
+    const inDay = src => reads.filter(r => r.source === src && r.read_at >= callAt && r.read_at < dayEnd && covers(src, r, t))
+                              .sort((a, b) => a.read_at - b.read_at);
+    const f = inDay('flares')[0] || null;
+    const fJson = f ? bodyOf('flares', f) : null;
+    const flareSettles = !!fJson && flaresOn(fJson, t).x.length > 0;
+    let k = null, kJson = null;
+    for (const r of inDay('kp')) {
+      const j = bodyOf('kp', r), vals = kpByDay(j)[t] || [];
+      if (vals.length >= 8 || vals.some(v => v.kp >= KP_TRIGGER) || flareSettles) { k = r; kJson = j; break; }
+    }
+    if ((!k || !f) && at < dayEnd) continue;       // keep retrying until midnight UTC on the call day
+    const d = decide(t, k, kJson, f, fJson);
     const rec = { thesis: THESIS, day: t, call: d.call, reasons: d.reasons, frozen_at: iso(at), call_time: iso(callAt),
-                  kp: d.kp, flares: d.flares, trigger: d.trigger, giving_up: d.giving_up, ...provenance(root, lock) };
+                  kp: d.kp, flares: d.flares, trigger: d.trigger, late: d.late, ...provenance(root, lock) };
     const wrote = freezeJson(p(root, 'solar', `${t}.json`), rec);
-    append(root, { at: iso(at), kind: 'solar_call', day: t, call: d.call, reasons: d.reasons, frozen: wrote,
+    append(root, { at: iso(at), kind: 'solar_call', day: t, call: d.call, reasons: d.reasons, late: d.late, frozen: wrote,
                    kp_sha256: d.kp && d.kp.sha256, flares_sha256: d.flares && d.flares.sha256, ...provenance(root, lock) });
     results.push({ day: t, call: d.call });
   }
@@ -437,7 +450,7 @@ let lastStatusAt = 0;
 
 /** Display-only episode count: a new episode on a TRIGGER day with at least 3
  *  QUIET days before it (or with no earlier trigger day). Days that abstained or
- *  wait on a ruling are not counted as quiet here; the one look uses the ruling. */
+ *  wait on a ruling are not quiet and break the run (Amendment 2, item 2). */
 function provisionalEpisodes(calls) {
   const eps = [];
   let quietRun = Infinity;

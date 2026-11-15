@@ -188,3 +188,21 @@ Date: 2026-11-15 · Initials: CM
    - Not checked: that this solar cycle peaked around October 2024.
    - Sources: USGS FDSN event service, GFZ Potsdam Kp, and NOAA SWPC edited event reports from the NCEI archive, pulled 2026-11-15.
 3. **Status line.** The Summary's "DRAFT, UNSIGNED" is out of date; the charter was signed 11/14/2026.
+
+## Amendment 2
+
+Date: 2026-11-15 · Initials: CM
+
+Settles the scoring details the charter left open. Written before any trigger call or quake count exists. No threshold changes.
+
+1. **Late or missing call.** If the 00:30 UTC read fails or is incomplete, the first complete read later that same day counts and is marked late. If none comes by midnight UTC, the day abstains. Why: an hour of downtime shouldn't throw a day away, and waiting no longer keeps "decide at t" honest.
+2. **Quiet days.** An abstained day is not a quiet day. It breaks the 3-day run before an episode. Why: we can't call a day quiet when we didn't see it.
+3. **Benchmark blocks.** Blocks never cross a test window or an abstained day. Each stretch between them is cut into 3-day blocks from its first day, and leftovers under 3 days are dropped. Why: every block stays a clean 3 days of ordinary time.
+4. **Jester.** Each shift is a whole number of days from 1 to the period length minus 1. The mulberry32 random generator, seeded 20261114, picks them evenly. A Jester run that ties the real score counts as beating it. Why: the runs can be replayed exactly, and a tie goes against us.
+5. **Squire.** Kp comes from GFZ Potsdam's final record and flares from NOAA's archived event reports, on the same calendar days 11 years earlier. Feb 29, 2028 has no twin and is skipped. Why: these are the official records, and it's the same sources Amendment 1 checked.
+6. **Test period.** 2026-11-15 through 2028-11-14, UTC. A window or block that runs past the end is dropped. Why: the 10-day wait then still ends by the opening date.
+7. **Missed quake snapshot.** The next snapshot after it stands in. If none comes within 5 days, the window abstains. Why: a later snapshot only has more settled magnitudes.
+8. **Event type.** Only USGS events typed "earthquake" count. Why: blasts and explosions aren't faults moving.
+9. **Static Twin.** k is the test-period days divided by the number of scored episodes, rounded down, starting on day one. Why: it gives the same number of windows, evenly spaced.
+10. **The 300 km rule.** Distance is measured along the surface between epicentres, ignoring depth. Why: it's simple and anyone can check it.
+11. **Launch record.** Launched 2026-11-15 02:11 UTC. Charter hash at launch: de356e52feddb78cbc14c5fa055c5d2cff889a45be61be7010dce59375796aa7.
