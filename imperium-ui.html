@@ -570,7 +570,7 @@ async function apiPost(url, body) {
   try {
     const r = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Imperium-Request': '1' },
       body: JSON.stringify(body)
     });
     return await r.json();
@@ -1063,7 +1063,7 @@ async function pollPetitions() {
 }
 async function decidePetition(id, how) {
   try {
-    const r = await fetch('/api/petitions/' + id + '/' + how, { method: 'POST' }).then(r => r.json());
+    const r = await fetch('/api/petitions/' + id + '/' + how, { method: 'POST', headers: { 'X-Imperium-Request': '1' } }).then(r => r.json());
     if (r.error) alertFeed(r.error);
   } catch {}
   pollPetitions();
@@ -1471,7 +1471,7 @@ boot();
     const b = document.getElementById('skaldBtn');
     b.disabled = true;
     try {
-      const r = await fetch('/api/skald/scan', { method: 'POST' }).then(r => r.json());
+      const r = await fetch('/api/skald/scan', { method: 'POST', headers: { 'X-Imperium-Request': '1' } }).then(r => r.json());
       if (r.error) emote('grumble', r.error); else emote('nod', 'The Skald goes to read the headlines…');
     } catch (e) { emote('fail', 'Could not reach the Warden.'); }
     finally { setTimeout(() => { b.disabled = false; }, 4000); }
@@ -1482,7 +1482,7 @@ boot();
     const b = document.getElementById('treasuryBtn');
     b.disabled = true;
     try {
-      const r = await fetch('/api/treasury/scan', { method: 'POST' }).then(r => r.json());
+      const r = await fetch('/api/treasury/scan', { method: 'POST', headers: { 'X-Imperium-Request': '1' } }).then(r => r.json());
       say(r.error ? r.error : 'Counting the coin… (first run fetches prices, ~5 min)', 4500);
     } catch { say('Couldn\'t reach the Warden.'); }
     setTimeout(() => { b.disabled = false; }, 8000);

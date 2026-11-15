@@ -18,6 +18,10 @@ let codeWriter = null;
 try { codeWriter = require('./runners/code-writer.js'); }
 catch (e) { console.warn('[TERMINAL] code-writer not loaded:', e.message); }
 
+// The door (2026-11-15): only our own page may change anything. See runners/door.js.
+// A hard require on purpose: if the door is missing, the terminal does not start.
+const { checkDoor } = require('./runners/door.js');
+
 const ROOT           = __dirname;
 const BUS_DB_PATH    = path.join(ROOT, 'data', 'message_bus.db');
 const LEDGER_DB_PATH = path.join(ROOT, 'data', 'imperial-ledger.db');
@@ -46,8 +50,7 @@ function parseContent(raw) {
 // ── Helpers ─────────────────────────────────────────────────────────────
 function json(res, data, code = 200) {
   res.writeHead(code, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json'
   });
   res.end(JSON.stringify(data));
 }
@@ -115,6 +118,15 @@ async function handleRequest(req, res) {
   const urlParts = req.url.split('?');
   const url = urlParts[0];
   const params = new URLSearchParams(urlParts[1] || '');
+
+  // The door (2026-11-15): Host must be ours on every request, and anything that
+  // changes state must come from our own page. See runners/door.js.
+  const refused = checkDoor(req, PORT);
+  if (refused) {
+    console.warn(`[TERMINAL] door refused ${req.method} ${url}: ${refused}`);
+    json(res, { error: 'refused: ' + refused }, 403);
+    return;
+  }
 
   // ── GET / — serve UI HTML file ──
   if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
