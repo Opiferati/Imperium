@@ -47,12 +47,15 @@ function getStatus() {
   return result;
 }
 
-function insertDecree(text) {
+// 2026-11-12: `source` records which door a decree came through, and for this server it
+// carries the caller's address. The bus recorded from_agent:'emperor' identically whether a
+// decree came from the dashboard or from anything that could reach this port.
+function insertDecree(text, source = 'oracle') {
   const bus = new DatabaseSync(BUS_PATH);
   const taskId = 'TASK-' + Date.now() + '-UI';
   bus.prepare(
     "INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority) VALUES (?,?,?,?,'queued',2)"
-  ).run(taskId, 'emperor', 'imperial-chancellor', JSON.stringify({ action: 'decree', text, sent_at: new Date().toISOString() }));
+  ).run(taskId, 'emperor', 'imperial-chancellor', JSON.stringify({ action: 'decree', text, source, sent_at: new Date().toISOString() }));
   bus.close();
   return taskId;
 }
@@ -95,7 +98,7 @@ const server = http.createServer((req, res) => {
           res.end(JSON.stringify({ success: false, error: 'text required' }));
           return;
         }
-        const taskId = insertDecree(text.trim());
+        const taskId = insertDecree(text.trim(), 'oracle:' + (req.socket && req.socket.remoteAddress || 'unknown'));
         console.log('[DECREE] queued:', taskId, '|', text.slice(0, 80));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, task_id: taskId }));
@@ -121,7 +124,11 @@ server.on('error', e => {
   process.exit(1);
 });
 
-server.listen(PORT, () => {
+// 2026-11-12: listen(PORT) with no host binds EVERY interface. imperium-terminal.js has
+// always bound '127.0.0.1'; this one did not, and POST /decree has no authentication - so
+// anything that could reach port 7979 could issue an Imperial decree. The asymmetry was
+// accidental. Loopback only, matching the terminal.
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`=== Norse Imperium Oracle Server ===`);
   console.log(`Port:      ${PORT}`);
   console.log(`HTML:      ${HTML_PATH}`);

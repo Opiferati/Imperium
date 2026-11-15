@@ -35,6 +35,11 @@ try {
   ravens = require('./runners/ravens.js');          // Huginn & Muninn — state of the realm for the Chancellor (2026-11-02)
 } catch (e) { console.warn('[WARDEN] ravens.js not loaded:', e.message); }
 
+let primaryData = null;   // Primary Data Bridge: USGS / NOAA SWPC pulled by plain code (2026-11-14)
+try {
+  primaryData = require('./runners/primary-data.js');
+} catch (e) { console.warn('[WARDEN] primary-data.js not loaded:', e.message); }
+
 let ecnalanif = null;
 let ecnalanifFlown = null;   // New York date of the last Ecnalanif scan (once per day)
 try {
@@ -64,6 +69,12 @@ try {
   console.warn('[WARDEN] evidence not loaded:', e.message);
 }
 const LATE_LOOK_HOUR = 22;   // 10 PM New York: CBOE posts the day's VIX close around 9 PM
+let thesisH = null;           // Thesis H (solar vs M6+ quakes), launched 2026-11-15. Freezes data only; verdict sealed.
+try {
+  thesisH = require('./runners/thesis-h.js');
+} catch (e) {
+  console.warn('[WARDEN] thesis-h not loaded:', e.message);
+}
 let backup = null;
 try {
   backup = require('./runners/backup.js');
@@ -369,13 +380,24 @@ const stmtGatePetition = busDb.prepare(`INSERT INTO petitions (task_id, agent, r
 // sideways, so the agent asks. The in-codebook version is sent either way; not a failure.
 const stmtIcomPetition = busDb.prepare(`INSERT INTO petitions (task_id, agent, request, kind) VALUES (?, ?, ?, 'icom')`);
 const stmtGatePending  = busDb.prepare(`SELECT id FROM petitions WHERE kind='gate' AND status='pending' AND target=?`);
-const PETITION_RE = /\[PETITION:\s*([^\]\n]{3,300})\]/i;
+// 2026-11-11 (Silent Drops audit): was /\[PETITION:\s*([^\]\n]{3,300})\]/i - three silent
+// drops in one line. Past 300 chars it did not match AT ALL, and because the strip below
+// only runs on a match, the marker was left sitting in the deliverable - an ask dying as
+// prose in an output file. A newline in the reason did the same. And .match() without /g
+// captured only the FIRST petition while the strip used 'gi' and removed them all, so a
+// second ask was erased from both the bus and the file. Any length, newlines allowed,
+// every match filed.
+const PETITION_RE = /\[PETITION:\s*([^\]]{3,})\]/gi;
 
 // ── The Imperial Brief (2026-11-03, Phase 3½): the Empire's source of truth ──
 // Read fresh for every Chancellor call, so edits to IMPERIAL_BRIEF.md take effect without a restart.
 // If a decree needs a fact the Brief lacks, the Chancellor answers [BLOCKED: ...] and the task is marked blocked.
 const BRIEF_PATH = path.join(ROOT, 'IMPERIAL_BRIEF.md');
-const BLOCKED_RE = /\[BLOCKED:\s*([^\]\n]{3,300})\]/i;
+// 2026-11-11 (Silent Drops audit): same three defects as PETITION_RE, with a worse
+// consequence - this is how an agent says it cannot proceed. Too long or across two
+// lines and the task was never marked blocked, no reason recorded, and it flowed on
+// looking healthy.
+const BLOCKED_RE = /\[BLOCKED:\s*([^\]]{3,})\]/i;
 function briefBlock() {
   let txt;
   try { txt = fs.readFileSync(BRIEF_PATH, 'utf8').trim(); } catch { return ''; }
@@ -780,7 +802,13 @@ async function runSkald(msg, sconf) {
 const MINISTRY_LABEL = { 'ministry-of-intelligence': 'Intelligence', 'ministry-of-engineering': 'Engineering', 'ministry-of-works': 'Works' };
 function wardenRelay(msg) {
   const text = String(msg.content || '');
-  const verdict = (text.match(/\[FORSETI: (PASS|FAIL|UNSURE)\]/) || [])[1];
+  // 2026-11-12: the marker has said "[FORSETI: PASS] (the Lawspeaker)" since it was written,
+  // but this regex captured only the verdict and the report printed a bare "Forseti: PASS".
+  // So "a judge read this and approved it" and "mechanical checks passed and nobody looked"
+  // reached the Emperor as the same four characters. The layer was never missing - it was dropped.
+  const fm = text.match(/\[FORSETI: (PASS|FAIL|UNSURE)\](?:\s*\(([^)]+)\))?/) || [];
+  const verdict = fm[1];
+  const judgedBy = (fm[2] || '').trim();
   const verified = [...text.matchAll(/^\[VERIFIED\] (.+?) — (\d+) bytes written$/gm)].map(m => ({ path: m[1], bytes: +m[2] }));
   const failedFiles = [...text.matchAll(/^\[FAILED\] (.+)$/gm)].map(m => m[1]);
   if (!verdict || verified.length === 0 || failedFiles.length) return false;
@@ -792,7 +820,7 @@ function wardenRelay(msg) {
 
   const after = text.slice(text.indexOf(`[FORSETI: ${verdict}]`));
   const problems = [...after.matchAll(/^- (.+)$/gm)].map(m => m[1]).filter(p => !/^\S+ — https?:/.test(p)).slice(0, 3);
-  const petition = (text.match(/\[PETITION #\d+ filed with the Emperor: [^\]]+\]/) || [])[0];
+  const petitions = [...text.matchAll(/\[PETITION #\d+ filed with the Emperor: [^\]]+\]/g)].map(m => m[0]);
   const sourcesBlock = (text.match(/\[SOURCES cited via web search\]\n((?:- .+\n?)+)/) || [])[1];
   const task = stmtTaskGet.get(msg.task_id) || {};
   const who = MINISTRY_LABEL[msg.from_agent] || msg.from_agent;
@@ -810,14 +838,36 @@ function wardenRelay(msg) {
     return true;
   }
 
+  // 2026-11-11 (Silent Drops audit, finding 6): this report had fixed slots and silently
+  // discarded everything else the ministry said. That is how the Intelligence ministry's
+  // question to the Emperor died as prose on line 157 of an output file. Whatever it has
+  // to say now rides along. It is capped - but the cut is ANNOUNCED and names the bus row
+  // holding the whole of it, so nothing is dropped without a word.
+  const MINISTRY_WORDS_MAX = 1500;
+  const ministryWords = (() => {
+    const fi = text.indexOf('[FORSETI:');
+    let s = fi >= 0 ? text.slice(0, fi) : text;
+    s = s.replace(/^\[(VERIFIED|FAILED)\].*$/gm, '')
+         .replace(/\[PETITION #\d+ filed with the Emperor: [^\]]+\][^\n]*/g, '')
+         .replace(/\[SOURCES cited via web search\]\n(?:- .+\n?)+/g, '')
+         .replace(/^\s*---\s*$/gm, '')
+         .replace(/\n{3,}/g, '\n\n')
+         .trim();
+    if (!s) return '';
+    if (s.length <= MINISTRY_WORDS_MAX) return s;
+    return s.slice(0, MINISTRY_WORDS_MAX) +
+      `\n[cut at ${MINISTRY_WORDS_MAX} of ${s.length} chars — the whole of it is message ${msg.id} on the bus]`;
+  })();
+
   const ok = verdict !== 'FAIL';
   let report = `Task: ${task.title || msg.task_id}\nMinistry: ${who}\n` +
     verified.map(v => `Result: ${ok ? '[VERIFIED]' : '[FAILED]'} ${v.path} — ${v.bytes} bytes`).join('\n') + '\n' +
-    `Forseti: ${verdict}${verdict === 'UNSURE' ? ' — not judged' : ''}` + (problems.length ? '\n' + problems.map(p => `- ${p}`).join('\n') : '') +
+    `Forseti: ${verdict}${judgedBy ? ` (${judgedBy})` : ''}${verdict === 'UNSURE' ? ' — not judged' : ''}` + (problems.length ? '\n' + problems.map(p => `- ${p}`).join('\n') : '') +
     (verdict === 'FAIL' ? `\nRevision limit reached (${MAX_ATTEMPTS - 1} revisions used). Not a usable deliverable.` : '') +
     (replies > 1 ? `\nDrafts: ${replies}` : '') +
-    (petition ? `\n${petition} — approve or deny it in the Petitions bar.` : '') +
-    (sourcesBlock ? `\nSources:\n${sourcesBlock.trim()}` : '');
+    (petitions.length ? '\n' + petitions.map(p => `${p} — approve or deny it in the Petitions bar.`).join('\n') : '') +
+    (sourcesBlock ? `\nSources:\n${sourcesBlock.trim()}` : '') +
+    (ministryWords ? `\n\nFrom the ministry, in its own words:\n${ministryWords}` : '');
   try {
     const rows = ledgerDb.prepare(`SELECT agent_id, COUNT(*) n, SUM(cost_usd) c FROM api_calls WHERE task_id = ? GROUP BY agent_id`).all(msg.task_id);
     const by = { chancellor: 0, ministries: 0, forseti: 0 }; let calls = 0;
@@ -852,6 +902,17 @@ function statusLine(text) {
 
 async function tickInner() {
   writeHeartbeat('idle');
+
+  // Thesis H: before the budget gate, because it spends nothing (public feeds, no model calls)
+  // and a paused day must still be frozen. A lock mismatch makes tick() refuse and log it.
+  if (thesisH && (registry.thesis_h || {}).enabled !== false) {
+    try {
+      const r = await thesisH.tick(ROOT);
+      if (r && r.line) console.log('\n[WARDEN] ' + r.line);
+    } catch (e) {
+      console.warn('[WARDEN] thesis-h:', e.message);
+    }
+  }
 
   // Budget gate
   const dailySpend = stmtDailySpend.get().total;
@@ -1049,13 +1110,23 @@ async function tickInner() {
     // their scans would cost a missed close on a live forward test, which is real
     // damage traded for a configuration fault that can be fixed in the morning.
     const slotRequired = (registry.slots || {}).required || [];
-    if (slots && slots.restricted(slotsFound, slotRequired)) {
+    // 2026-11-12: this read `if (slots && slots.restricted(...))`, which FAILED OPEN on the
+    // one case the fail-closed path exists for - the loader itself unresolvable. With `slots`
+    // null BOTH branches were skipped: no cards ran, no alarm was sent, and the night was
+    // indistinguishable from a quiet one. A guard that cannot guard its own absence is not a
+    // guard. Counting nights rather than rows is the other half of this; see the morning check.
+    if (!slots) {
+      const line = `[SLOTS] BUS RESTRICTED - the Legion loader could not be resolved, so NO cards ran ` +
+                   `and none could be checked. This is not a quiet night; it is an unchecked one.`;
+      console.warn(line);
+      stmtInsertMessage.run(msg.task_id, 'slots', 'emperor', line, 1);
+    } else if (slots.restricted(slotsFound, slotRequired)) {
       const missing = slots.requiredMissing(slotsFound, slotRequired)
         .map(m => `${m.name} (${m.reason})`).join('; ');
       const line = `[SLOTS] BUS RESTRICTED — required card(s) absent: ${missing}. No cards ran.`;
       console.warn(line);
       stmtInsertMessage.run(msg.task_id, 'slots', 'emperor', line, 1);
-    } else if (slots && slotsFound.cards.length) {
+    } else if (slotsFound.cards.length) {
       try {
         await slots.runAll(slotsFound.cards, {
           child,
@@ -1163,8 +1234,23 @@ async function tickInner() {
   // and the Codex change only when a file on disk changes. VOLATILE after the marker and
   // never cached: the Brief, the Ravens' Report and the mail are rebuilt every call, and
   // putting them inside the cached prefix would mean the cache never hit at all.
+  // Primary Data Bridge (2026-11-14): when an order to Intelligence names the USGS catalogue
+  // or NOAA SWPC, plain code fetches the counts first and freezes them in data/primary/.
+  // A failed feed is reported as FAILED and never filled in.
+  let primaryBlock = '';
+  if (primaryData && msg.to_agent === 'ministry-of-intelligence') {
+    try {
+      const orderText = formatContent(msg.content);
+      const want = primaryData.needs(orderText);
+      if (want.usgs || want.swpc) {
+        const sets = await primaryData.gather(ROOT, orderText);
+        primaryBlock = `\n\n${primaryData.toPrompt(sets)}`;
+        console.log(`[WARDEN]    primary data: ${sets.map(s => `${s.name} ${s.ok ? (s.reused ? 'reused' : 'fetched') : 'FAILED'}`).join(', ')}`);
+      }
+    } catch (e) { console.warn(`[WARDEN] primary data for ${msg.to_agent}: ${e.message}`); }
+  }
   const stableProm   = `${EDICTS}\n\n${soul}${codexBlock}`;
-  const volatileProm = `${briefStr}${ravensBlock}${icomBlock}`;
+  const volatileProm = `${briefStr}${ravensBlock}${icomBlock}${primaryBlock}`;
   const systemProm = [
     { type: 'text', text: stableProm, cache_control: { type: 'ephemeral' } },
     ...(volatileProm ? [{ type: 'text', text: volatileProm }] : []),
@@ -1252,18 +1338,39 @@ async function tickInner() {
 
     // ── Petition: the ministry asks the Emperor for room beyond the order (Edict VIII) ──
     if (MINISTRY_AGENTS.has(msg.to_agent)) {
-      const pm = responseText.match(PETITION_RE);
-      if (pm) {
+      const pms = [...responseText.matchAll(PETITION_RE)];
+      if (pms.length) {
         responseText = responseText.replace(new RegExp(PETITION_RE.source, 'gi'), '').trimEnd();
-        const request = pm[1].trim();
-        const pid = stmtPetitionAdd.run(msg.task_id, msg.to_agent, request).lastInsertRowid;
         const title = (stmtTaskGet.get(msg.task_id) || {}).title || msg.task_id;
-        stmtInsertMessage.run(`${msg.task_id}-PET${pid}`, msg.to_agent, 'emperor',
-          `[PETITION #${pid}] ${msg.to_agent} asks to go beyond the order on "${String(title).slice(0, 90)}": ${request}. ` +
-          `The in-scope version is delivered either way. Approve or deny it in the Petitions bar.`, msg.priority);
-        responseText += `\n\n---\n[PETITION #${pid} filed with the Emperor: ${request}] The in-scope version above is the deliverable. ` +
+        const filed = [];
+        for (const pm of pms) {
+          const request = pm[1].trim().replace(/\s+/g, ' ');
+          // 2026-11-14: a petition that asks for nothing is not filed. Granting one
+          // ("none", petitions #5 and #8) only buys a silent retry of the order (law 9).
+          // 2026-11-14 (later): petition #9 read "up to 2500 words - none needed", the order's own
+          // limit plus "none needed", and slipped past the start-of-line check. Catch it anywhere.
+          if (/^(none|n\/a|nothing|no petition|not needed)\b/i.test(request) ||
+              /\b(none|nothing|not|no more|no extra) (is |are )?needed\b/i.test(request)) {
+            console.log(`[WARDEN] empty petition from ${msg.to_agent} not filed: ${request.slice(0, 80)}`);
+            continue;
+          }
+          const pid = stmtPetitionAdd.run(msg.task_id, msg.to_agent, request).lastInsertRowid;
+          stmtInsertMessage.run(`${msg.task_id}-PET${pid}`, msg.to_agent, 'emperor',
+            `[PETITION #${pid}] ${msg.to_agent} asks to go beyond the order on "${title}": ${request}. ` +
+            `The in-scope version is delivered either way. Approve or deny it in the Petitions bar.`, msg.priority);
+          filed.push(`[PETITION #${pid} filed with the Emperor: ${request}]`);
+          console.log(`[WARDEN] petition #${pid} from ${msg.to_agent}: ${request}`);
+        }
+        if (filed.length) responseText += `\n\n---\n${filed.join('\n')}\nThe in-scope version above is the deliverable. ` +
           `A petition is not a failure — do not re-dispatch over it; the Emperor decides.`;
-        console.log(`[WARDEN] petition #${pid} from ${msg.to_agent}: ${request}`);
+      } else if (/\[PETITION\b/i.test(responseText)) {
+        // 2026-11-11: an opener that did not parse must NOT die as prose in the deliverable.
+        // It is left in place deliberately, and the Emperor is told it failed to file.
+        console.warn(`[WARDEN] ${msg.to_agent} wrote a [PETITION marker that did not parse — nothing was filed`);
+        stmtInsertMessage.run(`${msg.task_id}-PETBAD`, 'warden', 'emperor',
+          `[PETITION?] ${msg.to_agent} appears to have tried to file a petition on ` +
+          `"${(stmtTaskGet.get(msg.task_id) || {}).title || msg.task_id}" but the marker did not parse, ` +
+          `so nothing reached the Petitions bar. Its words are left in the reply below, unaltered.`, 1);
       }
     }
 
@@ -1398,10 +1505,10 @@ async function tickInner() {
           requireSources: webSearches > 0,
           canSpend:  () => stmtDailySpend.get().total < limit,
           callModel: async (sys, msgs) => {
-            const r = await callAnthropic(criticModel, sys, msgs, 2048);
+            const r = await callAnthropic(criticModel, sys, msgs, 8192); // was 2048: thinking ate the verdict (2026-11-13)
             if (r.error) throw new Error(r.error.message || JSON.stringify(r.error));
             const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
-            return { text, inputTok: r.usage?.input_tokens ?? 0, outputTok: r.usage?.output_tokens ?? 0 };
+            return { text, inputTok: r.usage?.input_tokens ?? 0, outputTok: r.usage?.output_tokens ?? 0, cutOff: r.stop_reason === 'max_tokens' };
           }
         });
         if (v.layer === 'forseti') {
@@ -1453,11 +1560,22 @@ async function tickInner() {
     }
 
     // Phase 3½: the Chancellor said it's blocked on a missing fact -> the ledger says so, with the reason
-    if (msg.to_agent === 'imperial-chancellor' && dispatchedCount === 0) {
+    // 2026-11-11 (Silent Drops audit, finding 5): this used to be the Chancellor's
+    // privilege alone, so a blocked MINISTRY had no way to say so at all.
+    if (dispatchedCount === 0 && (msg.to_agent === 'imperial-chancellor' || MINISTRY_AGENTS.has(msg.to_agent))) {
       const bm = responseText.match(BLOCKED_RE);
+      const btitle = (stmtTaskGet.get(msg.task_id) || {}).title || msg.task_id;
       if (bm) {
-        stmtTaskReason.run('blocked', bm[1].trim(), msg.task_id);
-        console.log(`[WARDEN] task ${msg.task_id} BLOCKED: ${bm[1].trim()}`);
+        const why = bm[1].trim().replace(/\s+/g, ' ');
+        stmtTaskReason.run('blocked', why, msg.task_id);
+        stmtInsertMessage.run(`${msg.task_id}-BLK`, msg.to_agent, 'emperor',
+          `[BLOCKED] ${msg.to_agent} cannot proceed on "${btitle}": ${why}`, 1);
+        console.log(`[WARDEN] task ${msg.task_id} BLOCKED by ${msg.to_agent}: ${why}`);
+      } else if (/\[BLOCKED\b/i.test(responseText)) {
+        console.warn(`[WARDEN] ${msg.to_agent} wrote a [BLOCKED marker that did not parse — not recorded as blocked`);
+        stmtInsertMessage.run(`${msg.task_id}-BLKBAD`, 'warden', 'emperor',
+          `[BLOCKED?] ${msg.to_agent} appears to have declared itself blocked on "${btitle}" ` +
+          `but the marker did not parse, so the task is NOT marked blocked. Its words are in its reply.`, 1);
       }
     }
 

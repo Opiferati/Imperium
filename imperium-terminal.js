@@ -212,7 +212,10 @@ async function handleRequest(req, res) {
         db.prepare(
           `INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
            VALUES (?, 'emperor', 'imperial-chancellor', ?, 'queued', 1)`
-        ).run(taskId, JSON.stringify({ action: 'decree', text: content.trim(), sent_at: new Date().toISOString() }));
+        // 2026-11-12: `source` records WHICH DOOR a decree came through. The bus recorded
+        // from_agent:'emperor' whether it arrived from this dashboard, the oracle's open HTTP
+        // port, or a curl on the network - so "who issued this" was unanswerable after the fact.
+        ).run(taskId, JSON.stringify({ action: 'decree', text: content.trim(), source: 'dash', sent_at: new Date().toISOString() }));
         json(res, { task_id: taskId });
       } finally { try { db.close(); } catch {} }
     } catch(e) { json(res, { error: e.message }, 500); }
@@ -304,7 +307,7 @@ async function handleRequest(req, res) {
           `Original task: ${p.task_id}. Dispatch ${p.agent} to write that file again, with the same content it produced before.`;
         db.prepare(`INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
                     VALUES (?, 'emperor', 'imperial-chancellor', ?, 'queued', 1)`)
-          .run(gTask, JSON.stringify({ action: 'decree', text: gText, sent_at: new Date().toISOString() }));
+          .run(gTask, JSON.stringify({ action: 'decree', text: gText, source: 'dash:gate-grant', sent_at: new Date().toISOString() }));
         db.prepare(`UPDATE petitions SET status='approved', decided_at=datetime('now'), granted_task=? WHERE id=?`).run(gTask, p.id);
         json(res, { ok: true, status: 'approved', task_id: gTask }); return;
       }
@@ -320,7 +323,7 @@ async function handleRequest(req, res) {
         `as a companion file at ${companion}. The earlier in-scope file stays as it is.`;
       db.prepare(`INSERT INTO messages (task_id, from_agent, to_agent, content, status, priority)
                   VALUES (?, 'emperor', 'imperial-chancellor', ?, 'queued', 1)`)
-        .run(taskId, JSON.stringify({ action: 'decree', text, sent_at: new Date().toISOString() }));
+        .run(taskId, JSON.stringify({ action: 'decree', text, source: 'dash:scope-grant', sent_at: new Date().toISOString() }));
       db.prepare(`UPDATE petitions SET status='approved', decided_at=datetime('now'), granted_task=? WHERE id=?`).run(taskId, p.id);
       json(res, { ok: true, status: 'approved', task_id: taskId });
     } catch (e) { json(res, { error: e.message }, 500); }

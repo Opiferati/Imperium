@@ -93,7 +93,8 @@ test('the mail block reaches the prompt the agent is actually given', () => {
   // uncached tail. The mail MUST be in the tail: it changes every call, and anything that
   // changes inside the cached prefix means the cache never hits at all.
   assert.match(WARDEN, /const stableProm\s+= `\$\{EDICTS\}\\n\\n\$\{soul\}\$\{codexBlock\}`/);
-  assert.match(WARDEN, /const volatileProm = `\$\{briefStr\}\$\{ravensBlock\}\$\{icomBlock\}`/);
+  // 2026-11-14: primaryBlock (Primary Data Bridge) joined the volatile tail; icomBlock must still be there.
+  assert.match(WARDEN, /const volatileProm = `\$\{briefStr\}\$\{ravensBlock\}\$\{icomBlock\}(\$\{primaryBlock\})?`/);
   const stable = WARDEN.slice(WARDEN.indexOf('const stableProm'), WARDEN.indexOf('const volatileProm'));
   for (const v of ['icomBlock', 'ravensBlock', 'briefStr'])
     assert.ok(!stable.includes(v), `${v} changes every call and must not sit inside the cached prefix`);
