@@ -1,0 +1,333 @@
+{
+  "name": "swpc-ssn",
+  "source": "NOAA SWPC observed solar cycle indices (services.swpc.noaa.gov)",
+  "query": "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json",
+  "rows": [
+    {
+      "year": 1973,
+      "months": 12,
+      "mean_ssn": 54.3,
+      "partial": false
+    },
+    {
+      "year": 1974,
+      "months": 12,
+      "mean_ssn": 49.2,
+      "partial": false
+    },
+    {
+      "year": 1975,
+      "months": 12,
+      "mean_ssn": 22.4,
+      "partial": false
+    },
+    {
+      "year": 1976,
+      "months": 12,
+      "mean_ssn": 18.3,
+      "partial": false
+    },
+    {
+      "year": 1977,
+      "months": 12,
+      "mean_ssn": 39.3,
+      "partial": false
+    },
+    {
+      "year": 1978,
+      "months": 12,
+      "mean_ssn": 131.2,
+      "partial": false
+    },
+    {
+      "year": 1979,
+      "months": 12,
+      "mean_ssn": 219.9,
+      "partial": false
+    },
+    {
+      "year": 1980,
+      "months": 12,
+      "mean_ssn": 219,
+      "partial": false
+    },
+    {
+      "year": 1981,
+      "months": 12,
+      "mean_ssn": 198.8,
+      "partial": false
+    },
+    {
+      "year": 1982,
+      "months": 12,
+      "mean_ssn": 162.9,
+      "partial": false
+    },
+    {
+      "year": 1983,
+      "months": 12,
+      "mean_ssn": 90.8,
+      "partial": false
+    },
+    {
+      "year": 1984,
+      "months": 12,
+      "mean_ssn": 60.7,
+      "partial": false
+    },
+    {
+      "year": 1985,
+      "months": 12,
+      "mean_ssn": 20.5,
+      "partial": false
+    },
+    {
+      "year": 1986,
+      "months": 12,
+      "mean_ssn": 14.8,
+      "partial": false
+    },
+    {
+      "year": 1987,
+      "months": 12,
+      "mean_ssn": 33.7,
+      "partial": false
+    },
+    {
+      "year": 1988,
+      "months": 12,
+      "mean_ssn": 122.7,
+      "partial": false
+    },
+    {
+      "year": 1989,
+      "months": 12,
+      "mean_ssn": 211.2,
+      "partial": false
+    },
+    {
+      "year": 1990,
+      "months": 12,
+      "mean_ssn": 191.4,
+      "partial": false
+    },
+    {
+      "year": 1991,
+      "months": 12,
+      "mean_ssn": 203.4,
+      "partial": false
+    },
+    {
+      "year": 1992,
+      "months": 12,
+      "mean_ssn": 133.3,
+      "partial": false
+    },
+    {
+      "year": 1993,
+      "months": 12,
+      "mean_ssn": 76.4,
+      "partial": false
+    },
+    {
+      "year": 1994,
+      "months": 12,
+      "mean_ssn": 44.9,
+      "partial": false
+    },
+    {
+      "year": 1995,
+      "months": 12,
+      "mean_ssn": 25.2,
+      "partial": false
+    },
+    {
+      "year": 1996,
+      "months": 12,
+      "mean_ssn": 11.5,
+      "partial": false
+    },
+    {
+      "year": 1997,
+      "months": 12,
+      "mean_ssn": 28.9,
+      "partial": false
+    },
+    {
+      "year": 1998,
+      "months": 12,
+      "mean_ssn": 88.1,
+      "partial": false
+    },
+    {
+      "year": 1999,
+      "months": 12,
+      "mean_ssn": 136.2,
+      "partial": false
+    },
+    {
+      "year": 2000,
+      "months": 12,
+      "mean_ssn": 173.8,
+      "partial": false
+    },
+    {
+      "year": 2001,
+      "months": 12,
+      "mean_ssn": 170.3,
+      "partial": false
+    },
+    {
+      "year": 2002,
+      "months": 12,
+      "mean_ssn": 163.6,
+      "partial": false
+    },
+    {
+      "year": 2003,
+      "months": 12,
+      "mean_ssn": 99,
+      "partial": false
+    },
+    {
+      "year": 2004,
+      "months": 12,
+      "mean_ssn": 65.3,
+      "partial": false
+    },
+    {
+      "year": 2005,
+      "months": 12,
+      "mean_ssn": 45.7,
+      "partial": false
+    },
+    {
+      "year": 2006,
+      "months": 12,
+      "mean_ssn": 24.6,
+      "partial": false
+    },
+    {
+      "year": 2007,
+      "months": 12,
+      "mean_ssn": 12.6,
+      "partial": false
+    },
+    {
+      "year": 2008,
+      "months": 12,
+      "mean_ssn": 4.2,
+      "partial": false
+    },
+    {
+      "year": 2009,
+      "months": 12,
+      "mean_ssn": 4.8,
+      "partial": false
+    },
+    {
+      "year": 2010,
+      "months": 12,
+      "mean_ssn": 24.9,
+      "partial": false
+    },
+    {
+      "year": 2011,
+      "months": 12,
+      "mean_ssn": 80.8,
+      "partial": false
+    },
+    {
+      "year": 2012,
+      "months": 12,
+      "mean_ssn": 84.4,
+      "partial": false
+    },
+    {
+      "year": 2013,
+      "months": 12,
+      "mean_ssn": 93.7,
+      "partial": false
+    },
+    {
+      "year": 2014,
+      "months": 12,
+      "mean_ssn": 113.6,
+      "partial": false
+    },
+    {
+      "year": 2015,
+      "months": 12,
+      "mean_ssn": 69.8,
+      "partial": false
+    },
+    {
+      "year": 2016,
+      "months": 12,
+      "mean_ssn": 39.8,
+      "partial": false
+    },
+    {
+      "year": 2017,
+      "months": 12,
+      "mean_ssn": 21.8,
+      "partial": false
+    },
+    {
+      "year": 2018,
+      "months": 12,
+      "mean_ssn": 7,
+      "partial": false
+    },
+    {
+      "year": 2019,
+      "months": 12,
+      "mean_ssn": 3.6,
+      "partial": false
+    },
+    {
+      "year": 2020,
+      "months": 12,
+      "mean_ssn": 8.8,
+      "partial": false
+    },
+    {
+      "year": 2021,
+      "months": 12,
+      "mean_ssn": 29.5,
+      "partial": false
+    },
+    {
+      "year": 2022,
+      "months": 12,
+      "mean_ssn": 83,
+      "partial": false
+    },
+    {
+      "year": 2023,
+      "months": 12,
+      "mean_ssn": 125.3,
+      "partial": false
+    },
+    {
+      "year": 2024,
+      "months": 12,
+      "mean_ssn": 154.5,
+      "partial": false
+    },
+    {
+      "year": 2025,
+      "months": 12,
+      "mean_ssn": 123.5,
+      "partial": false
+    },
+    {
+      "year": 2026,
+      "months": 10,
+      "mean_ssn": 81.3,
+      "partial": true
+    }
+  ],
+  "ok": true,
+  "fetched_at": "2026-11-14T19:32:42.174Z"
+}

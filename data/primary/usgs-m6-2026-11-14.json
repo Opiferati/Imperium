@@ -1,0 +1,333 @@
+{
+  "name": "usgs-m6",
+  "source": "USGS ComCat count API (earthquake.usgs.gov/fdsnws/event/1/count)",
+  "query": "https://earthquake.usgs.gov/fdsnws/event/1/count?starttime={Y}-01-01&endtime={Y+1}-01-01&minmagnitude={M}",
+  "rows": [
+    {
+      "year": 1973,
+      "partial": false,
+      "m6": 99,
+      "m7": 9
+    },
+    {
+      "year": 1974,
+      "partial": false,
+      "m6": 99,
+      "m7": 11
+    },
+    {
+      "year": 1975,
+      "partial": false,
+      "m6": 114,
+      "m7": 13
+    },
+    {
+      "year": 1976,
+      "partial": false,
+      "m6": 115,
+      "m7": 14
+    },
+    {
+      "year": 1977,
+      "partial": false,
+      "m6": 86,
+      "m7": 11
+    },
+    {
+      "year": 1978,
+      "partial": false,
+      "m6": 93,
+      "m7": 12
+    },
+    {
+      "year": 1979,
+      "partial": false,
+      "m6": 94,
+      "m7": 8
+    },
+    {
+      "year": 1980,
+      "partial": false,
+      "m6": 96,
+      "m7": 6
+    },
+    {
+      "year": 1981,
+      "partial": false,
+      "m6": 86,
+      "m7": 10
+    },
+    {
+      "year": 1982,
+      "partial": false,
+      "m6": 90,
+      "m7": 8
+    },
+    {
+      "year": 1983,
+      "partial": false,
+      "m6": 139,
+      "m7": 14
+    },
+    {
+      "year": 1984,
+      "partial": false,
+      "m6": 138,
+      "m7": 14
+    },
+    {
+      "year": 1985,
+      "partial": false,
+      "m6": 162,
+      "m7": 15
+    },
+    {
+      "year": 1986,
+      "partial": false,
+      "m6": 138,
+      "m7": 11
+    },
+    {
+      "year": 1987,
+      "partial": false,
+      "m6": 173,
+      "m7": 13
+    },
+    {
+      "year": 1988,
+      "partial": false,
+      "m6": 126,
+      "m7": 11
+    },
+    {
+      "year": 1989,
+      "partial": false,
+      "m6": 139,
+      "m7": 8
+    },
+    {
+      "year": 1990,
+      "partial": false,
+      "m6": 154,
+      "m7": 18
+    },
+    {
+      "year": 1991,
+      "partial": false,
+      "m6": 137,
+      "m7": 17
+    },
+    {
+      "year": 1992,
+      "partial": false,
+      "m6": 179,
+      "m7": 13
+    },
+    {
+      "year": 1993,
+      "partial": false,
+      "m6": 148,
+      "m7": 12
+    },
+    {
+      "year": 1994,
+      "partial": false,
+      "m6": 159,
+      "m7": 13
+    },
+    {
+      "year": 1995,
+      "partial": false,
+      "m6": 202,
+      "m7": 20
+    },
+    {
+      "year": 1996,
+      "partial": false,
+      "m6": 164,
+      "m7": 15
+    },
+    {
+      "year": 1997,
+      "partial": false,
+      "m6": 136,
+      "m7": 16
+    },
+    {
+      "year": 1998,
+      "partial": false,
+      "m6": 121,
+      "m7": 12
+    },
+    {
+      "year": 1999,
+      "partial": false,
+      "m6": 135,
+      "m7": 18
+    },
+    {
+      "year": 2000,
+      "partial": false,
+      "m6": 160,
+      "m7": 15
+    },
+    {
+      "year": 2001,
+      "partial": false,
+      "m6": 137,
+      "m7": 15
+    },
+    {
+      "year": 2002,
+      "partial": false,
+      "m6": 139,
+      "m7": 13
+    },
+    {
+      "year": 2003,
+      "partial": false,
+      "m6": 154,
+      "m7": 15
+    },
+    {
+      "year": 2004,
+      "partial": false,
+      "m6": 157,
+      "m7": 16
+    },
+    {
+      "year": 2005,
+      "partial": false,
+      "m6": 150,
+      "m7": 11
+    },
+    {
+      "year": 2006,
+      "partial": false,
+      "m6": 153,
+      "m7": 11
+    },
+    {
+      "year": 2007,
+      "partial": false,
+      "m6": 196,
+      "m7": 18
+    },
+    {
+      "year": 2008,
+      "partial": false,
+      "m6": 179,
+      "m7": 12
+    },
+    {
+      "year": 2009,
+      "partial": false,
+      "m6": 160,
+      "m7": 17
+    },
+    {
+      "year": 2010,
+      "partial": false,
+      "m6": 174,
+      "m7": 24
+    },
+    {
+      "year": 2011,
+      "partial": false,
+      "m6": 207,
+      "m7": 20
+    },
+    {
+      "year": 2012,
+      "partial": false,
+      "m6": 133,
+      "m7": 16
+    },
+    {
+      "year": 2013,
+      "partial": false,
+      "m6": 142,
+      "m7": 19
+    },
+    {
+      "year": 2014,
+      "partial": false,
+      "m6": 155,
+      "m7": 12
+    },
+    {
+      "year": 2015,
+      "partial": false,
+      "m6": 146,
+      "m7": 19
+    },
+    {
+      "year": 2016,
+      "partial": false,
+      "m6": 147,
+      "m7": 16
+    },
+    {
+      "year": 2017,
+      "partial": false,
+      "m6": 111,
+      "m7": 7
+    },
+    {
+      "year": 2018,
+      "partial": false,
+      "m6": 134,
+      "m7": 17
+    },
+    {
+      "year": 2019,
+      "partial": false,
+      "m6": 145,
+      "m7": 10
+    },
+    {
+      "year": 2020,
+      "partial": false,
+      "m6": 121,
+      "m7": 9
+    },
+    {
+      "year": 2021,
+      "partial": false,
+      "m6": 157,
+      "m7": 19
+    },
+    {
+      "year": 2022,
+      "partial": false,
+      "m6": 127,
+      "m7": 11
+    },
+    {
+      "year": 2023,
+      "partial": false,
+      "m6": 147,
+      "m7": 19
+    },
+    {
+      "year": 2024,
+      "partial": false,
+      "m6": 99,
+      "m7": 10
+    },
+    {
+      "year": 2025,
+      "partial": false,
+      "m6": 145,
+      "m7": 16
+    },
+    {
+      "year": 2026,
+      "partial": true,
+      "m6": 127,
+      "m7": 13
+    }
+  ],
+  "ok": true,
+  "fetched_at": "2026-11-14T19:32:40.219Z"
+}
