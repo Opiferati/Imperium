@@ -265,6 +265,8 @@ input, textarea { font-family: Georgia, serif; }
 @keyframes rTilt { 0%,70%,100% { transform: rotate(0deg); } 80% { transform: rotate(-8deg); } 90% { transform: rotate(4deg); } }
 .raven-eye { fill: var(--gold2); }
 .raven-card.muninn .raven-eye { fill: #8fb0d8; }
+/* ── Stations: Thesis H link panel (2026-11-15) ── */
+#thesis-h-frame { flex: 1; width: 100%; min-height: 70vh; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
 #ravens-report-pre { font-family: Consolas, monospace; font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
 #overlay-panel { display: none; }
 #overlay-panel.open { display: flex; flex-direction: column; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg2); z-index: 10; padding: 12px; overflow-y: auto; }
@@ -475,6 +477,13 @@ img { -webkit-user-drag: none; }
             </div>
             <div id="muninn-lines"><div class="raven-line">Taking flight...</div></div>
           </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-section-title" title="Stations with a page of their own. Click to open the full station.">Stations</div>
+        <div class="raven-card" id="thesis-h-card" onclick="openThesisH()">
+          <div class="raven-head"><div><div class="raven-name">Thesis H</div><div class="raven-sub">Sunspots &middot; quakes</div></div></div>
+          <div id="thesis-h-lines"><div class="raven-line">Checking...</div></div>
         </div>
       </div>
       <div>
@@ -1343,6 +1352,66 @@ function openRavens() {
   ravenFlap('raven-huginn'); setTimeout(() => ravenFlap('raven-muninn'), 250);
 }
 
+// ── Thesis H station (2026-11-15) ───────────────────────────────────
+// The full station page lives in output/stations/thesis-h/. Its status comes
+// from status.js there, written by the Thesis H runner after launch.
+// No file = not launched. Display only: status words, never a quake count or a score.
+const TH_DIR = 'stations/thesis-h/';
+const TH_SCRIPT = 'scr' + 'ipt';
+function thParse(r) {
+  if (!r || r.kind !== 'text' || typeof r.text !== 'string') return null;
+  const m = r.text.match(/^\s*window\.THESIS_H\s*=\s*([\s\S]*?);?\s*$/);
+  if (!m) return null;
+  try { const s = JSON.parse(m[1]); return (s && typeof s === 'object') ? s : null; } catch { return null; }
+}
+async function pollThesisH() {
+  const r = await api('/api/output-file?path=' + encodeURIComponent(TH_DIR + 'status.js'));
+  const s = thParse(r);
+  let html;
+  if (!r) html = rl('Status', 'Not launched', 'warn');
+  else if (!s) html = rl('Status', 'status file unreadable', 'bad');
+  else if (s.hash_ok === false) html = rl('Status', 'Stopped: charter changed', 'bad');
+  else if (s.verdict && s.verdict.opened_at && s.verdict.word) html = rl('Verdict', String(s.verdict.word), 'ok');
+  else if (!s.launched_at) html = rl('Status', 'Not launched', 'warn');
+  else {
+    html = rl('Status', 'Watching', 'ok') + (s.episodes !== undefined && s.episodes !== null ? rl('Episodes', String(s.episodes)) : '');
+    if (s.windows_open !== undefined && s.windows_open !== null) html += rl('Windows open', String(s.windows_open));
+    if (s.sources && s.sources.kp) html += rl('Kp feed', String(s.sources.kp));
+    // Freshness: the runner rewrites status.js about every 10 minutes while the Warden runs.
+    const at = Date.parse(s.written_at || '');
+    if (!isNaN(at)) {
+      const mins = Math.round((Date.now() - at) / 60000);
+      html += mins > 30 ? rl('Updated', mins + ' min ago (runner quiet?)', 'warn') : rl('Updated', mins <= 1 ? 'just now' : mins + ' min ago');
+    }
+  }
+  html += rl('Open', 'full station page');
+  const el = document.getElementById('thesis-h-lines');
+  if (el) el.innerHTML = html;
+}
+async function openThesisH() {
+  const overlay = document.getElementById('overlay-panel');
+  const content = document.getElementById('overlay-content');
+  const head = '<h3>Thesis H &middot; Sunspots and Earthquakes</h3>';
+  content.innerHTML = head + '<div class="empty-note">Opening the station...</div>';
+  overlay.classList.add('open');
+  const page = await api('/api/output-file?path=' + encodeURIComponent(TH_DIR + 'index.html'));
+  if (!page || page.kind !== 'text') {
+    content.innerHTML = head + '<div class="empty-note">The station page was not found at output/stations/thesis-h/index.html.</div>';
+    return;
+  }
+  const s = thParse(await api('/api/output-file?path=' + encodeURIComponent(TH_DIR + 'status.js')));
+  const tag = '<' + TH_SCRIPT + ' src="status.js" onerror="window.THESIS_H_MISSING = true"></' + TH_SCRIPT + '>';
+  const inline = s ? '<' + TH_SCRIPT + '>window.THESIS_H = ' + JSON.stringify(s).replace(/</g, '\\u003c') + ';</' + TH_SCRIPT + '>' : '';
+  let html = page.text.split(tag).join(inline);
+  html = html.replace(/src="(crest|banner)\.png"/g, (m0, n) => 'src="/api/output-raw?path=' + encodeURIComponent(TH_DIR + n + '.png') + '"');
+  content.innerHTML = head;
+  const f = document.createElement('iframe');
+  f.id = 'thesis-h-frame';
+  f.setAttribute('sandbox', 'allow-scripts');
+  f.srcdoc = html;
+  content.appendChild(f);
+}
+
 // ── Boot ────────────────────────────────────────────────────────────
 async function boot() {
   await Promise.all([pollStatus(), pollMinistries(), pollTasks(), pollOutputFiles(), pollOllama(), pollRavens()]);
@@ -1358,6 +1427,8 @@ async function boot() {
   setInterval(pollFeed, 3000);
   setInterval(updateRatioStat, 5000);
   setInterval(pollRavens, 10000);
+  pollThesisH(); setInterval(pollThesisH, 60000);
+  if (location.hash === '#thesis-h') openThesisH();
 }
 
 boot();
