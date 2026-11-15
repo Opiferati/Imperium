@@ -190,10 +190,37 @@ test('one source down all day abstains the day, even if the other shows a trigge
   assert.strictEqual(call(root, '2026-11-15').call, 'ABSTAIN');
 });
 
-test('a flare with no readable class on an otherwise quiet day waits on ruling R11', async () => {
-  const { c } = await callFor([1, 1, 1, 1, 1, 1, 1, 1], [['2026-11-15T13:02:00Z', '']]);
-  assert.strictEqual(c.call, 'PENDING');
-  assert.match(c.reasons.join(' '), /R11/);
+test('Amendment 3: a flare with no readable class on a quiet day is an incomplete read; a readable read later counts, marked late', async () => {
+  const { root, c } = await callFor([1, 1, 1, 1, 1, 1, 1, 1], [['2026-11-15T13:02:00Z', '']]);
+  assert.strictEqual(c, null, 'no call while the only flare read has a classless flare');
+  th._reset();
+  await th.tick(root, { now: () => at('2026-11-16T07:00:00Z'), fetchImpl: net({ kp: kpBody('2026-11-15', [1, 1, 1, 1, 1, 1, 1, 1]), flares: flareBody([['2026-11-15T13:02:00Z', 'M2.1']]), ssn: [], usgs: quakeBody() }) });
+  const d = call(root, '2026-11-15');
+  assert.strictEqual(d.call, 'QUIET');
+  assert.strictEqual(d.late, true);
+  assert.strictEqual(d.flares.late, true);
+  assert.strictEqual(d.kp.late, false, 'the on-time complete Kp read still stands');
+  assert.strictEqual(d.flares.read_at, '2026-11-16T07:00:00.000Z');
+});
+
+test('Amendment 3: nothing readable by midnight UTC and the day abstains; the class is never guessed', async () => {
+  const { root } = await callFor([1, 1, 1, 1, 1, 1, 1, 1], [['2026-11-15T13:02:00Z', '']]);
+  th._reset();
+  await th.tick(root, { now: () => at('2026-11-17T00:00:30Z'), fetchImpl: net({ kp: kpBody('2026-11-15', [1, 1, 1, 1, 1, 1, 1, 1]), flares: flareBody([['2026-11-15T13:02:00Z', '']]), ssn: [], usgs: quakeBody() }) });
+  const d = call(root, '2026-11-15');
+  assert.strictEqual(d.call, 'ABSTAIN');
+  assert.strictEqual(d.flares, null);
+  assert.match(d.reasons.join(' '), /no readable class \(Amendment 3\)/);
+});
+
+test('Amendment 3: a classless flare does not hold up a day something else triggers', async () => {
+  const a = await callFor([1, 1, 1, 7.33, 1, 1, 1, 1], [['2026-11-15T13:02:00Z', '']]);
+  assert.strictEqual(a.c.call, 'TRIGGER');
+  assert.strictEqual(a.c.late, false);
+  th._reset();
+  const b = await callFor([1, 1, 1, 1, 1, 1, 1, 1], [['2026-11-15T09:00:00Z', ''], ['2026-11-15T13:02:00Z', 'X1.4']]);
+  assert.strictEqual(b.c.call, 'TRIGGER');
+  assert.strictEqual(b.c.late, false);
 });
 
 test('a frozen call is never rewritten, and the raw bodies are kept', async () => {
@@ -267,16 +294,16 @@ test('provisional episodes need 3 quiet days before a trigger', () => {
 
 // ── the sealed look ───────────────────────────────────────────────────
 
-test('the verdict will not open early, or while a ruling is pending', async () => {
+test('the verdict will not open early, and the one look is not written yet', async () => {
   const root = await launched();
   assert.match(verdict.open(root, { now: at('2027-06-01T00:00:00Z') }).why, /sealed until 2028-11-25/);
-  assert.match(verdict.open(root, { now: at('2029-01-01T00:00:00Z') }).why, /rulings still pending/);
+  assert.match(verdict.open(root, { now: at('2029-01-01T00:00:00Z') }).why, /not written yet/);
 });
 
-test('Amendment 2 settles R1-R10; only R11 is still open', () => {
-  assert.deepStrictEqual(Object.keys(verdict.SETTLED), ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10']);
-  for (const v of Object.values(verdict.SETTLED)) assert.match(v, /^Amendment 2 item \d+:/);
-  assert.deepStrictEqual(verdict.PENDING_RULINGS.map(r => r.split(' ')[0]), ['R11']);
+test('Amendment 2 settles R1-R10 and Amendment 3 settles R11; no ruling is still open', () => {
+  assert.deepStrictEqual(Object.keys(verdict.SETTLED), ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11']);
+  for (const [k, v] of Object.entries(verdict.SETTLED)) assert.match(v, k === 'R11' ? /^Amendment 3:/ : /^Amendment 2 item \d+:/);
+  assert.deepStrictEqual(verdict.PENDING_RULINGS, []);
 });
 
 test('rule 7 throws out a quake with an equal or bigger one within 300 km and 30 days before it', () => {

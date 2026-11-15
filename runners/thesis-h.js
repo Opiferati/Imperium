@@ -4,18 +4,20 @@
 //
 // Charter: THESIS_H.md at the Imperium root, a byte-for-byte snapshot of the
 // Claude Doc "Thesis H Charter: Sunspots and Earthquakes" (signed CM 11/14/2026,
-// Amendment 1 CM 2026-11-15, Amendment 2 CM 2026-11-15). The lock is the SHA-256
+// Amendment 1 CM 2026-11-15, Amendment 2 CM 2026-11-15, Amendment 3 CM 2026-11-15).
+// The lock is the SHA-256
 // of that whole file, so it covers every amendment. Every run checks it and refuses
 // on a mismatch; an amendment is taken in only by an append-only re-lock.
 //
 // What this file does, and nothing more:
 //   1. The solar call (rules 1-2). At 00:30 UTC on day t+1 it reads the NOAA
 //      planetary Kp product and the GOES X-ray flare list, freezes both raw
-//      bodies, and freezes one call for day t: TRIGGER, QUIET, ABSTAIN, or
-//      PENDING (a case the charter does not settle; it waits for a ruling).
+//      bodies, and freezes one call for day t: TRIGGER, QUIET or ABSTAIN.
 //      Amendment 2 item 1: if the 00:30 read fails or can't settle the call, the
 //      first read later that same UTC day (t+1) that can counts, marked late;
-//      none by midnight UTC and the day abstains.
+//      none by midnight UTC and the day abstains. Amendment 3: a flare list that
+//      shows a flare with no readable class, on a day nothing else triggers, is
+//      an incomplete read under the same rule.
 //   2. The quake snapshot (rules 6-8). Once a UTC day at 00:30 it reads the
 //      USGS M6+ catalog for the 45 days before that day and freezes it. The
 //      verdict later takes, for each window, the first snapshot taken 10 days
@@ -232,10 +234,13 @@ function covers(source, read, t) {
  * day. A Kp read settles the call when it holds all 8 values for t, or a value
  * of 7.00 or more (the day is then a trigger whatever the rest), or when the
  * flare list already shows an X1.0+ flare that day (rule 1: either is enough).
- * The one case the amendments do not settle (a flare with no readable class on
- * a day nothing else triggers) stays PENDING with its reason.
+ * Amendment 3: a flare read that shows a flare with no readable class that day
+ * settles the call only if something else triggers; otherwise it is incomplete,
+ * and with nothing readable by midnight UTC the day abstains. The class of such
+ * a flare is never guessed. `classless` says the day had flare reads, all of
+ * them incomplete this way.
  */
-function decide(t, kpRead, kpJson, flRead, flJson) {
+function decide(t, kpRead, kpJson, flRead, flJson, { classless = false } = {}) {
   const callAt = dayMs(t) + DAY_MS + CALL_OFFSET;
   const late   = r => !!r && r.read_at - callAt >= ON_TIME_MS;
   const kpVals = kpJson ? (kpByDay(kpJson)[t] || []) : null;
@@ -250,9 +255,10 @@ function decide(t, kpRead, kpJson, flRead, flJson) {
     call = 'ABSTAIN';
     const missing = [!kpRead && 'Kp', !flRead && 'flare list'].filter(Boolean).join(' and ');
     reasons.push(`no ${missing} read that could settle the call by midnight UTC on the call day (Amendment 2, item 1)`);
+    if (!flRead && classless) reasons.push('every flare list read that day showed a flare with no readable class (Amendment 3)');
   } else if (fl.unclassified.length && !kpHit && !flHit) {
-    call = 'PENDING';
-    reasons.push('a flare peaked this day with no readable class (R11, waits on a ruling)');
+    call = 'ABSTAIN';      // not reached through solarStep, which never picks such a read; kept so decide() is safe alone
+    reasons.push('the flare list showed a flare with no readable class and nothing else triggers (Amendment 3)');
   } else call = (kpHit || flHit) ? 'TRIGGER' : 'QUIET';
   const isLate = late(kpRead) || late(flRead);
   return {
@@ -408,16 +414,21 @@ async function solarStep(root, info, lock, { now, fetchImpl }) {
     const dayEnd = dayMs(t) + 2 * DAY_MS;          // Amendment 2 item 1: "later that same day", midnight UTC
     const inDay = src => reads.filter(r => r.source === src && r.read_at >= callAt && r.read_at < dayEnd && covers(src, r, t))
                               .sort((a, b) => a.read_at - b.read_at);
-    const f = inDay('flares')[0] || null;
-    const fJson = f ? bodyOf('flares', f) : null;
-    const flareSettles = !!fJson && flaresOn(fJson, t).x.length > 0;
+    // Amendment 3: a flare read is readable for day t unless it shows a flare with no
+    // readable class that day and no X1.0+ flare. A Kp trigger (below) makes any read do.
+    const fReads = inDay('flares').map(r => ({ r, j: bodyOf('flares', r) }));
+    let fPick = fReads.find(({ j }) => { const fl = flaresOn(j, t); return fl.x.length > 0 || fl.unclassified.length === 0; }) || null;
+    const flareSettles = !!fPick && flaresOn(fPick.j, t).x.length > 0;
     let k = null, kJson = null;
     for (const r of inDay('kp')) {
       const j = bodyOf('kp', r), vals = kpByDay(j)[t] || [];
       if (vals.length >= 8 || vals.some(v => v.kp >= KP_TRIGGER) || flareSettles) { k = r; kJson = j; break; }
     }
+    const kpTriggers = !!kJson && (kpByDay(kJson)[t] || []).some(v => v.kp >= KP_TRIGGER);
+    if (kpTriggers && fReads.length) fPick = fReads[0];   // something else triggers: the first flare read stands
+    const f = fPick ? fPick.r : null, fJson = fPick ? fPick.j : null;
     if ((!k || !f) && at < dayEnd) continue;       // keep retrying until midnight UTC on the call day
-    const d = decide(t, k, kJson, f, fJson);
+    const d = decide(t, k, kJson, f, fJson, { classless: !f && fReads.length > 0 });
     const rec = { thesis: THESIS, day: t, call: d.call, reasons: d.reasons, frozen_at: iso(at), call_time: iso(callAt),
                   kp: d.kp, flares: d.flares, trigger: d.trigger, late: d.late, ...provenance(root, lock) };
     const wrote = freezeJson(p(root, 'solar', `${t}.json`), rec);
@@ -449,8 +460,8 @@ async function quakeStep(root, info, lock, { now, fetchImpl }) {
 let lastStatusAt = 0;
 
 /** Display-only episode count: a new episode on a TRIGGER day with at least 3
- *  QUIET days before it (or with no earlier trigger day). Days that abstained or
- *  wait on a ruling are not quiet and break the run (Amendment 2, item 2). */
+ *  QUIET days before it (or with no earlier trigger day). Days that abstained
+ *  (or any call that is not QUIET) are not quiet and break the run (Amendment 2, item 2). */
 function provisionalEpisodes(calls) {
   const eps = [];
   let quietRun = Infinity;

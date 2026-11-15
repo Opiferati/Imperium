@@ -18,7 +18,8 @@ const path = require('node:path');
 const DAY_MS = 86400000;
 
 // Every question the charter left open, by number, so a ruling can be pointed at
-// exactly. R1-R10 were settled by Amendment 2 (CM 2026-11-15), items 1-10.
+// exactly. R1-R10 were settled by Amendment 2 (CM 2026-11-15), items 1-10;
+// R11 by Amendment 3 (CM 2026-11-15).
 const SETTLED = Object.freeze({
   R1:  'Amendment 2 item 1: a late call counts if made by midnight UTC on t+1, marked late; otherwise the day abstains',
   R2:  'Amendment 2 item 2: an abstained day is not quiet and breaks the 3-day run',
@@ -30,12 +31,12 @@ const SETTLED = Object.freeze({
   R8:  'Amendment 2 item 8: USGS type "earthquake" only',
   R9:  'Amendment 2 item 9: k = test-period days / scored episodes, rounded down, from day one',
   R10: 'Amendment 2 item 10: great-circle distance between epicentres, depth ignored',
+  R11: 'Amendment 3: a flare with no readable class, on a day nothing else triggers, is an incomplete read; nothing readable by midnight UTC and the day sits out',
 });
 
 // Still open. Each is settled only by a dated, initialed amendment.
-const PENDING_RULINGS = Object.freeze([
-  'R11 a flare that peaked on the day with no readable class, on a day nothing else triggers: an incomplete read (Amendment 2 item 1) or its own ruling',
-]);
+// None as of Amendment 3 (CM 2026-11-15).
+const PENDING_RULINGS = Object.freeze([]);
 
 // ── rule 7: mainshocks only ───────────────────────────────────────────
 function km(a, b) {

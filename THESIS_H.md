@@ -206,3 +206,9 @@ Settles the scoring details the charter left open. Written before any trigger ca
 9. **Static Twin.** k is the test-period days divided by the number of scored episodes, rounded down, starting on day one. Why: it gives the same number of windows, evenly spaced.
 10. **The 300 km rule.** Distance is measured along the surface between epicentres, ignoring depth. Why: it's simple and anyone can check it.
 11. **Launch record.** Launched 2026-11-15 02:11 UTC. Charter hash at launch: de356e52feddb78cbc14c5fa055c5d2cff889a45be61be7010dce59375796aa7.
+
+## Amendment 3
+
+Date: 2026-11-15 · Initials: CM
+
+A flare logged with no readable class, on a day nothing else triggers, counts as an incomplete read, the same as a missing Kp value. Then the late-call rule applies, and if nothing readable comes by midnight UTC the day sits out.
