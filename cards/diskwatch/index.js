@@ -8,7 +8,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const GB = 1024 ** 3;
-const GDRIVE = '/mnt/g/My Drive';
+const GDRIVE = '/mnt/g'; // G: itself; "My Drive" there is only a .lnk shortcut (changed 2026-11-13)
 
 function round(n) { return Math.round(n * 100) / 100; }
 

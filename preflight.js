@@ -48,15 +48,18 @@ async function main() {
     }
   }
 
-  // 5. Databases open
+  // 5. Databases open and sound (boot guard, 2026-11-13)
   try {
     const { DatabaseSync } = require('node:sqlite');
+    let sound = true;
     for (const [f, t] of [['message_bus.db', 'messages'], ['imperial-ledger.db', 'api_calls']]) {
-      const db = new DatabaseSync(path.join(ROOT, 'data', f));
+      const db = new DatabaseSync(path.join(ROOT, 'data', f), { readOnly: true });
+      const res = db.prepare('PRAGMA integrity_check').all().map(r => r.integrity_check);
       db.prepare(`SELECT COUNT(*) n FROM ${t}`).get();
       db.close();
+      if (res.length !== 1 || res[0] !== 'ok') { sound = false; bad(`${f} failed its integrity check: ${res.slice(0, 3).join('; ')} - restore it before starting`); }
     }
-    ok('Message bus and ledger open');
+    if (sound) ok('Message bus and ledger open, integrity check ok');
   } catch (e) { bad(`Database problem: ${e.message}`); }
 
   // 6. Code compiles
