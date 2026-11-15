@@ -134,3 +134,71 @@ By signing, the Jarl fixes the claim, the statistic, the fleet, the seeds, the c
 
 **Signed:** __Opie_____________________  **Date:** __11/10/2026__________
 
+---
+
+## AMENDMENT 1 - the Status line was stale at signing
+
+**Raised:** 2026-11-11 · **Proposed by:** Digi, at the Emperor's direction
+**Initials:** __Op____________  **Date:** ___11/11/2026___________
+
+The sealed body's Status line reads "DRAFT - UNSIGNED. Nothing is built until Opie
+signs." That line was already stale when the charter was signed on 11/10/2026. The
+charter IS signed, per the signature line above, and the launch lock recorded the
+signed body as adb58170397b69f9.
+
+The sealed body is NOT edited. The Status line stands as written, because correcting
+it would change the body hash and break the launch lock - the very thing law 2 exists
+to prevent. A reader should take the signature line, not the Status line, as the
+charter's standing.
+
+The same applies to the "Amendments" section in the sealed body, which reads "None."
+It is sealed. Amendments to a launched thesis live BELOW the signature line, where
+charter.js's amendmentInitialed() still finds and validates them while bodyHash()
+leaves them outside the seal.
+
+Nothing about the run changes under this amendment. It corrects how the document is
+read, not the test.
+
+## AMENDMENT 2 - day-level clustering in the verdict's interval
+
+**Raised:** 2026-11-11, at 2 of 60 observations · **Proposed by:** Digi, at the Emperor's direction
+**Initials:** ___Op___________  **Date:** __11/11/2026____________
+
+Section 7 declares 2 observations per trading night (the Skald's stock and crypto
+readings) and computes power at n=60, df=59, as though all 60 were independent.
+
+They are not fully independent, and THIS CHARTER ALREADY SAID SO. Section 10, declared
+weakness 4: "Two observations a night share the day's macro weather, so they are not
+fully independent. The error bars will be slightly optimistic - the uncertainty is real
+but modestly understated." Two observations from one night also share the models, the
+hour, the same Skald reading pass, and that evening's API behaviour. Sixty observations
+arrive as thirty clusters of two.
+
+So this amendment discovers nothing. It closes a gap between the charter's prose and the
+charter's arithmetic: the weakness was declared at signing in Section 10 and then never
+reached the interval in Sections 6 and 7. "Slightly" and "modestly" were assertions made
+before any data existed; neither was computed, and neither can be until the box opens.
+The honest course is not to argue the size of the effect in advance but to report the
+interval both ways and let the difference speak.
+
+Treating them as 60 independent draws makes the interval NARROWER than honest, which
+biases the verdict toward PASS or KILL where UNTESTED is the truthful answer. Law 8 is
+declared binding in this thesis, not display-only, so this is a defect in the verdict's
+uncertainty and not a presentational matter.
+
+THE VERDICT THEREFORE REPORTS BOTH:
+
+  (a) the naive interval, computed as Sections 6 and 7 describe, at n=60; and
+  (b) a day-clustered interval, accounting for the two observations from one night
+      sharing daily conditions.
+
+WHERE THE TWO DISAGREE ON THE OUTCOME, (b) GOVERNS. The verdict states both intervals
+and names which one decided it.
+
+No verdict tier is redefined. PASS, KILL, UNTESTED and WE BROKE IT keep exactly the
+meanings Section 6 gives them. Only the interval they are read against is corrected.
+
+Declared at 2 observations. No delta, standard deviation, score or paired figure from
+library/thesis_g.jsonl was read by anyone in raising this amendment - it follows from
+the sampling plan stated in the charter's own Section 7, not from the data. Law 3 is
+intact: the box has not been opened.
