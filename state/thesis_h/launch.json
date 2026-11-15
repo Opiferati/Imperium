@@ -1,0 +1,23 @@
+{
+ "thesis": "THESIS_H",
+ "charter_hash": "de356e52feddb78cbc14c5fa055c5d2cff889a45be61be7010dce59375796aa7",
+ "launched_at": "2026-11-15T02:11:11.897Z",
+ "launch_date": "2026-11-15",
+ "first_call_day": "2026-11-15",
+ "first_snapshot_day": "2026-11-16",
+ "verdict_opens": "2028-11-25T02:11:11.897Z",
+ "halfway_report": "2027-11-15",
+ "jester_seed": "20261114",
+ "register_id": "thesis-h-charter-1",
+ "urls": {
+  "kp": "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json",
+  "flares": "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json",
+  "ssn": "https://services.swpc.noaa.gov/json/solar-cycle/swpc_observed_ssn.json",
+  "usgs": "https://earthquake.usgs.gov/fdsnws/event/1/query"
+ },
+ "commit": "a65a30923ef240bdd1065d9a6ace082e007cb723",
+ "code": {
+  "runners/thesis-h.js": "35da64f68b19ea1ea8cc6738a3262b09beffd57e73a14792784b30218d2b48a7",
+  "runners/thesis-h-verdict.js": "701761c7fdd28a563a750dbd7244eb444541e64636d9cbcd813bca63bd98da03"
+ }
+}

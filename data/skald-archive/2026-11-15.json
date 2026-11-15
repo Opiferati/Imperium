@@ -1,0 +1,146 @@
+{
+  "date": "2026-11-15",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.059088100000000005,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 18,
+    "stock_mood": 38,
+    "crypto_drivers": [
+      {
+        "event": "Bitcoin fell to about $63,500 and ether dropped roughly 9% as bets on a Fed rate hike, ETF outflows and about $1bn in liquidations hit the market",
+        "effect": "fear",
+        "url": "https://cryptoticker.io/en/crypto-news-bitcoin-falls-to-63500-fed-hike-bets-november-14-2026/"
+      },
+      {
+        "event": "Bitcoin slid about 14% over the week to near $65,000 after weekend selling broke through Friday's low",
+        "effect": "fear",
+        "url": "https://cryptonews.net/news/analytics/33752999/"
+      },
+      {
+        "event": "Ether fell to a low near $1,715, its weakest level since July, while ETF outflows continued",
+        "effect": "fear",
+        "url": "https://cryptoticker.io/en/ethereum-price-crash-1715-63-percent-below-record-november-15-2026"
+      },
+      {
+        "event": "US authorities obtained court approval to seize or restrain over $1.2bn of assets stolen in the $6.3bn Binance hack, as further DeFi exploits added to security worries",
+        "effect": "fear",
+        "url": "https://www.altcoinbuzz.io/binance-heist-and-defi-exploits-put-crypto-security-under-pressure"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Fed officials locked in expectations for a December rate hike after a hotter October consumer-price report, raising the prospect of back-to-back increases",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/economy/policy/articles/fed-track-raise-interest-rates-195501318.html"
+      },
+      {
+        "event": "A hotter-than-expected October inflation report put Wall Street indexes in the red and added pressure for a December Fed rate increase",
+        "effect": "fear",
+        "url": "https://www.thenationalnews.com/business/economy/2026/11/10/federal-reserve-inflation-interest-rates-december/"
+      },
+      {
+        "event": "October producer prices rose less than forecast, though markets still fully priced a quarter-point Fed hike in December",
+        "effect": "neutral",
+        "url": "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Crypto news: bitcoin falls to $63,500, ether down 9% as Fed hike bets soar",
+        "url": "https://cryptoticker.io/en/crypto-news-bitcoin-falls-to-63500-fed-hike-bets-november-14-2026/",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum Price Crashes to $1,715, Now 63% Below Its Record High",
+        "url": "https://cryptoticker.io/en/ethereum-price-crash-1715-63-percent-below-record-november-15-2026",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto News: Bitcoin, Ethereum And XRP Hit Make-Or-Break Levels After Brutal Sell-Off",
+        "url": "https://cryptonews.net/news/analytics/33752999/",
+        "market": "crypto"
+      },
+      {
+        "title": "Why Is XRP Crashing Today? Ripple Token Falls 18% in a Week",
+        "url": "https://coinpaper.com/38867/why-is-xrp-crashing-today-ripple-token-falls-18-in-a-week-as-bitcoin-and-ethereum-selloff-deepens",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum reserves on Binance hit five-year low as ETH price falls",
+        "url": "https://crypto.news/ethereum-binance-reserves-fall-2-9-million-eth",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance Heist and DeFi Exploits Put Crypto Security Under Pressure",
+        "url": "https://www.altcoinbuzz.io/binance-heist-and-defi-exploits-put-crypto-security-under-pressure",
+        "market": "crypto"
+      },
+      {
+        "title": "Fed on Track to Raise Interest Rates Next Month And Maybe Again in January",
+        "url": "https://finance.yahoo.com/economy/policy/articles/fed-track-raise-interest-rates-195501318.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Hot US inflation report seals Federal Reserve rate increase",
+        "url": "https://www.thenationalnews.com/business/economy/2026/11/10/federal-reserve-inflation-interest-rates-december/",
+        "market": "stocks"
+      },
+      {
+        "title": "Wholesale prices rose 0.3% in October, putting annual rate at 6.5%, the highest in nearly four years",
+        "url": "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://crypto.news/",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://www.gncrypto.news/",
+    "https://www.coindesk.com/",
+    "https://openpr.com/news/4690389/what-should-crypto-traders-buy-next-after-bitcoin-falls-below",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://cryptoticker.io/en/crypto-crash-prediction-where-will-coins-bottom",
+    "https://pl.tradingview.com/news/cryptonews%3A706267085094b%3A0-live-crypto-news-today-latest-updates-for-august-26-2025-940m-in-crypto-liquidated-as-bitcoin-drops-below-110k-amid-macro-pressures",
+    "https://www.fxstreet.com/cryptocurrencies/news/top-3-price-predictions-bitcoin-ethereum-ripple-btc-eth-and-xrp-extend-losses-as-downside-momentum-dominates-202611130342",
+    "https://finance.yahoo.com/markets/crypto/articles/peter-schiff-warns-black-monday-102605004.html",
+    "https://crypto.news/ethereum-binance-reserves-fall-2-9-million-eth",
+    "https://cryptonews.net/news/analytics/33752999/",
+    "https://cryptoticker.io/en/ethereum-price-crash-1715-63-percent-below-record-november-15-2026",
+    "https://cryptoticker.io/en/crypto-news-bitcoin-falls-to-63500-fed-hike-bets-november-14-2026/",
+    "https://coinpaper.com/38867/why-is-xrp-crashing-today-ripple-token-falls-18-in-a-week-as-bitcoin-and-ethereum-selloff-deepens",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://stockanalysis.com/news/",
+    "https://finance.yahoo.com/topic/stock-market-news/",
+    "https://seekingalpha.com/market-news",
+    "https://www.cnbc.com/",
+    "https://www.google.com/finance/",
+    "https://www.nyse.com/index",
+    "https://www.bloomberg.com/markets",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://www.cnbc.com/markets/",
+    "https://finance.yahoo.com/economy/policy/articles/fed-track-raise-interest-rates-195501318.html",
+    "https://www.federalreserve.gov/releases/h15/",
+    "https://www.thenationalnews.com/business/economy/2026/11/10/federal-reserve-inflation-interest-rates-december/",
+    "https://cnbc.com/2026/11/13/ppi-inflation-report-october-2026.html",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/30",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/27",
+    "https://www.foxnews.com/story/federal-reserve-holds-interest-rates-steady-citing-cooling-economy.print",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://gizmodo.com/there-are-too-many-crypto-hacks-happening-its-impossible-to-keep-up-2000833986",
+    "https://cryptobriefing.com/south-korea-crypto-withdrawal-freezes-hacking/",
+    "https://www.altcoinbuzz.io/binance-heist-and-defi-exploits-put-crypto-security-under-pressure",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46",
+    "https://que.com/crypto-exchanges-reinvent-security-standards-after-record-binance-heist/"
+  ]
+}
