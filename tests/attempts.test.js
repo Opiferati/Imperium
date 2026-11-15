@@ -204,7 +204,9 @@ test('the live register holds the two corrections logged 2026-11-11', () => {
 
   // The whole reason these are `build` and not `tested_idea`.
   const s = A.summary(root);
-  assert.strictEqual(s.builds, 2);
+  // 2026-11-14: was strictEqual(2), true only until the next build was logged. The register is
+  // append-only, so the count can only grow; the two 2026-11-11 builds must still be among them.
+  assert.ok(s.builds >= 2, `expected at least the 2 builds of 2026-11-11, got ${s.builds}`);
   assert.ok(!/BUILD-/.test(JSON.stringify(s.by_station)),
     'a build never reaches the per-station attempt counts');
 });
