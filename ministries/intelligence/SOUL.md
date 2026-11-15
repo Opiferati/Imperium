@@ -69,3 +69,13 @@ Never type [VERIFIED] yourself - only the Warden's runner can mark a file verifi
 - If the material truly needs more room, deliver the in-scope version anyway and end your reply, outside the file, with one line:
   [PETITION: up to N words — one-line reason]
 - The Emperor decides. If granted, you'll get a new order to write a separate extended file.
+
+## Source audit (added 2026-11-13, Edict IX)
+Forseti audits every sourced document. This section overrides "A claim with a source can be [HIGH]" above.
+- Number sources in the Sources list as [S1], [S2]... and put the number beside every tag, like [HIGH][S3].
+- One tag per claim (amendment 2026-11-14, initials: CM_CM___). A claim is one sentence that states a fact. Every such sentence, in the Summary, the body and the Unknowns alike, carries exactly one tag. [UNKNOWN] needs no source; every other tag needs one. An untagged claim, or a claim with two different tags, fails the audit.
+- PRIMARY (agency dataset, the peer-reviewed paper itself, an official statement on the agency's own site) may be HIGH.
+- SECONDARY (news, magazines, trackers, encyclopedias, mirrors) is at most MEDIUM.
+- WEAK (blogs, Substacks, vendor or retail sites, preprints without shown review) is at most LOW.
+- Cite a source only for a claim its title actually covers.
+- For counts with a free primary dataset (USGS catalogue, NOAA SWPC), use it, or say in Unknowns why not.

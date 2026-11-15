@@ -40,7 +40,7 @@ function braceBalance(text) {
 
 // Word limit stated in the order ("350-450 words", "under 400 words", "about 500 words"). Upper bound, or null.
 function wordLimit(taskText) {
-  const t = String(taskText || '');
+  const t = String(taskText || '').replace(/(\d),(?=\d{3}\b)/g, '$1'); // "2,500" -> "2500" (fix 2026-11-13)
   let m = t.match(/(\d{2,5})\s*(?:-|–|—|to)\s*(\d{2,5})\s*words/i);
   if (m) return Math.max(+m[1], +m[2]);
   m = t.match(/(\d{2,5})\s*words/i);
@@ -101,7 +101,13 @@ function lawCheck(files, { truncated = false, requireSources = false, wordLimitF
       if (b.curly > 0 || b.paren > 0) problems.push(`${name}: ${b.curly} unclosed { and ${b.paren} unclosed ( — file ends mid-code.`);
     }
   }
-  return problems.slice(0, 3);
+  // 2026-11-12: this returned a bare slice, so a file with seven problems was reported as
+  // three and nothing said the other four existed. The verdict was always right - any problem
+  // is a FAIL - but the REASON was truncated silently. Announced truncation is not a drop.
+  if (problems.length > 3) {
+    return [...problems.slice(0, 3), `(+${problems.length - 3} further problem(s) found but not shown)`];
+  }
+  return problems;
 }
 
 // ── Layer 2: Forseti's judgment ─────────────────────────────────────────
@@ -134,7 +140,23 @@ Check each item. Any item that is ABSENT or done wrong is a problem; quote the o
 8. Alignment: are all series on the same timezone and bar-close convention?
 A backtest with an annualized Sharpe above 2 on daily data is presumed leaky until shown otherwise.`;
 const BACKTEST_RE = /backtest|sharpe|drawdown|walk[- ]?forward|trading strateg|entry.{0,20}exit|\.shift\(|equity curve|position siz/i;
-
+// Source audit — amendment 2026-11-13 (initials: CM__CM__)
+const SOURCE_AUDIT = `## SOURCE AUDIT — this work cites sources
+Judge each source from its entry in the Sources list (title, publisher, address). Any breach is a problem; quote the claim.
+1. Tiers. PRIMARY: an agency dataset, the peer-reviewed paper itself, or an official statement on the agency's own site. SECONDARY: news, magazines, trackers, encyclopedias, mirrors. WEAK: blogs, Substacks, vendor or retail sites. A preprint counts as WEAK until its peer review is shown.
+2. Caps. A tag cannot exceed its best source: PRIMARY may be HIGH, SECONDARY caps at MEDIUM, WEAK caps at LOW.
+3. Topic. A source whose title shows a different subject than the claim it backs is a FAIL for that claim.
+4. One tag per claim (amendment 2026-11-14, initials: CM__CM__). A claim is one sentence that states a fact. Every such sentence, in the summary, the body and the Unknowns alike, carries exactly one tag. An untagged claim, or a claim carrying two different tags, is a FAIL. [UNKNOWN] needs no source; every other tag needs one.
+5. Primary first. If a free primary dataset exists for a count (USGS catalogue, NOAA SWPC), the report must use it or say in its Unknowns why not.
+6. Attribution (amendment 2026-11-14, initials: CM_CM___). A claim that names who says it ("USGS says", "NASA found") must cite that body's own source. Backing it with a news item about them is a FAIL for that claim.
+7. No soft passes (amendment 2026-11-14, initials: CM__CM__). Any source problem you find is a FAIL. Never return PASS with a source problem in the list.`;
+const SOURCE_RE = /\[S\d+\]|https?:\/\//;
+function needsSourceAudit(files) {
+  for (const f of files) {
+    try { if (SOURCE_RE.test(fs.readFileSync(f.resolvedPath, 'utf8').slice(0, 40_000))) return true; } catch {}
+  }
+  return false;
+}
 function needsBacktestAudit(taskText, files) {
   if (BACKTEST_RE.test(taskText || '')) return true;
   for (const f of files) {
@@ -148,7 +170,8 @@ function needsBacktestAudit(taskText, files) {
 }
 
 function buildCriticPrompt(taskText, files) {
-  const audit = needsBacktestAudit(taskText, files) ? `\n\n${BACKTEST_AUDIT}` : '';
+      const audit = (needsBacktestAudit(taskText, files) ? `\n\n${BACKTEST_AUDIT}` : '')
+              + (needsSourceAudit(files) ? `\n\n${SOURCE_AUDIT}` : '');
   const parts = [`## TASK AS ASSIGNED\n${taskText}${audit}\n\n## FILES PRODUCED`];
   for (const f of files) {
     let text = '';
@@ -186,7 +209,10 @@ async function review({ taskText, files, truncated = false, requireSources = fal
     return { verdict: 'UNSURE', problems: ['Budget limit reached — Forseti skipped. The Lawspeaker\'s checks passed.'], layer: 'lawspeaker', inputTok: 0, outputTok: 0 };
   }
   const r = await callModel(FORSETI_SYSTEM, [{ role: 'user', content: buildCriticPrompt(taskText, files) }]);
-  return { ...parseVerdict(r.text), layer: 'forseti', inputTok: r.inputTok, outputTok: r.outputTok };
+  const pv = parseVerdict(r.text);
+  // Plain words when the cap was the cause (2026-11-13)
+  if (pv.verdict === 'UNSURE' && r.cutOff) pv.problems = ['Forseti ran out of room before finishing its verdict (token cap hit) - no verdict.'];
+  return { ...pv, layer: 'forseti', inputTok: r.inputTok, outputTok: r.outputTok };
 }
 
 module.exports = { BACKTEST_AUDIT, needsBacktestAudit, wordLimit, proseWords, review, lawCheck, parseVerdict, buildCriticPrompt, FORSETI_SYSTEM };
