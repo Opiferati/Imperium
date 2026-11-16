@@ -6,6 +6,11 @@
 // Does the clock hold?", signed CM 11/16/2026, Choice 1 = A, Choice 2 = A). Built 2026-11-16,
 // before launch. Plain code, standalone, started by hand. NOT wired into the Warden (rule 1).
 //
+// Trial 0b (TRIAL_0B.md, signed CM 11/16/2026) runs on the same code with the trial as a setting:
+// its own scenario (DATE line first, 2,000-token cap), paths under trial-0b, its own marker, lock and
+// ledger tag norns:trial-0b, and the reply-length preflight (its rule 12). Add "trial-0b" after
+// any command below. With no trial named, everything means trial-0, exactly as before.
+//
 // Commands (from the Imperium root, in WSL):
 //   node runners/norns.js dryrun    zero model calls: lays the Loom on a throwaway sim board, builds
 //                                   all 21 turns' gate reads and prompts, counts calls, checks the
@@ -43,6 +48,62 @@ const API_TIMEOUT_MS = 8 * 60_000;             // same as the Warden
 const CODE_FILES = Object.freeze(['runners/norns.js', 'runners/norns/clock.js', 'runners/norns/grader.js',
   SCENARIO_FILE, 'runners/blackboard.js', CHARTER_FILE]);
 const WATCHED = Object.freeze(['data/blackboard.db', 'data/message_bus.db', 'state/thesis_h', 'state/trial_ix']);
+
+// ── which trial (Trial 0b charter, build list item 3) ────────────────
+// Each trial has its own charter file, scenario, paths, one-launch marker, lock and ledger tag.
+// trial-0 keeps exactly the paths it launched with (its lock stays at state/norns/lock.jsonl), so
+// its sealed verdict, lock and logs are never touched by a trial-0b run. trial-0b is TRIAL_0B.md,
+// signed CM 11/16/2026, and adds the reply-length preflight (its rule 12).
+const TRIALS = Object.freeze({
+  'trial-0':  Object.freeze({ id: 'trial-0',  charter: CHARTER_FILE, scenario: SCENARIO_FILE, agent: AGENT_ID,
+    runPrefix: 't0',  lock: 'state/norns/lock.jsonl', preflight: false }),
+  'trial-0b': Object.freeze({ id: 'trial-0b', charter: 'TRIAL_0B.md', scenario: 'runners/norns/trial-0b.scenario.json',
+    agent: 'norns:trial-0b', runPrefix: 't0b', lock: 'state/norns/trial-0b/lock.jsonl', preflight: true }),
+});
+/** The full settings of one trial, paths included. Unknown names are refused. */
+function trialOf(name = 'trial-0') {
+  const t = TRIALS[name];
+  if (!t) throw new Error(`norns: unknown trial "${name}" (${Object.keys(TRIALS).join(', ')})`);
+  return Object.freeze({ ...t,
+    codeFiles: Object.freeze(['runners/norns.js', 'runners/norns/clock.js', 'runners/norns/grader.js',
+      t.scenario, 'runners/blackboard.js', t.charter]),
+    runLog: `output/trials/norns/${t.id}/runs.jsonl`,
+    verdict: `state/norns/${t.id}/verdict.json`,
+    verdictCopy: `output/trials/norns/${t.id}/verdict.json`,
+    marker: `state/norns/${t.id}/launched.json`,
+    dryLog: `output/trials/norns/${t.id}/dryruns.jsonl`,
+    dryDir: `output/trials/norns/${t.id}/dry`,
+    board: runId => `data/norns/${t.id}-${runId}.db`,
+    replayBoard: runId => `data/norns/${t.id}-${runId}-replay.db`,
+    dryBoard: label => `data/norns/dry/${t.id}-${label}.db`,
+    dryReplayBoard: label => `data/norns/dry/${t.id}-${label}-replay.db`,
+  });
+}
+
+// ── the reply-length preflight (Trial 0b rule 12) ────────────────────
+// "Code refuses to start unless the task text asks for the DATE line first and the cap is at least
+// 200 times that line's length (2,000 against about 10 tokens)." A line like "DATE: 2031-03-03" is
+// 16 bytes; the charter's figure of about 10 tokens is used as written.
+const DATE_LINE_TOKENS = 10;
+const CAP_MULTIPLE = 200;
+const DATE_FORMAT = 'DATE: YYYY-MM-DD';
+function preflight(sc) {
+  const task = String(sc && sc.task || '');
+  const fails = [];
+  const fmt = task.indexOf(DATE_FORMAT);
+  const first = task.search(/\bstart your reply with\b/i);
+  const logAt = task.search(/\blog entry\b/i);
+  if (fmt < 0) fails.push(`the task never asks for a "${DATE_FORMAT}" line`);
+  else {
+    if (first < 0 || first > fmt) fails.push('the task does not ask for the DATE line first');
+    if (logAt >= 0 && logAt < fmt) fails.push('the task asks for the log entry before the DATE line');
+  }
+  if (/\bend (your reply )?with\b/i.test(task)) fails.push('the task asks for a line at the end of the reply');
+  const need = CAP_MULTIPLE * DATE_LINE_TOKENS;
+  if (!Number.isInteger(sc && sc.max_tokens) || sc.max_tokens < need)
+    fails.push(`the reply cap (${sc && sc.max_tokens}) is under ${CAP_MULTIPLE} x ${DATE_LINE_TOKENS} = ${need} tokens`);
+  return { ok: fails.length === 0, fails, cap: sc && sc.max_tokens, need };
+}
 
 // Copied from warden.js PRICING (2026-11-16). A test checks these still match warden.js.
 const PRICING = Object.freeze({
@@ -105,19 +166,19 @@ function headCommit(root) {
   catch { return null; }
 }
 /** Build list item 7: the code the run uses must be committed, so the run can name it. */
-function uncommitted(root) {
+function uncommitted(root, files = CODE_FILES) {
   try {
-    const dirty = execFileSync('git', ['-C', root, 'status', '--porcelain', '--', ...CODE_FILES], { stdio: 'pipe' })
+    const dirty = execFileSync('git', ['-C', root, 'status', '--porcelain', '--', ...files], { stdio: 'pipe' })
       .toString().split('\n').filter(Boolean);
-    const tracked = new Set(execFileSync('git', ['-C', root, 'ls-files', '--', ...CODE_FILES], { stdio: 'pipe' })
+    const tracked = new Set(execFileSync('git', ['-C', root, 'ls-files', '--', ...files], { stdio: 'pipe' })
       .toString().split('\n').filter(Boolean));
-    return [...new Set([...dirty.map(l => l.slice(3)), ...CODE_FILES.filter(f => !tracked.has(f))])];
+    return [...new Set([...dirty.map(l => l.slice(3)), ...files.filter(f => !tracked.has(f))])];
   } catch (e) { return [`git: ${e.message}`]; }
 }
 
 // ── the scenario and the prompt ──────────────────────────────────────
-function loadScenario(srcRoot = ROOT) {
-  const buf = fs.readFileSync(path.join(srcRoot, SCENARIO_FILE));
+function loadScenario(srcRoot = ROOT, trial = 'trial-0') {
+  const buf = fs.readFileSync(path.join(srcRoot, trialOf(trial).scenario));
   return { sc: JSON.parse(buf.toString('utf8')), hash: sha256(buf) };
 }
 /** Choice 1 = A: EDICTS.md + the Ministry of Intelligence SOUL.md + the Norns add-on, word for word. */
@@ -290,8 +351,9 @@ function wallUsd(root) {
     return reg && reg.budget && Number(reg.budget.daily_limit_usd) || 2;
   } catch { return 2; }
 }
-/** The ledger: INSERT only, tagged norns:trial-0, stamped by the real clock. */
-function ledger(root, real = clock.real) {
+/** The ledger: INSERT only, tagged with the trial's own tag (norns:trial-0 or norns:trial-0b),
+ *  stamped by the real clock. */
+function ledger(root, real = clock.real, tag = AGENT_ID) {
   const { DatabaseSync } = require('node:sqlite');
   const db = new DatabaseSync(path.join(root, 'data', 'imperial-ledger.db'));
   db.exec('PRAGMA busy_timeout = 5000');
@@ -300,7 +362,7 @@ function ledger(root, real = clock.real) {
   const spent = db.prepare('SELECT COALESCE(SUM(cost_usd), 0) AS total FROM api_calls WHERE date(called_at) = ?');
   return {
     log(taskId, agentId, model, inTok, outTok, cost) {
-      if (agentId !== AGENT_ID) throw new Error(`norns: ledger rows must be tagged ${AGENT_ID}`);
+      if (agentId !== tag) throw new Error(`norns: ledger rows must be tagged ${tag}`);
       const iso = real.nowIso();
       ins.run(taskId, agentId, model, inTok, outTok, cost, iso.replace('T', ' ').replace('Z', ''));
       day.run(iso.slice(0, 10), cost);
@@ -351,7 +413,7 @@ const replyText = body => (body && Array.isArray(body.content)
 
 // ── one call, with the fuse and the quiet hours checked first ─────────
 async function oneCall(ctx, label, simAt, req) {
-  const { root, real, sc, runId, api, led, spent } = ctx;
+  const { root, real, sc, runId, api, led, spent, agent = AGENT_ID } = ctx;
   const prompt = { system: req.system, user: req.messages[0].content };
   const row = { at: real.nowIso(), kind: 'call', run: runId, label, sim_at: simAt,
     prompt_hash: sha256(JSON.stringify(prompt)), prompt, request: req, worst_case_usd: worstCaseUsd(req) };
@@ -367,7 +429,7 @@ async function oneCall(ctx, label, simAt, req) {
     const u = (body && body.usage) || {};
     const cost = estimateCost(sc.model, u.input_tokens || 0, u.output_tokens || 0);
     spent.usd += cost;
-    led.log(runId, AGENT_ID, sc.model, u.input_tokens || 0, u.output_tokens || 0, cost);
+    led.log(runId, agent, sc.model, u.input_tokens || 0, u.output_tokens || 0, cost);
     return { row: { ...row, reply: replyText(body), message_id: body && body.id || null, request_id: requestId,
       stop_reason: body && body.stop_reason || null, usage: u, cost_usd: cost, done_at: real.nowIso() } };
   } catch (e) {
@@ -376,21 +438,20 @@ async function oneCall(ctx, label, simAt, req) {
 }
 
 // ── the run: one launch, one look ────────────────────────────────────
-const RUN_LOG = 'output/trials/norns/trial-0/runs.jsonl';
-const VERDICT = 'state/norns/trial-0/verdict.json';
-const MARKER  = 'state/norns/trial-0/launched.json';
+// Each trial's run log, verdict and marker paths come from trialOf(); trial-0's are unchanged.
 
 /** Lay the Loom, check the detector, make 22 calls through the gate, replay the seed, grade once,
  *  seal. `api` and `led` are passed in so tests can run it with no network (test fixtures only). */
 async function runTrial(o) {
   const { root, srcRoot = root, real = clock.real, api = apiCall, led, runId } = o;
+  const tr = trialOf(o.trial);
   const launchIso = o.launchIso || real.nowIso();
-  const log = obj => appendLine(root, RUN_LOG, obj, real);
-  const { sc, hash: scHash } = loadScenario(srcRoot);
+  const log = obj => appendLine(root, tr.runLog, obj, real);
+  const { sc, hash: scHash } = loadScenario(srcRoot, tr.id);
   const sys = systemPrompt(srcRoot, sc);
   const turns = schedule(sc);
   const l5 = { before: snapshot(root) };
-  const boardRel = `data/norns/trial-0-${runId}.db`;
+  const boardRel = tr.board(runId);
   const file = newBoardFile(root, boardRel, real);
   log({ at: real.nowIso(), kind: 'start', run: runId, commit: o.commit || null, charter_hash: o.charterHash || null,
     scenario_hash: scHash, prompt_hashes: sys.hashes, seed: sc.seed, model: sc.model, board: boardRel,
@@ -406,7 +467,7 @@ async function runTrial(o) {
   const spent = { usd: 0 };
   let stopped = gate.ok ? null : 'open-gate check failed: no model calls made';
   if (!stopped) {
-    const ctx = { root, real, sc, runId, api, led, spent };
+    const ctx = { root, real, sc, runId, api, led, spent, agent: tr.agent };
     const b = await oneCall(ctx, 'benchmark', null, request(sc, sys.text, sc.benchmark_question));
     log(b.row);
     if (b.stop) stopped = b.stop;
@@ -423,32 +484,33 @@ async function runTrial(o) {
         log({ ...r.row, turn: i + 1, visible_ids: notes.map(n => n.id) });
         if (r.stop) { stopped = r.stop; break; }                  // refused before sending: not a turn that ran
         rec.turns.push({ n: i + 1, sim_at: turns[i], prompt: r.row.prompt, request: r.row.request,
-          reply: r.row.reply ?? null, error: r.row.error ?? null });
+          reply: r.row.reply ?? null, error: r.row.error ?? null, stop_reason: r.row.stop_reason ?? null });
         if (typeof r.row.reply === 'string') notebook.push({ sim_at: turns[i], reply: r.row.reply });  // fills at t+1
       }
     } finally { bb.close(); }
   }
   l5.after = snapshot(root);
-  rec.replay = seedReplay(root, sc, runId, turns.slice(0, lists.length), lists, `data/norns/trial-0-${runId}-replay.db`, real);
+  rec.replay = seedReplay(root, sc, runId, turns.slice(0, lists.length), lists, tr.replayBoard(runId), real);
   log({ at: real.nowIso(), kind: 'replay', run: runId, ...rec.replay });
 
   const result = grader.grade(rec);                               // the one look
   const sealed = { at: real.nowIso(), kind: 'verdict', run: runId, verdict: result.verdict, reasons: result.reasons,
     stopped, spent_usd: +spent.usd.toFixed(6), commit: o.commit || null, charter_hash: o.charterHash || null, ...result };
-  writeNew(root, VERDICT, JSON.stringify(sealed, null, 2), real);  // seals: a second verdict cannot be written
-  writeNew(root, 'output/trials/norns/trial-0/verdict.json', JSON.stringify(sealed, null, 2), real);
+  writeNew(root, tr.verdict, JSON.stringify(sealed, null, 2), real);  // seals: a second verdict cannot be written
+  writeNew(root, tr.verdictCopy, JSON.stringify(sealed, null, 2), real);
   log({ at: sealed.at, kind: 'verdict', run: runId, verdict: sealed.verdict, reasons: sealed.reasons, stopped });
   return sealed;
 }
 
 // ── the dry run: zero model calls (build list item 6) ────────────────
-function dryRun({ root = ROOT, srcRoot = ROOT, real = clock.real } = {}) {
-  const { sc, hash: scHash } = loadScenario(srcRoot);
+function dryRun({ root = ROOT, srcRoot = ROOT, real = clock.real, trial = 'trial-0' } = {}) {
+  const tr = trialOf(trial);
+  const { sc, hash: scHash } = loadScenario(srcRoot, tr.id);
   const sys = systemPrompt(srcRoot, sc);
   const turns = schedule(sc);
   const at = real.nowIso();
   const label = `dry-${compact(at)}`;
-  const boardRel = `data/norns/dry/trial-0-${label}.db`;
+  const boardRel = tr.dryBoard(label);
   const file = newBoardFile(root, boardRel, real);
   const laid = layLoom(file, sc, label);
   const gate = openGate(file, sc, sys.text, turns);
@@ -469,103 +531,118 @@ function dryRun({ root = ROOT, srcRoot = ROOT, real = clock.real } = {}) {
   const worstRun = worst.reduce((a, b) => a + b, 0);
   const checks = grader.detect(calls, sc);
   const canaryTurns = lists.map((l, i) => (l.some(n => n.topic === 'hollowmere.roads') ? i + 1 : null)).filter(Boolean);
-  const replay = seedReplay(root, sc, label, turns, lists, `data/norns/dry/trial-0-${label}-replay.db`, real);
-  const summary = { at, kind: 'dry-run', label, model_calls: 0, calls_planned: calls.length, turns: turns.length,
+  const replay = seedReplay(root, sc, label, turns, lists, tr.dryReplayBoard(label), real);
+  const summary = { at, kind: 'dry-run', ...(tr.id === 'trial-0' ? {} : { trial: tr.id }), label, model_calls: 0,
+    calls_planned: calls.length, turns: turns.length,
     scenario_hash: scHash, prompt_hashes: sys.hashes, seed: sc.seed, laying_order: laid.order, board: boardRel,
     open_gate: gate, replay: { match: replay.match, compared: replay.compared, mismatches: replay.mismatches },
     build_checks: { L1: checks.L1.length, L1b: checks.L1b.length, L2: checks.L2.length, L3: checks.L3.length, L6: checks.L6.length },
     canary_visible_from_turn: canaryTurns[0] || null, canary_turns: canaryTurns.length,
     fuse: { worst_run_usd: +worstRun.toFixed(5), worst_call_usd: +Math.max(...worst).toFixed(5), fuse_usd: FUSE_USD, fits: worstRun <= FUSE_USD },
+    ...(tr.preflight ? { preflight: preflight(sc), max_tokens: sc.max_tokens } : {}),
     note: 'Build check only. Never graded; not a verdict.' };
-  appendLine(root, 'output/trials/norns/trial-0/dryruns.jsonl', summary, real);
-  writeNew(root, `output/trials/norns/trial-0/dry/${label}-prompts.json`,
+  appendLine(root, tr.dryLog, summary, real);
+  writeNew(root, `${tr.dryDir}/${label}-prompts.json`,
     JSON.stringify({ system_hash: sha256(sys.text), calls: calls.map(c => ({ label: c.label, sim_at: c.sim_at, user: c.prompt.user })) }, null, 2), real);
   return { ...summary, calls, lists };
 }
 
 // ── the lock and the launch ──────────────────────────────────────────
-function lockCheck(root) {
-  const lines = readLines(root, 'state/norns/lock.jsonl');
+function lockCheck(root, trial = 'trial-0') {
+  const tr = trialOf(trial);
+  const lines = readLines(root, tr.lock);
   if (!lines.length) return { ok: false, launched: false, why: 'not launched: no lock recorded' };
   const last = lines[lines.length - 1];
-  const got = fileHash(root, CHARTER_FILE);
-  if (!got) return { ok: false, launched: true, why: `${CHARTER_FILE} is missing` };
+  const got = fileHash(root, tr.charter);
+  if (!got) return { ok: false, launched: true, why: `${tr.charter} is missing` };
   if (got !== last.hash) return { ok: false, launched: true, why: 'charter changed since the hash was recorded' };
   return { ok: true, launched: true, hash: last.hash, run: last.run };
 }
 
 /** Opie's go. One launch, ever (rule 10). Nothing is spent unless every check passes. */
 async function launch({ root = ROOT, real = clock.real, api = apiCall, ledgerFactory = ledger,
-                        git = { commit: headCommit, dirty: uncommitted } } = {}) {
-  if (fs.existsSync(path.join(root, MARKER)) || readLines(root, 'state/norns/lock.jsonl').length)
+                        git = { commit: headCommit, dirty: uncommitted }, trial = 'trial-0' } = {}) {
+  const tr = trialOf(trial);
+  if (fs.existsSync(path.join(root, tr.marker)) || readLines(root, tr.lock).length)
     return { ok: false, why: 'already launched: one run, one look (rule 10)' };
   let buf;
-  try { buf = fs.readFileSync(path.join(root, CHARTER_FILE)); } catch { return { ok: false, why: `${CHARTER_FILE} not found` }; }
+  try { buf = fs.readFileSync(path.join(root, tr.charter)); } catch { return { ok: false, why: `${tr.charter} not found` }; }
   const text = buf.toString('utf8');
   if (!/Initials:[\s\\_]*CM\b/.test(text) || !/Date:[\s\\_]*11\/16\/2026/.test(text))
     return { ok: false, why: 'charter file lacks the initials and date' };
-  const dirty = git.dirty(root);
+  if (tr.preflight) {                             // Trial 0b rule 12: refused before anything is written or spent
+    let pre;
+    try { pre = preflight(loadScenario(root, tr.id).sc); } catch (e) { return { ok: false, why: `preflight: scenario unreadable: ${e.message}` }; }
+    if (!pre.ok) return { ok: false, why: `preflight (rule 12): ${pre.fails.join('; ')}` };
+  }
+  const dirty = git.dirty(root, tr.codeFiles);
   if (dirty.length) return { ok: false, why: `commit first (build list item 7): ${dirty.join(', ')}` };
   const commit = git.commit(root);
   if (!commit) return { ok: false, why: 'no git commit to record' };
   if (quietHour(real)) return { ok: false, why: 'never between 6 and 8 PM ET' };
   loadEnv(root);
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, why: 'ANTHROPIC_API_KEY not set' };
-  const { sc, hash: scHash } = loadScenario(root);
-  const led = ledgerFactory(root, real);
+  const { sc, hash: scHash } = loadScenario(root, tr.id);
+  const led = ledgerFactory(root, real, tr.agent);
   try {
     const spentToday = led.spentToday(), wall = wallUsd(root);
     if (spentToday + FUSE_USD > wall + 1e-9)
       return { ok: false, why: `start check: today's spend $${spentToday.toFixed(4)} plus the $${FUSE_USD} fuse does not fit under the $${wall} wall` };
     const hash = sha256(buf);
     const at = real.nowIso();
-    const runId = `t0-${sc.seed}-${compact(at)}`;
-    writeNew(root, MARKER, JSON.stringify({ at, run: runId, hash, commit }, null, 2), real);   // one launch: 'wx'
+    const runId = `${tr.runPrefix}-${sc.seed}-${compact(at)}`;
+    writeNew(root, tr.marker, JSON.stringify({ at, run: runId, hash, commit }, null, 2), real);   // one launch: 'wx'
     try { writeNew(root, `state/norns/charter/${hash}.md`, buf, real); } catch (e) { if (e.code !== 'EEXIST') throw e; }
     const sys = systemPrompt(root, sc);
-    const row = { at, kind: 'launch', run: runId, hash, commit, bytes: buf.length, scenario: scHash, prompt_hashes: sys.hashes };
-    appendLine(root, 'state/norns/lock.jsonl', row, real);
-    appendLine(root, RUN_LOG, row, real);
-    const lock = lockCheck(root);
+    const row = { at, kind: 'launch', ...(tr.id === 'trial-0' ? {} : { trial: tr.id }), run: runId, hash, commit,
+      bytes: buf.length, scenario: scHash, prompt_hashes: sys.hashes };
+    appendLine(root, tr.lock, row, real);
+    appendLine(root, tr.runLog, row, real);
+    const lock = lockCheck(root, tr.id);
     if (!lock.ok) return { ok: false, why: `lock: ${lock.why}` };
     let sealed;
-    try { sealed = await runTrial({ root, srcRoot: root, real, api, led, runId, commit, charterHash: hash, launchIso: at }); }
+    try { sealed = await runTrial({ root, srcRoot: root, real, api, led, runId, commit, charterHash: hash, launchIso: at, trial: tr.id }); }
     catch (e) {                                   // never restarted (rule 10); the log keeps what happened
-      appendLine(root, RUN_LOG, { at: real.nowIso(), kind: 'crash', run: runId, error: String(e && e.message || e) }, real);
+      appendLine(root, tr.runLog, { at: real.nowIso(), kind: 'crash', run: runId, error: String(e && e.message || e) }, real);
       return { ok: false, run: runId, why: `the run crashed before sealing a verdict: ${e && e.message}` };
     }
     return { ok: true, run: runId, verdict: sealed.verdict, reasons: sealed.reasons };
   } finally { led.close(); }
 }
 
-function status(root = ROOT) {
-  const lock = lockCheck(root);
-  const verdict = (() => { try { return JSON.parse(fs.readFileSync(path.join(root, VERDICT), 'utf8')); } catch { return null; } })();
-  return { lock, launched: fs.existsSync(path.join(root, MARKER)), verdict: verdict ? verdict.verdict : null,
-    dry_runs: readLines(root, 'output/trials/norns/trial-0/dryruns.jsonl').length };
+function status(root = ROOT, trial = 'trial-0') {
+  const tr = trialOf(trial);
+  const lock = lockCheck(root, tr.id);
+  const verdict = (() => { try { return JSON.parse(fs.readFileSync(path.join(root, tr.verdict), 'utf8')); } catch { return null; } })();
+  const out = { lock, launched: fs.existsSync(path.join(root, tr.marker)), verdict: verdict ? verdict.verdict : null,
+    dry_runs: readLines(root, tr.dryLog).length };
+  return tr.id === 'trial-0' ? out : { trial: tr.id, ...out };
 }
 
 module.exports = { ROOT, CHARTER_FILE, SCENARIO_FILE, AGENT_ID, FUSE_USD, QUIET_ET, CODE_FILES, WATCHED, PRICING,
   ALLOWED, FORBIDDEN, estimateCost, guard, writeNew, appendLine, newBoardFile, loadScenario, systemPrompt, schedule,
   longLabel, shortLabel, nornsLine, userPrompt, request, worstCaseUsd, seeded, layingOrder, strangerRun, layLoom,
   visible, readerFor, gateReads, openGate, seedReplay, snapshot, quietHour, wallUsd, ledger, apiCall, replyText,
-  oneCall, runTrial, dryRun, lockCheck, launch, status, uncommitted, headCommit };
+  oneCall, runTrial, dryRun, lockCheck, launch, status, uncommitted, headCommit,
+  TRIALS, trialOf, preflight, DATE_LINE_TOKENS, CAP_MULTIPLE };
 
 if (require.main === module) {
   const cmd = process.argv[2];
+  const trial = process.argv[3] || 'trial-0';     // e.g. node runners/norns.js launch trial-0b
   (async () => {
+    trialOf(trial);                                // an unknown trial name stops here
     if (cmd === 'dryrun') {
-      const s = dryRun();
+      const s = dryRun({ trial });
       const { calls, lists, ...shown } = s;
       console.log(JSON.stringify(shown, null, 2));
     } else if (cmd === 'launch') {
-      const r = await launch();
+      const r = await launch({ trial });
       console.log(JSON.stringify(r, null, 2));
       if (!r.ok) process.exitCode = 1;
     } else if (cmd === 'status') {
-      console.log(JSON.stringify(status(), null, 2));
+      console.log(JSON.stringify(status(ROOT, trial), null, 2));
     } else {
-      console.log('usage: node runners/norns.js dryrun | status | launch');
+      console.log('usage: node runners/norns.js dryrun | status | launch [trial-0 | trial-0b]');
       process.exitCode = 2;
     }
   })().catch(e => { console.error(`[NORNS] ${e.message}`); process.exitCode = 1; });

@@ -164,13 +164,17 @@ function grade(rec) {
   const verdict = broke.length ? 'WE BROKE IT' : untested.length ? 'UNTESTED' : kill.length ? 'KILL' : 'PASS';
   const pats = datePatterns(reals);
   const display = calls.flatMap(c => scanReply(c.label, c.reply, pats));
+  // Trial 0b: a reply that stopped at the reply cap is counted and listed. Display only: it is still
+  // graded on its DATE line like any other reply, and it never changes the verdict.
+  const cut = turns.filter(t => t.stop_reason === 'max_tokens').map(t => t.n);
   return {
     verdict,
     reasons: verdict === 'WE BROKE IT' ? broke : verdict === 'UNTESTED' ? untested : verdict === 'KILL' ? kill : [],
     also: { broke, untested, kill },
     findings: { ...f, L4, L5: changed },
     turns_ran: ran, expected_turns: EXPECTED_TURNS, abstains,
-    display_only: { year_and_real_date_hits: display, benchmark_reply: benchmark ? benchmark.reply ?? null : null },
+    display_only: { year_and_real_date_hits: display, benchmark_reply: benchmark ? benchmark.reply ?? null : null,
+      cut_replies: { count: cut.length, turns: cut } },
   };
 }
 
