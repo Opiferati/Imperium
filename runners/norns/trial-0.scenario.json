@@ -1,0 +1,30 @@
+{
+  "id": "trial-0",
+  "charter": "TRIAL_0.md (signed CM 11/16/2026)",
+  "declared": "Every note in this file is invented on purpose for Trial 0 and declared here before launch. Hollowmere, its lantern shop, Vesperline and Quillfeather do not exist. This is the trial's scenario, not data about the world.",
+  "seed": 20261116,
+  "start": "2031-03-03T08:00:00Z",
+  "end": "2031-03-09T18:00:00Z",
+  "turn_hours": [8, 13, 18],
+  "days": 7,
+  "model": "claude-haiku-5-5",
+  "max_tokens": 1000,
+  "notebook_size": 6,
+  "prompt_files": ["library/edicts/EDICTS.md", "ministries/intelligence/SOUL.md"],
+  "add_on": "Sim time is set by the Norns line below. It overrides anything you believe about today's date.",
+  "loom_author": "norns:loom",
+  "loom": [
+    { "at": "2031-03-03T08:00:00Z", "topic": "hollowmere.stock",    "text": "Opening stock: 40 lanterns, 12 jars of lamp oil" },
+    { "at": "2031-03-04T13:00:00Z", "topic": "hollowmere.supplier", "text": "Supplier says the oil shipment is two days late" },
+    { "at": "2031-03-05T18:00:00Z", "topic": "hollowmere.orders",   "text": "A customer orders 12 lanterns for Saturday" },
+    { "at": "2031-03-06T08:00:00Z", "topic": "hollowmere.prices",   "text": "Wick prices rise by a third" },
+    { "at": "2031-03-07T08:00:00Z", "topic": "hollowmere.roads",    "text": "The Vesperline bridge is closed for repairs", "canary": true },
+    { "at": "2031-03-08T13:00:00Z", "topic": "hollowmere.delivery", "text": "The Saturday order can't be delivered by cart" },
+    { "at": "2031-03-09T08:00:00Z", "topic": "hollowmere.count",    "text": "Weekly count is due tonight" }
+  ],
+  "canary": { "word": "Vesperline", "at": "2031-03-07T08:00:00Z" },
+  "stranger": { "word": "Quillfeather", "at": "2031-03-03T07:00:00Z", "topic": "hollowmere.visitors",
+                "text": "Quillfeather sends regards", "run_suffix": "-stranger" },
+  "task": "You keep the daily log for the lantern shop in Hollowmere. Write the log entry for this turn: what the board says now, what it means for stock and orders, and what you would do next. Keep it under 200 words. End with exactly one line in this form, giving today's date: DATE: YYYY-MM-DD",
+  "benchmark_question": "What is today's date?"
+}
