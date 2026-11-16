@@ -246,20 +246,27 @@ function board(root, file, opts) {
 // at launch in a shuffled order, so row ids say nothing about time.
 // A gated board refuses the live file by name: a sim lives in its own file. The `run` column is
 // added only to sim files; the live board's schema is never touched from here.
+//
+// Trial 0c (2026-11-16, charter TRIAL_0C.md, signed CM): sim files also get a `created_at` column,
+// the real time a note was written, for provenance only. It is never read by the gate. Its value
+// comes from an optional opts.real ({ nowIso() }) handed in by the caller, so this section still
+// never asks the computer for the time itself. Without opts.real it is left empty (null).
 // ══════════════════════════════════════════════════════════════════════
 const SIM_AT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const RUN_RE = /^[a-z0-9][a-z0-9._:-]{0,79}$/i;
 
 function gatedBoard(root, file, opts) {
-  const { clock, run, loom = false } = opts;
+  const { clock, run, loom = false, real = null } = opts;
   if (!clock || typeof clock.now !== 'function')
     throw new Error('blackboard: a gated board needs a clock with now()');
+  if (real !== null && typeof real.nowIso !== 'function')
+    throw new Error('blackboard: opts.real, when given, needs nowIso()');
   if (typeof run !== 'string' || !RUN_RE.test(run) || run.toUpperCase() === 'LIVE')
     throw new Error(`blackboard: a gated board needs a SIM run ID, got ${JSON.stringify(run)}`);
   if (!file || path.basename(String(file)).toLowerCase().startsWith('blackboard.db'))
     throw new Error('blackboard: a gated board needs its own file, never the live blackboard.db');
   const db = open(root, file);
-  for (const col of ['half_life_days REAL', 'based_on TEXT', 'run TEXT'])
+  for (const col of ['half_life_days REAL', 'based_on TEXT', 'run TEXT', 'created_at TEXT'])
     try { db.exec(`ALTER TABLE notes ADD COLUMN ${col}`); } catch { /* already there */ }
   db.exec('CREATE INDEX IF NOT EXISTS notes_run_at ON notes(run, at)');
 
@@ -276,8 +283,8 @@ function gatedBoard(root, file, opts) {
 
   const insert = db.prepare(
     `INSERT INTO notes (topic, author, kind, value, as_of, at, confidence, source, code, expires, supersedes,
-                        reason, half_life_days, based_on, run)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+                        reason, half_life_days, based_on, run, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const getCurrent = db.prepare(
     `SELECT * FROM notes WHERE ${SEEN} AND topic = ? AND kind = 'note' AND ${LIVE}
        AND (expires IS NULL OR expires > ?) ORDER BY at DESC, id DESC LIMIT 1`);
@@ -324,9 +331,11 @@ function gatedBoard(root, file, opts) {
         throw new Error('blackboard: based_on must be an array of note ids');
       for (const b of based_on || [])
         if (!getSeenById.get(run, at, b)) throw new Error(`blackboard: cannot cite note ${b}, it does not exist`);
+      const created_at = real ? String(real.nowIso()) : null;
       const r = insert.run(topic, author, 'note', json, as_of, at, confidence, source, code, expires,
-                           supersedes, null, half_life_days, based_on ? JSON.stringify(based_on) : null, run);
-      return { id: Number(r.lastInsertRowid), at };
+                           supersedes, null, half_life_days, based_on ? JSON.stringify(based_on) : null, run,
+                           created_at);
+      return real ? { id: Number(r.lastInsertRowid), at, created_at } : { id: Number(r.lastInsertRowid), at };
     },
 
     read(topic, opts = {}) {
@@ -370,7 +379,8 @@ function gatedBoard(root, file, opts) {
       if (!target) throw new Error(`blackboard: no note ${id} to retract`);
       if (!author) throw new Error('blackboard: a retraction needs an author');
       const r = insert.run(target.topic, author, 'retraction', null, target.as_of, now,
-                           null, null, null, null, id, reason, null, null, run);
+                           null, null, null, null, id, reason, null, null, run,
+                           real ? String(real.nowIso()) : null);
       return { id: Number(r.lastInsertRowid), at: now };
     },
 

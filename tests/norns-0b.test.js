@@ -107,7 +107,7 @@ test('trial settings: trial-0 keeps its launch paths; trial-0b never shares one'
     assert.ok(!/(^|\/)trial-0(\/|-|$)/.test(p.replace(/trial-0b/g, '')), `${p} names trial-0`);
   }
   assert.ok(TB.codeFiles.includes('TRIAL_0B.md') && TB.codeFiles.includes(TB.scenario) && !TB.codeFiles.includes('TRIAL_0.md'));
-  assert.throws(() => N.trialOf('trial-0c'), /unknown trial/);
+  assert.throws(() => N.trialOf('trial-0d'), /unknown trial/);
 });
 
 // ── the reply-length preflight (rule 12, build list item 4) ──────────

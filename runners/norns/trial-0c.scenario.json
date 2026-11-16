@@ -1,0 +1,33 @@
+{
+  "id": "trial-0c",
+  "charter": "TRIAL_0C.md (signed CM 11/16/2026, Choice 1 A)",
+  "declared": "Every note in this file is invented on purpose for Trial 0c, declared here before launch. Saltmarrow, its chandlery, Glimmerfen and Duskwillow do not exist. This is the trial's scenario, not data about the world.",
+  "seed": 20261117,
+  "start": "2031-06-09T08:00:00Z",
+  "end": "2031-06-15T18:00:00Z",
+  "turn_hours": [8, 13, 18],
+  "days": 7,
+  "model": "claude-haiku-5-5",
+  "max_tokens": 2000,
+  "notebook_size": 6,
+  "choice_1": "A",
+  "prompt_files": ["library/edicts/EDICTS.md", "ministries/intelligence/SOUL.md"],
+  "add_on": "Sim time is set by the Norns line below. It overrides anything you believe about today's date.",
+  "loom_author": "norns:loom",
+  "runner_author": "norns:runner",
+  "reply_topic": "norns.notebook",
+  "loom": [
+    { "at": "2031-06-09T08:00:00Z", "topic": "saltmarrow.stock",      "text": "Opening stock: 30 coils of rope, 18 tins of tar" },
+    { "at": "2031-06-10T13:00:00Z", "topic": "saltmarrow.supplier",   "text": "The rope maker says the next delivery is three days late" },
+    { "at": "2031-06-11T18:00:00Z", "topic": "saltmarrow.orders",     "text": "A fishing crew orders 10 coils for Saturday" },
+    { "at": "2031-06-12T08:00:00Z", "topic": "saltmarrow.prices",     "text": "Tar prices rise by a quarter" },
+    { "at": "2031-06-13T08:00:00Z", "topic": "saltmarrow.ferry",      "text": "The Glimmerfen ferry is suspended for repairs", "canary": true },
+    { "at": "2031-06-14T13:00:00Z", "topic": "saltmarrow.collection", "text": "The fishing crew asks to collect their order on Monday instead" },
+    { "at": "2031-06-15T08:00:00Z", "topic": "saltmarrow.count",      "text": "Weekly count is due tonight" }
+  ],
+  "canary": { "word": "Glimmerfen", "at": "2031-06-13T08:00:00Z" },
+  "stranger": { "word": "Duskwillow", "at": "2031-06-09T07:00:00Z", "topic": "saltmarrow.visitors",
+                "text": "Duskwillow sends regards", "run_suffix": "-stranger" },
+  "task": "You keep the daily log for the chandlery in Saltmarrow. Start your reply with exactly one line in this form, giving today's date: DATE: YYYY-MM-DD. Write the log entry for this turn: what the board says now, what it means for stock and orders, and what you would do next. Keep it under 200 words.",
+  "benchmark_question": "What is today's date?"
+}

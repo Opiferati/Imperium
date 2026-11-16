@@ -11,6 +11,12 @@
 // ledger tag norns:trial-0b, and the reply-length preflight (its rule 12). Add "trial-0b" after
 // any command below. With no trial named, everything means trial-0, exactly as before.
 //
+// Trial 0c (TRIAL_0C.md, signed CM 11/16/2026, Choice 1 A) adds "trial-0c": the Norns stamp sim_at,
+// created_at and run_id on every record, post each reply to the sim board for t+1, read the
+// notebook back through the gate, and grade with grader.grade0c (L7; the DATE line is display
+// only). It writes only to trial-0c paths, and its launch also waits for the live files to be quiet.
+// See the TRIAL 0c section below.
+//
 // Commands (from the Imperium root, in WSL):
 //   node runners/norns.js dryrun    zero model calls: lays the Loom on a throwaway sim board, builds
 //                                   all 21 turns' gate reads and prompts, counts calls, checks the
@@ -59,6 +65,12 @@ const TRIALS = Object.freeze({
     runPrefix: 't0',  lock: 'state/norns/lock.jsonl', preflight: false }),
   'trial-0b': Object.freeze({ id: 'trial-0b', charter: 'TRIAL_0B.md', scenario: 'runners/norns/trial-0b.scenario.json',
     agent: 'norns:trial-0b', runPrefix: 't0b', lock: 'state/norns/trial-0b/lock.jsonl', preflight: true }),
+  // Trial 0c (TRIAL_0C.md, signed CM 11/16/2026, Choice 1 A): the Norns own the date. `stamped` sends
+  // it down its own run, dry run and grader (runTrial0c, dryRun0c, grader.grade0c) and its own
+  // strict write list; nothing on the trial-0 or trial-0b paths changes.
+  'trial-0c': Object.freeze({ id: 'trial-0c', charter: 'TRIAL_0C.md', scenario: 'runners/norns/trial-0c.scenario.json',
+    agent: 'norns:trial-0c', runPrefix: 't0c', lock: 'state/norns/trial-0c/lock.jsonl', preflight: true, stamped: true,
+    choice1: 'A' }),
 });
 /** The full settings of one trial, paths included. Unknown names are refused. */
 function trialOf(name = 'trial-0') {
@@ -123,35 +135,43 @@ const FORBIDDEN = WATCHED;
 
 function rel(root, p) { return path.relative(root, path.resolve(root, p)).split(path.sep).join('/'); }
 
-/** Refuse any write outside the Norns' own folders. Returns the absolute path. */
-function guard(root, p, real = clock.real) {
+/** Trial 0c rule 14: a stamped trial may write only under its own paths (and the shared charter
+ *  copies), never to Trial 0's or 0b's sealed files, blackboard.db or message_bus.db. */
+function stampedAllow(tr) {
+  return [`state/norns/${tr.id}/`, `output/trials/norns/${tr.id}/`, `data/norns/${tr.id}-`, `data/norns/dry/${tr.id}-`,
+    'state/norns/charter/'];
+}
+/** Refuse any write outside the Norns' own folders. Returns the absolute path. With a stamped
+ *  trial (Trial 0c) the stricter list above applies first. A refusal throws with code NORNS_REFUSED. */
+function guard(root, p, real = clock.real, tr = null) {
   const r = rel(root, p);
   const bad = FORBIDDEN.find(f => r === f || r.startsWith(f + '/') || r.startsWith(f + '-'));
-  const ok = !r.startsWith('..') && ALLOWED.some(a => r === a || r.startsWith(a + '/'));
+  const ok = !r.startsWith('..') && ALLOWED.some(a => r === a || r.startsWith(a + '/'))
+    && !(tr && tr.stamped && (r.includes('/../') || !stampedAllow(tr).some(a => r.startsWith(a))));
   if (bad || !ok) {
     try {
       fs.mkdirSync(path.join(root, 'state', 'norns'), { recursive: true });
       fs.appendFileSync(path.join(root, 'state', 'norns', 'guard.jsonl'),
-        JSON.stringify({ at: real.nowIso(), refused: r }) + '\n');
+        JSON.stringify({ at: real.nowIso(), refused: r, ...(tr ? { trial: tr.id } : {}) }) + '\n');
     } catch { /* the refusal still stands */ }
-    throw new Error(`norns: write refused outside the Norns' folders: ${r}`);
+    throw Object.assign(new Error(`norns: write refused outside the Norns' folders: ${r}`), { code: 'NORNS_REFUSED', refused: r });
   }
   return path.resolve(root, p);
 }
-function writeNew(root, p, data, real) {        // freeze: first write wins, never overwritten
-  const abs = guard(root, p, real);
+function writeNew(root, p, data, real, tr = null) {   // freeze: first write wins, never overwritten
+  const abs = guard(root, p, real, tr);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, data, { flag: 'wx' });
   return abs;
 }
-function appendLine(root, p, obj, real) {        // logs are append-only
-  const abs = guard(root, p, real);
+function appendLine(root, p, obj, real, tr = null) {  // logs are append-only
+  const abs = guard(root, p, real, tr);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.appendFileSync(abs, JSON.stringify(obj) + '\n');
 }
 /** A sim board file: guarded, and it must not exist yet (a fresh board every time). */
-function newBoardFile(root, p, real) {
-  const abs = guard(root, p, real);
+function newBoardFile(root, p, real, tr = null) {
+  const abs = guard(root, p, real, tr);
   if (fs.existsSync(abs)) throw new Error(`norns: ${p} already exists; a sim board is never reused`);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   return abs;
@@ -256,11 +276,13 @@ function layingOrder(sc) {
 }
 const strangerRun = (sc, runId) => `${runId}${sc.stranger.run_suffix}`;
 
-/** Post the whole week face-down at launch, plus the stranger under another run's tag. */
-function layLoom(file, sc, runId) {
+/** Post the whole week face-down at launch, plus the stranger under another run's tag. Trial 0c
+ *  passes `real` so each note also carries its real created_at; trial-0 and 0b pass nothing. */
+function layLoom(file, sc, runId, real = null) {
   const order = layingOrder(sc);
   const loomClock = clock.simClock(sc.start);
-  const bb = board(null, file, { clock: loomClock, run: runId, loom: true });
+  const stamp = real ? { real } : {};
+  const bb = board(null, file, { clock: loomClock, run: runId, loom: true, ...stamp });
   const laid = [];
   try {
     for (const i of order) {
@@ -269,7 +291,7 @@ function layLoom(file, sc, runId) {
       laid.push({ id: r.id, at: r.at, topic: n.topic });
     }
   } finally { bb.close(); }
-  const other = board(null, file, { clock: loomClock, run: strangerRun(sc, runId), loom: true });
+  const other = board(null, file, { clock: loomClock, run: strangerRun(sc, runId), loom: true, ...stamp });
   try {
     const r = other.post({ topic: sc.stranger.topic, author: sc.loom_author, value: sc.stranger.text, at: sc.stranger.at });
     laid.push({ id: r.id, at: r.at, topic: sc.stranger.topic, run: strangerRun(sc, runId) });
@@ -505,6 +527,7 @@ async function runTrial(o) {
 // ── the dry run: zero model calls (build list item 6) ────────────────
 function dryRun({ root = ROOT, srcRoot = ROOT, real = clock.real, trial = 'trial-0' } = {}) {
   const tr = trialOf(trial);
+  if (tr.stamped) return dryRun0c({ root, srcRoot, real, trial: tr.id });   // Trial 0c has its own dry run
   const { sc, hash: scHash } = loadScenario(srcRoot, tr.id);
   const sys = systemPrompt(srcRoot, sc);
   const turns = schedule(sc);
@@ -547,6 +570,314 @@ function dryRun({ root = ROOT, srcRoot = ROOT, real = clock.real, trial = 'trial
   return { ...summary, calls, lists };
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// TRIAL 0c: the Norns own the date (TRIAL_0C.md, signed CM 11/16/2026, Choice 1 A).
+// Everything here is new and used only by a stamped trial; trial-0 and 0b run the code above.
+//   Rule 13  every saved record carries sim_at (from the Loom clock or the schedule), created_at (the
+//            real clock) and run_id: every prompt, reply record, failed-call record and board note.
+//   Rule 9   each reply is posted by the runner as a board note stamped with the NEXT turn's time,
+//            so it first shows at t+1; the notebook is read back through the gate, each reply
+//            under the runner's stamp line.
+//   Rule 14  writes only to trial-0c paths; a refused write stops the run, graded WE BROKE IT.
+//   L5       watches the live files and Trial 0's and 0b's sealed files.
+// The Benchmark is turn 0, stamped with the scenario start (the Loom clock before turn 1).
+// ══════════════════════════════════════════════════════════════════════
+
+/** Trial 0's and 0b's sealed files and folders, as paths under the root (L5 and rule 14). */
+function sealedPaths(root) {
+  const out = ['state/norns/lock.jsonl', 'state/norns/trial-0', 'state/norns/trial-0b',
+    'output/trials/norns/trial-0', 'output/trials/norns/trial-0b'];
+  for (const dir of ['data/norns', 'data/norns/dry']) {
+    let names = [];
+    try { names = fs.readdirSync(path.join(root, dir)); } catch { /* none yet */ }
+    for (const n of names.sort()) if (/^trial-0b?-/.test(n)) out.push(`${dir}/${n}`);
+  }
+  return out;
+}
+const watched0c = root => [...WATCHED, ...sealedPaths(root)];
+
+/** Charter, Money section: launch only while the Warden and Trial IX are quiet. Quiet means none of
+ *  the files L5 watches changed in the last `minutes` of real time (file times, read by fs). */
+const QUIET_MINUTES = 10;
+function liveQuiet(root, real = clock.real, minutes = QUIET_MINUTES) {
+  const files = [];
+  for (const w of [...WATCHED, 'data/blackboard.db-wal', 'data/message_bus.db-wal'])
+    for (const [abs, flag] of walk(path.join(root, w))) if (flag !== 'missing') files.push(abs);
+  let newest = null;
+  for (const abs of files) {
+    try { const m = fs.statSync(abs).mtimeMs; if (!newest || m > newest.ms) newest = { ms: m, path: rel(root, abs) }; } catch { /* gone */ }
+  }
+  if (!newest) return { ok: true, newest: null, minutes };
+  const ageMin = (real.nowMs() - newest.ms) / 60_000;
+  return { ok: ageMin >= minutes, newest: { path: newest.path, age_minutes: +ageMin.toFixed(1) }, minutes };
+}
+
+/** The scenario's turn slots, run on past the end (slot k, from 0), for the next-turn stamp. */
+function slotTime(sc, k) {
+  const start = Date.parse(sc.start);
+  const day0 = start - (start % 86_400_000);
+  const hours = [...sc.turn_hours].sort((a, b) => a - b);
+  return clock.isoOf(day0 + Math.floor(k / hours.length) * 86_400_000 + hours[k % hours.length] * 3_600_000);
+}
+/** Rule 9: the board note for turn n's reply is stamped with turn n+1's time (turn 21: the slot after). */
+const nextTurnTime = (sc, n) => slotTime(sc, n);
+
+/** The runner's stamp line over each notebook entry (rule 6). */
+const stampLine = iso => `[Norns stamp: written at sim time ${longLabel(iso)}]`;
+/** Rule 6 for 0c: the Norns line, the board notes visible now, the last 6 replies each under the
+ *  runner's stamp line, and the task. */
+function userPrompt0c(sc, simAt, notes, notebook) {
+  const shown = notes.length ? notes.map(n => `- [${shortLabel(n.at)}] ${n.text}`).join('\n') : '(nothing on the board)';
+  const book = notebook.length
+    ? notebook.map(e => `${stampLine(e.sim_at)}\n${String(e.text).trim()}`).join('\n\n')
+    : '(empty)';
+  return `${nornsLine(simAt)}\n\nTHE BOARD (notes visible now):\n${shown}\n\n`
+    + `YOUR NOTEBOOK (your last ${sc.notebook_size} replies, oldest first):\n${book}\n\nTHE TASK: ${sc.task}`;
+}
+/** The two gate reads of a turn: board notes (reply notes left out) and the notebook (reply notes). */
+const boardRead = (bb, sc) => visible(bb).filter(n => n.topic !== sc.reply_topic);
+function notebookRead(bb, sc) {
+  return bb.history(sc.reply_topic).slice(-sc.notebook_size)
+    .map(n => ({ id: n.id, at: n.at, sim_at: n.value && n.value.sim_at, turn: n.value && n.value.turn, text: n.value && n.value.text }));
+}
+/** Every row of a sim board, read with the gate off, as stamped records for L7. */
+function boardRows(file) {
+  const { DatabaseSync } = require('node:sqlite');
+  const db = new DatabaseSync(file, { readOnly: true });
+  try {
+    return db.prepare('SELECT id, run, at, created_at, topic, author, kind, value FROM notes ORDER BY id').all()
+      .map(r => ({ id: r.id, run_id: r.run, sim_at: r.at, created_at: r.created_at, topic: r.topic, author: r.author,
+        kind: r.kind, value: r.value == null ? null : JSON.parse(r.value) }));
+  } finally { db.close(); }
+}
+const replyNote = (sc, runId, n, simAt, text) =>
+  ({ topic: sc.reply_topic, author: sc.runner_author, at: nextTurnTime(sc, n), value: { turn: n, sim_at: simAt, run_id: runId, text } });
+
+/** Seed replay for 0c: rebuild the board from the seed in a fresh file, redo every turn's two gate
+ *  reads, re-post the recorded replies at their stamps, and compare reads and every sim stamp. */
+function seedReplay0c(root, sc, runId, turns, reads, replies, boardFile, replayRel, real, tr) {
+  const file = newBoardFile(root, replayRel, real, tr);
+  layLoom(file, sc, runId);                     // created_at is real time and differs by design; sim stamps are compared
+  const { simClock, bb } = readerFor(file, sc, runId);
+  const writer = board(null, file, { clock: simClock, run: runId, loom: true });
+  const mismatches = [];
+  try {
+    for (let i = 0; i < reads.length; i++) {
+      simClock.set(turns[i]);
+      const got = { board: boardRead(bb, sc), notebook: notebookRead(bb, sc) };
+      if (JSON.stringify(got) !== JSON.stringify(reads[i])) mismatches.push(i + 1);
+      const r = replies.find(x => x.turn === i + 1);
+      if (r && typeof r.reply === 'string') writer.post(replyNote(sc, runId, i + 1, turns[i], r.reply));
+    }
+  } finally { bb.close(); writer.close(); }
+  const key = rows => rows.map(r => JSON.stringify([r.id, r.run_id, r.sim_at, r.topic, r.author, r.value]));
+  const a = key(boardRows(boardFile)), b = key(boardRows(file));
+  const stampsMatch = a.length === b.length && a.every((x, i) => x === b[i]);
+  if (!stampsMatch) mismatches.push('stamps');
+  return { match: mismatches.length === 0 && reads.length > 0, compared: reads.length, stamps_compared: a.length,
+    mismatches, file: replayRel };
+}
+
+/** One call with its stamps. The fuse and the quiet hours are checked first; a refused call sends
+ *  nothing and saves no prompt. A sent call saves its stamped prompt, then a stamped reply or a
+ *  stamped failure record (rule 13). */
+async function stampedCall(ctx, n, simAt, req) {
+  const { real, sc, runId, api, led, spent, agent, save, log } = ctx;
+  const wc = worstCaseUsd(req);
+  if (spent.usd + wc > FUSE_USD + 1e-12) {
+    log({ at: real.nowIso(), kind: 'refused', run_id: runId, turn: n, sim_at: simAt, why: 'fuse', worst_case_usd: wc });
+    return { stop: 'fuse' };
+  }
+  if (quietHour(real)) {
+    log({ at: real.nowIso(), kind: 'refused', run_id: runId, turn: n, sim_at: simAt, why: 'quiet hours' });
+    return { stop: 'quiet hours (6 to 8 PM ET)' };
+  }
+  const prompt = { system: req.system, user: req.messages[0].content };
+  save('prompts', { kind: 'prompt', run_id: runId, turn: n, sim_at: simAt, created_at: real.nowIso(),
+    prompt_hash: sha256(JSON.stringify(prompt)), prompt, request: req, model: req.model, worst_case_usd: wc });
+  let body = null, requestId = null, err = null;
+  try {
+    ({ body, requestId } = await api(req, real));
+    if (!body || body.type === 'error' || body.error) {
+      const e = (body && body.error) || {};
+      err = `${e.type || 'error'}: ${String(e.message || '').slice(0, 200)}`;
+    }
+  } catch (e) { err = String(e && e.message || e).slice(0, 300); }
+  if (err) {
+    const f = { kind: 'failure', run_id: runId, turn: n, sim_at: simAt, created_at: real.nowIso(), error: err,
+      request_id: requestId || null, model: req.model };
+    save('failures', f);
+    return { failure: f };
+  }
+  const u = body.usage || {};
+  const cost = estimateCost(sc.model, u.input_tokens || 0, u.output_tokens || 0);
+  spent.usd += cost;
+  led.log(runId, agent, sc.model, u.input_tokens || 0, u.output_tokens || 0, cost);
+  const r = { kind: 'reply', run_id: runId, turn: n, sim_at: simAt, created_at: real.nowIso(), reply: replyText(body),
+    message_id: body.id || null, request_id: requestId || null, model: body.model || req.model,
+    stop_reason: body.stop_reason || null, usage: u, cost_usd: cost };
+  save('replies', r);
+  return { reply: r };
+}
+
+/** Choices the build made where the signed 0c charter is silent. Declared in every run's start row and
+ *  every dry-run summary, so none of them is silent. They change no rule the charter states. */
+const DECLARED_0C = Object.freeze([
+  'Benchmark stamp: the Benchmark (turn 0) is stamped with sim_at = the scenario start, 2031-06-09T08:00:00Z.',
+  'Quiet: the Warden and Trial IX count as quiet when no file L5 watches changed in the last 10 minutes of real time (file times).',
+  'Where reply notes show: under Choice 1 A each reply is a stamped note on this run\'s isolated sim board, read back through the gate as YOUR NOTEBOOK; the prompt\'s THE BOARD section lists the other sim-board notes (Loom notes) and leaves reply notes out. Nothing goes to the live blackboard.db.',
+  'Stamp line: each notebook entry sits under "[Norns stamp: written at sim time <Weekday D Month YYYY, HH:MM>]".',
+]);
+
+/** The Trial 0c run: lay the Loom, check the detector, the Benchmark and 21 stamped turns through the
+ *  gate, replies posted at t+1, replay the seed, grade once, seal. `api` and `led` are passed in so
+ *  tests can run it with no network; `testHooks` exists only for build tests (labeled there) and
+ *  is never set by launch(). */
+async function runTrial0c(o) {
+  const { root, srcRoot = root, real = clock.real, api = apiCall, led, runId, testHooks = null } = o;
+  const tr = trialOf(o.trial || 'trial-0c');
+  if (!tr.stamped) throw new Error(`norns: ${tr.id} is not a stamped trial`);
+  const launchIso = o.launchIso || real.nowIso();
+  const log = obj => appendLine(root, tr.runLog, obj, real, tr);
+  const { sc, hash: scHash } = loadScenario(srcRoot, tr.id);
+  const sys = systemPrompt(srcRoot, sc);
+  const turns = schedule(sc);
+  const watched = watched0c(root);
+  const l5 = { before: snapshot(root, watched), watched };
+  const boardRel = tr.board(runId);
+  const file = newBoardFile(root, boardRel, real, tr);
+  log({ at: real.nowIso(), kind: 'start', run_id: runId, commit: o.commit || null, charter_hash: o.charterHash || null,
+    scenario_hash: scHash, prompt_hashes: sys.hashes, seed: sc.seed, model: sc.model, board: boardRel,
+    stranger_run: strangerRun(sc, runId), choice_1: tr.choice1, declared_build_choices: DECLARED_0C });
+  const laid = layLoom(file, sc, runId, real);
+  log({ at: real.nowIso(), kind: 'loom', run_id: runId, ...laid });
+  const gate = openGate(file, sc, sys.text, turns);
+  log({ at: real.nowIso(), kind: 'open-gate', run_id: runId, ...gate });
+
+  const records = { prompts: [], replies: [], failures: [] };
+  const save = (kind, r) => { log(r); records[kind].push(r); };   // logged first: a refused log is never a saved record
+  const boardFailures = [], refused = [];
+  const reads = [];
+  const spent = { usd: 0 };
+  let stopped = gate.ok ? null : 'open-gate check failed: no model calls made';
+  const ctx = { root, real, sc, runId, api, led, spent, agent: tr.agent, save, log };
+  const refusedStop = e => { refused.push({ path: e.refused, error: e.message }); stopped = `rule 14: write refused (${e.refused})`; };
+  if (!stopped) {
+    try {
+      const b = await stampedCall(ctx, 0, sc.start, request(sc, sys.text, sc.benchmark_question));
+      if (b.stop) stopped = b.stop;
+    } catch (e) { if (e && e.code === 'NORNS_REFUSED') refusedStop(e); else throw e; }
+  }
+  if (!stopped) {
+    const { simClock, bb } = readerFor(file, sc, runId);
+    const writer = board(null, file, { clock: simClock, run: runId, loom: true, real });
+    try {
+      for (let i = 0; i < turns.length && !stopped; i++) {
+        const n = i + 1;
+        simClock.set(turns[i]);                                   // jump; due notes flip face-up
+        let shown, book;
+        try {
+          if (testHooks && testHooks.beforeRead) testHooks.beforeRead(n);
+          shown = boardRead(bb, sc); book = notebookRead(bb, sc);
+        } catch (e) { boardFailures.push({ turn: n, op: 'read', error: String(e && e.message || e) }); stopped = 'board read failed'; break; }
+        reads.push({ board: shown, notebook: book });
+        const r = await stampedCall(ctx, n, turns[i], request(sc, sys.text, userPrompt0c(sc, turns[i], shown, book)));
+        if (r.stop) { stopped = r.stop; break; }
+        if (r.reply && typeof r.reply.reply === 'string') {
+          let w;
+          try {
+            if (testHooks && testHooks.beforePost) testHooks.beforePost(n);
+            w = writer.post(replyNote(sc, runId, n, turns[i], r.reply.reply));
+          } catch (e) { boardFailures.push({ turn: n, op: 'write', error: String(e && e.message || e) }); stopped = 'board write failed'; break; }
+          log({ at: real.nowIso(), kind: 'reply-note', run_id: runId, turn: n, id: w.id, sim_at: w.at, created_at: w.created_at });
+        }
+        if (testHooks && testHooks.afterTurn)                      // build tests only: tries a write through the guard
+          testHooks.afterTurn(n, { write: p => appendLine(root, p, { test_fixture: true }, real, tr) });
+      }
+    } catch (e) {
+      if (e && e.code === 'NORNS_REFUSED') refusedStop(e); else throw e;
+    } finally { bb.close(); writer.close(); }
+  }
+  l5.after = snapshot(root, watched);
+  const boardNotes = boardRows(file);
+  let replay;
+  try { replay = seedReplay0c(root, sc, runId, turns, reads, records.replies, file, tr.replayBoard(runId), real, tr); }
+  catch (e) { replay = { match: false, error: String(e && e.message || e) }; if (e && e.code === 'NORNS_REFUSED') refused.push({ path: e.refused, error: e.message }); }
+  try { log({ at: real.nowIso(), kind: 'replay', run_id: runId, ...replay }); } catch { /* the replay result is still graded */ }
+
+  const rec = { scenario: sc, runId, records, boardNotes, board_failures: boardFailures, refused_writes: refused,
+    l5, openGate: gate, replay, realLaunchIso: launchIso, realEndIso: real.nowIso(),
+    realEtDate: clock.eastern(Date.parse(launchIso)).date, stopped };
+  const result = grader.grade0c(rec);                              // the one look
+  const sealed = { at: real.nowIso(), kind: 'verdict', trial: tr.id, run_id: runId, verdict: result.verdict,
+    reasons: result.reasons, stopped, spent_usd: +spent.usd.toFixed(6), commit: o.commit || null,
+    charter_hash: o.charterHash || null, choice_1: tr.choice1, ...result };
+  writeNew(root, tr.verdict, JSON.stringify(sealed, null, 2), real, tr);   // seals: a second verdict cannot be written
+  writeNew(root, tr.verdictCopy, JSON.stringify(sealed, null, 2), real, tr);
+  log({ at: sealed.at, kind: 'verdict', run_id: runId, verdict: sealed.verdict, reasons: sealed.reasons, stopped });
+  return sealed;
+}
+
+/** The Trial 0c dry run: zero model calls. Lays the Loom with stamps, builds the Benchmark and all
+ *  21 stamped prompts through the gate, runs L7 and its shifted-stamp self-check over them and the
+ *  board notes, the open-gate check, the seed replay, the preflight and the fuse. Never graded. */
+function dryRun0c({ root = ROOT, srcRoot = ROOT, real = clock.real, trial = 'trial-0c' } = {}) {
+  const tr = trialOf(trial);
+  const { sc, hash: scHash } = loadScenario(srcRoot, tr.id);
+  const sys = systemPrompt(srcRoot, sc);
+  const turns = schedule(sc);
+  const at = real.nowIso();
+  const label = `dry-${compact(at)}`;
+  const boardRel = tr.dryBoard(label);
+  const file = newBoardFile(root, boardRel, real, tr);
+  const laid = layLoom(file, sc, label, real);
+  const gate = openGate(file, sc, sys.text, turns);
+  const { simClock, bb } = readerFor(file, sc, label);
+  const reads = [];
+  try { for (const t of turns) { simClock.set(t); reads.push({ board: boardRead(bb, sc), notebook: notebookRead(bb, sc) }); } }
+  finally { bb.close(); }
+  const prompts = [{ kind: 'prompt', run_id: label, turn: 0, sim_at: sc.start, created_at: at,
+    prompt: { system: sys.text, user: sc.benchmark_question }, request: request(sc, sys.text, sc.benchmark_question) }];
+  reads.forEach((r, i) => {
+    const user = userPrompt0c(sc, turns[i], r.board, r.notebook);
+    prompts.push({ kind: 'prompt', run_id: label, turn: i + 1, sim_at: turns[i], created_at: at,
+      prompt: { system: sys.text, user }, request: request(sc, sys.text, user) });
+  });
+  const endIso = real.nowIso();
+  const stampRec = { scenario: sc, runId: label, records: { prompts, replies: [], failures: [] }, boardNotes: boardRows(file),
+    realLaunchIso: at, realEndIso: endIso };
+  const L7 = grader.l7(stampRec);
+  const self = grader.stampSelfCheck(stampRec);
+  const calls = prompts.map(p => ({ label: p.turn === 0 ? 'benchmark' : `turn ${p.turn}`, sim_at: p.turn === 0 ? null : p.sim_at,
+    prompt: p.prompt, request: p.request, reply: null }));
+  const checks = grader.detect(calls, sc);
+  // Worst case per call: the notebook is empty here, so each turn is priced as if it were full
+  // (up to six earlier replies of max_tokens each, plus their stamp lines), as in 0b.
+  const worst = calls.map((c, i) => {
+    const notebookTok = i <= 1 ? 0 : Math.min(i - 1, sc.notebook_size) * (sc.max_tokens + 30);
+    const inTok = Math.ceil(Buffer.byteLength(c.prompt.system + c.prompt.user) / 2) + 50 + notebookTok;
+    return estimateCost(sc.model, inTok, sc.max_tokens);
+  });
+  const worstRun = worst.reduce((a, b) => a + b, 0);
+  const canary = sc.loom.find(n => n.canary);
+  const canaryTurns = reads.map((r, i) => (canary && r.board.some(n => n.topic === canary.topic) ? i + 1 : null)).filter(Boolean);
+  const replay = seedReplay0c(root, sc, label, turns, reads, [], file, tr.dryReplayBoard(label), real, tr);
+  const summary = { at, kind: 'dry-run', trial: tr.id, label, model_calls: 0, calls_planned: calls.length, turns: turns.length,
+    scenario_hash: scHash, prompt_hashes: sys.hashes, seed: sc.seed, laying_order: laid.order, board: boardRel,
+    open_gate: { ...gate, stamp_self_check: self.ok }, replay: { match: replay.match, compared: replay.compared,
+      stamps_compared: replay.stamps_compared, mismatches: replay.mismatches },
+    build_checks: { L1: checks.L1.length, L1b: checks.L1b.length, L2: checks.L2.length, L3: checks.L3.length, L6: checks.L6.length,
+      L7: L7.length, stamps_checked: prompts.length + stampRec.boardNotes.length },
+    canary_visible_from_turn: canaryTurns[0] || null, canary_turns: canaryTurns.length,
+    fuse: { worst_run_usd: +worstRun.toFixed(5), worst_call_usd: +Math.max(...worst).toFixed(5), fuse_usd: FUSE_USD, fits: worstRun <= FUSE_USD },
+    preflight: preflight(sc), max_tokens: sc.max_tokens,
+    declared_build_choices: DECLARED_0C, note: 'Build check only. Never graded; not a verdict.' };
+  appendLine(root, tr.dryLog, summary, real, tr);
+  writeNew(root, `${tr.dryDir}/${label}-prompts.json`,
+    JSON.stringify({ system_hash: sha256(sys.text), calls: prompts.map(p => ({ turn: p.turn, sim_at: p.sim_at, created_at: p.created_at, user: p.prompt.user })) }, null, 2), real, tr);
+  return { ...summary, l7: L7, stamp_self_check: self, calls, reads };
+}
+
 // ── the lock and the launch ──────────────────────────────────────────
 function lockCheck(root, trial = 'trial-0') {
   const tr = trialOf(trial);
@@ -570,6 +901,8 @@ async function launch({ root = ROOT, real = clock.real, api = apiCall, ledgerFac
   const text = buf.toString('utf8');
   if (!/Initials:[\s\\_]*CM\b/.test(text) || !/Date:[\s\\_]*11\/16\/2026/.test(text))
     return { ok: false, why: 'charter file lacks the initials and date' };
+  if (tr.stamped && !new RegExp(`Choice 1:[\\s\\\\_]*${tr.choice1}\\b`).test(text))
+    return { ok: false, why: `charter file does not show Choice 1 marked ${tr.choice1}` };
   if (tr.preflight) {                             // Trial 0b rule 12: refused before anything is written or spent
     let pre;
     try { pre = preflight(loadScenario(root, tr.id).sc); } catch (e) { return { ok: false, why: `preflight: scenario unreadable: ${e.message}` }; }
@@ -580,6 +913,10 @@ async function launch({ root = ROOT, real = clock.real, api = apiCall, ledgerFac
   const commit = git.commit(root);
   if (!commit) return { ok: false, why: 'no git commit to record' };
   if (quietHour(real)) return { ok: false, why: 'never between 6 and 8 PM ET' };
+  if (tr.stamped) {                               // Trial 0c: the Warden and Trial IX must be quiet first
+    const q = liveQuiet(root, real);
+    if (!q.ok) return { ok: false, why: `not quiet: ${q.newest.path} changed ${q.newest.age_minutes} min ago (needs ${q.minutes})` };
+  }
   loadEnv(root);
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, why: 'ANTHROPIC_API_KEY not set' };
   const { sc, hash: scHash } = loadScenario(root, tr.id);
@@ -591,19 +928,21 @@ async function launch({ root = ROOT, real = clock.real, api = apiCall, ledgerFac
     const hash = sha256(buf);
     const at = real.nowIso();
     const runId = `${tr.runPrefix}-${sc.seed}-${compact(at)}`;
-    writeNew(root, tr.marker, JSON.stringify({ at, run: runId, hash, commit }, null, 2), real);   // one launch: 'wx'
-    try { writeNew(root, `state/norns/charter/${hash}.md`, buf, real); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    const g = tr.stamped ? tr : null;             // Trial 0c: every write through its strict list (rule 14)
+    writeNew(root, tr.marker, JSON.stringify({ at, run: runId, hash, commit }, null, 2), real, g);   // one launch: 'wx'
+    try { writeNew(root, `state/norns/charter/${hash}.md`, buf, real, g); } catch (e) { if (e.code !== 'EEXIST') throw e; }
     const sys = systemPrompt(root, sc);
     const row = { at, kind: 'launch', ...(tr.id === 'trial-0' ? {} : { trial: tr.id }), run: runId, hash, commit,
       bytes: buf.length, scenario: scHash, prompt_hashes: sys.hashes };
-    appendLine(root, tr.lock, row, real);
-    appendLine(root, tr.runLog, row, real);
+    appendLine(root, tr.lock, row, real, g);
+    appendLine(root, tr.runLog, row, real, g);
     const lock = lockCheck(root, tr.id);
     if (!lock.ok) return { ok: false, why: `lock: ${lock.why}` };
     let sealed;
-    try { sealed = await runTrial({ root, srcRoot: root, real, api, led, runId, commit, charterHash: hash, launchIso: at, trial: tr.id }); }
+    const run = tr.stamped ? runTrial0c : runTrial;
+    try { sealed = await run({ root, srcRoot: root, real, api, led, runId, commit, charterHash: hash, launchIso: at, trial: tr.id }); }
     catch (e) {                                   // never restarted (rule 10); the log keeps what happened
-      appendLine(root, tr.runLog, { at: real.nowIso(), kind: 'crash', run: runId, error: String(e && e.message || e) }, real);
+      appendLine(root, tr.runLog, { at: real.nowIso(), kind: 'crash', run: runId, error: String(e && e.message || e) }, real, g);
       return { ok: false, run: runId, why: `the run crashed before sealing a verdict: ${e && e.message}` };
     }
     return { ok: true, run: runId, verdict: sealed.verdict, reasons: sealed.reasons };
@@ -624,7 +963,9 @@ module.exports = { ROOT, CHARTER_FILE, SCENARIO_FILE, AGENT_ID, FUSE_USD, QUIET_
   longLabel, shortLabel, nornsLine, userPrompt, request, worstCaseUsd, seeded, layingOrder, strangerRun, layLoom,
   visible, readerFor, gateReads, openGate, seedReplay, snapshot, quietHour, wallUsd, ledger, apiCall, replyText,
   oneCall, runTrial, dryRun, lockCheck, launch, status, uncommitted, headCommit,
-  TRIALS, trialOf, preflight, DATE_LINE_TOKENS, CAP_MULTIPLE };
+  TRIALS, trialOf, preflight, DATE_LINE_TOKENS, CAP_MULTIPLE,
+  stampedAllow, sealedPaths, watched0c, liveQuiet, QUIET_MINUTES, slotTime, nextTurnTime, stampLine, userPrompt0c,
+  boardRead, notebookRead, boardRows, replyNote, seedReplay0c, stampedCall, runTrial0c, dryRun0c, DECLARED_0C };
 
 if (require.main === module) {
   const cmd = process.argv[2];
@@ -633,7 +974,7 @@ if (require.main === module) {
     trialOf(trial);                                // an unknown trial name stops here
     if (cmd === 'dryrun') {
       const s = dryRun({ trial });
-      const { calls, lists, ...shown } = s;
+      const { calls, lists, reads, ...shown } = s;
       console.log(JSON.stringify(shown, null, 2));
     } else if (cmd === 'launch') {
       const r = await launch({ trial });
@@ -642,7 +983,7 @@ if (require.main === module) {
     } else if (cmd === 'status') {
       console.log(JSON.stringify(status(ROOT, trial), null, 2));
     } else {
-      console.log('usage: node runners/norns.js dryrun | status | launch [trial-0 | trial-0b]');
+      console.log('usage: node runners/norns.js dryrun | status | launch [trial-0 | trial-0b | trial-0c]');
       process.exitCode = 2;
     }
   })().catch(e => { console.error(`[NORNS] ${e.message}`); process.exitCode = 1; });
