@@ -16,6 +16,9 @@
         "max_uses": 3,
         "max_content_tokens": 15000
       },
+      "read_page": {
+        "max_uses": 3
+      },
       "max_tokens": 16000
     },
     "ministry-of-works": {

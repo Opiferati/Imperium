@@ -80,14 +80,21 @@ Forseti audits every sourced document. This section overrides "A claim with a so
 - Cite a source only for a claim its title actually covers.
 - For counts with a free primary dataset (USGS catalogue, NOAA SWPC), use it, or say in Unknowns why not.
 
-## Opening pages (added 2026-11-16)
-You can open up to 3 pages per order with the web_fetch tool, beside your 5 searches.
-- Search first, then open the 1 to 3 results that hold the actual numbers or statement. Prefer the
-  primary source's own page (agency dataset, the paper, the official statement).
-- You can only open an address that already appears in this conversation: in the order, in a search
-  result, or in a page you opened. An address you make up is refused. Never guess one.
-- Prefer a web page or a text or CSV file. Open a PDF only when it is the primary source and there is
-  no web version, because PDFs are not cut to size.
+## Opening pages (added 2026-11-16, revised the same day)
+Use the page tools your order gives you; each one's description says how many pages you may open.
+- web_fetch opens an address that already appears in this conversation: in the order, in a search
+  result, or in a page you opened. An address you make up is refused there.
+- read_page opens public https pages on these data sites and their subdomains only: usgs.gov,
+  noaa.gov, treasury.gov, gfz.de, gfz-potsdam.de, sidc.be. On those sites you may build the address
+  yourself, for example a USGS catalogue query or a Treasury table with dates in it. Build it from the
+  site's own documented pattern. Any other site is refused.
+- An address carries only the data query (dates, place, magnitude, the dataset's own fields). Never put
+  anything from your files, your orders or the Imperium into an address.
+- Search first when you don't know where the data lives, then open the 1 to 3 pages that hold the
+  actual numbers or statement. Prefer the primary source's own page (agency dataset, the paper, the
+  official statement).
+- Prefer a web page or a text, CSV or JSON file. Open a PDF only when it is the primary source and there
+  is no web version, because PDFs are not cut to size.
 - A claim you read on an opened page may cite that page. A claim seen only in a search snippet is still
   a snippet: say so in the Unknowns if the page could not be opened.
 - If a page is refused or empty, say which and why in the Unknowns. Do not fill the gap from memory.

@@ -1259,36 +1259,57 @@ async function tickInner() {
 
     // A search-heavy turn can come back as pause_turn — resume it, a few times at most
     const maxTok = agentConf.max_tokens ?? 8192;
-    let result = await callAnthropic(model, systemProm, thread, maxTok, tools);
+    // A page read (read_page, Legion's own reader for the government data sites, 2026-11-16) comes back
+    // as tool_use: run it, keep the reply and the results as finished turns, and ask again.
+    const convo = [...thread];            // finished turns: one assistant + one user turn per page-read round
+    const allContent = [];                // blocks of every finished round (citations, opened pages)
+    const usageSum = { input_tokens: 0, output_tokens: 0, searches: 0, fetches: 0, reads: 0, cost: 0 };
+    const readLog = [];                   // read_page opens, for the record
+    const addUsage = r => {
+      const u = r.usage || {};
+      usageSum.input_tokens  += u.input_tokens ?? 0;
+      usageSum.output_tokens += u.output_tokens ?? 0;
+      usageSum.searches      += u.server_tool_use?.web_search_requests ?? 0;
+      usageSum.fetches       += u.server_tool_use?.web_fetch_requests ?? 0;
+      usageSum.cost          += estimateCost(model, u.input_tokens ?? 0, u.output_tokens ?? 0); // per request: Haiku's long-prompt price is per request
+    };
+    let result = await callAnthropic(model, systemProm, convo, maxTok, tools);
     if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
-    const allContent = [...(result.content || [])];
-    const usageSum   = { input_tokens: result.usage?.input_tokens ?? 0, output_tokens: result.usage?.output_tokens ?? 0,
-                         searches: result.usage?.server_tool_use?.web_search_requests ?? 0,
-                         fetches:  result.usage?.server_tool_use?.web_fetch_requests ?? 0 };
-    for (let hop = 0; result.stop_reason === 'pause_turn' && hop < 3; hop++) {
+    addUsage(result);
+    let turn = [...(result.content || [])];   // the assistant turn in progress (pause_turn hops add to it)
+    for (let hop = 0; hop < 8; hop++) {
+      const paused  = result.stop_reason === 'pause_turn';
+      const reading = !!researchTools && budget.reads > 0 && result.stop_reason === 'tool_use'
+        && (result.content || []).some(b => b.type === 'tool_use');
+      if (!paused && !reading) break;
       // Stop between hops if this order would carry the day to the wall (the tick gate ran before it).
-      const soFar = estimateCost(model, usageSum.input_tokens, usageSum.output_tokens) + usageSum.searches * 0.01;
-      if (researchTools && researchTools.pastWall(stmtDailySpend.get().total, soFar, registry.budget.daily_limit_usd)) {
+      if (researchTools && researchTools.pastWall(stmtDailySpend.get().total, usageSum.cost + usageSum.searches * 0.01, registry.budget.daily_limit_usd)) {
         console.warn(`[WARDEN] ${msg.to_agent}: stopping hops, the order would reach the daily wall`); break;
       }
-      // Same tools on every hop: a resume is the same turn, and the API holds max_uses across it.
-      result = await callAnthropic(model, systemProm,
-        [...thread, { role: 'assistant', content: allContent }], maxTok, tools);
+      if (paused) {
+        // Same tools on every hop: a resume is the same turn, and the API holds max_uses across it.
+        result = await callAnthropic(model, systemProm, [...convo, { role: 'assistant', content: turn }], maxTok, tools);
+      } else {
+        const rr = await researchTools.runReads(result.content, Math.max(0, budget.reads - usageSum.reads));
+        usageSum.reads += rr.used; readLog.push(...rr.opened);
+        for (const o of rr.opened) console.log(`[WARDEN]    read_page: ${o.ok ? 'opened' : 'refused'} ${o.url.slice(0, 120)}${o.ok ? '' : ` (${o.error})`}`);
+        convo.push({ role: 'assistant', content: turn }, { role: 'user', content: rr.results });
+        allContent.push(...turn);
+        turn = [];
+        result = await callAnthropic(model, systemProm, convo, maxTok, tools);
+      }
       if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
-      allContent.push(...(result.content || []));
-      usageSum.input_tokens  += result.usage?.input_tokens ?? 0;
-      usageSum.output_tokens += result.usage?.output_tokens ?? 0;
-      usageSum.searches      += result.usage?.server_tool_use?.web_search_requests ?? 0;
-      usageSum.fetches       += result.usage?.server_tool_use?.web_fetch_requests ?? 0;
+      addUsage(result);
+      turn.push(...(result.content || []));
     }
     // Cut off at the token ceiling? Ask once for a condensed, complete version (Edict VIII)
     // instead of sending a half-finished file to Forseti. The search results stay in hand.
     if (result.stop_reason === 'max_tokens' && MINISTRY_AGENTS.has(msg.to_agent)) {
       console.warn(`[WARDEN] ${msg.to_agent} hit max_tokens — asking once for a condensed version`);
-      // Keep a server call only with its result (search OR page); an orphaned call is a 400.
-      const answered = new Set(allContent.filter(b => b.type === 'web_search_tool_result' || b.type === 'web_fetch_tool_result').map(b => b.tool_use_id));
-      const priorBlocks = allContent.filter(b => b.type !== 'server_tool_use' || answered.has(b.id));
-      // The condense ask is a new turn, so it gets only what is left of each tool.
+      // Keep a server call only with its result (search OR page), and drop any read_page call; an orphan is a 400.
+      const priorBlocks = researchTools ? researchTools.finishedBlocks(turn)
+        : turn.filter(b => b.type !== 'server_tool_use' || turn.some(r => r.type === 'web_search_tool_result' && r.tool_use_id === b.id));
+      // The condense ask is a new turn, so it gets only what is left of each server tool.
       const condenseTools = researchTools
         ? researchTools.toolsFor(budget, researchTools.leftAfter(budget, { searches: usageSum.searches, fetches: usageSum.fetches }))
         : tools;
@@ -1299,24 +1320,25 @@ async function tickInner() {
         `outside any file: [PETITION: up to N words — one-line reason]`;
       try {
         const c = await callAnthropic(model, systemProm,
-          [...thread, { role: 'assistant', content: priorBlocks }, { role: 'user', content: condense }], maxTok, condenseTools);
+          [...convo, { role: 'assistant', content: priorBlocks }, { role: 'user', content: condense }], maxTok, condenseTools);
         if (c.error) throw new Error(c.error.message || JSON.stringify(c.error));
-        usageSum.input_tokens  += c.usage?.input_tokens ?? 0;
-        usageSum.output_tokens += c.usage?.output_tokens ?? 0;
-        usageSum.searches      += c.usage?.server_tool_use?.web_search_requests ?? 0;
-        usageSum.fetches       += c.usage?.server_tool_use?.web_fetch_requests ?? 0;
-        allContent.length = 0; allContent.push(...(c.content || []));
+        addUsage(c);
+        // A condensed reply that stops to read a page is not a deliverable: keep the cut-off one.
+        if (c.stop_reason === 'tool_use' || c.stop_reason === 'pause_turn') throw new Error(`condensed reply stopped at ${c.stop_reason}`);
+        turn = [...(c.content || [])];
         result = c;
         console.log(`[WARDEN]    condensed reply: ${result.stop_reason}`);
       } catch (ce) {
         console.warn(`[WARDEN] condense attempt failed: ${ce.message} — keeping the cut-off reply`);
       }
     }
+    allContent.push(...turn);
+    const finalText = turn.filter(b => b.type === 'text').map(b => b.text).join('');   // the reply after the last page read
     result = { ...result, content: allContent, usage: usageSum };
     const webSearches = usageSum.searches;
 
     // Text blocks are joined directly — with web search, sentences get split at citations
-    let responseText   = (result.content || []).filter(b => b.type === 'text').map(b => b.text).join('')
+    let responseText   = finalText
                          || JSON.stringify(result);
     // Sources actually cited, for the record (Chancellor + Forseti see these)
     const cited = new Map();
@@ -1326,15 +1348,19 @@ async function tickInner() {
     // Pages actually opened (page citations carry no address; the result block does)
     const pages = researchTools ? researchTools.openedPages(result.content) : { opened: new Map(), failed: [] };
     for (const [u, t] of pages.opened) if (!cited.has(u)) cited.set(u, t);
+    for (const o of readLog) if (o.ok && o.final && !cited.has(o.final)) {
+      let host = 'data site'; try { host = new URL(o.final).hostname; } catch { /* keep */ }
+      cited.set(o.final, `Data page (${host})`);
+    }
     if (result.stop_reason === 'max_tokens') {
       responseText += '\n\n[WARDEN] Reply hit the token limit and was cut off.';
       console.warn(`[WARDEN] ${msg.to_agent} hit max_tokens — output truncated`);
     }
     const inputTok     = result.usage?.input_tokens  ?? 0;
     const outputTok    = result.usage?.output_tokens ?? 0;
-    const costUsd      = estimateCost(model, inputTok, outputTok) + webSearches * 0.01;  // $10 per 1,000 searches
+    const costUsd      = usageSum.cost + webSearches * 0.01;  // priced per request (Haiku's long-prompt tier); $10 per 1,000 searches
     // Page opens have no fee of their own, only tokens (platform docs), so the cost line is unchanged.
-    if (webSearches > 0 || usageSum.fetches > 0) console.log(`[WARDEN]    web: ${webSearches} search(es), ` +
+    if (webSearches > 0 || usageSum.fetches > 0 || usageSum.reads > 0) console.log(`[WARDEN]    web: ${webSearches} search(es), ${usageSum.reads} data page(s) read, ` +
       `${pages.opened.size} page(s) opened${pages.failed.length ? `, ${pages.failed.length} refused (${pages.failed.join(', ')})` : ''}, ${cited.size} source(s)`);
 
     // Only the runner may mint [VERIFIED]/[FAILED]. An agent writing the tag
@@ -1513,7 +1539,7 @@ async function tickInner() {
           wordLimitFrom: formatContent(msg.content),
           files:     verifiedFiles,
           truncated: result.stop_reason === 'max_tokens',
-          requireSources: webSearches > 0 || usageSum.fetches > 0,
+          requireSources: webSearches > 0 || usageSum.fetches > 0 || usageSum.reads > 0,
           canSpend:  () => stmtDailySpend.get().total < limit,
           callModel: async (sys, msgs) => {
             const r = await callAnthropic(criticModel, sys, msgs, 8192); // was 2048: thinking ate the verdict (2026-11-13)
