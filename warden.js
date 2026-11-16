@@ -11,6 +11,7 @@ const https = require('node:https');
 const { DatabaseSync } = require('node:sqlite');
 const translator = require('./runners/translator.js');   // fixes the form of court replies, never the facts (2026-11-07)
 const apiRetry   = require('./runners/api-retry.js');    // timeout + retries on API hiccups (2026-11-07 resource audit)
+const apiTimeout = require('./runners/api-timeout.js');  // honest timeout labels (2026-11-15: "8 min" fired after 5 s)
 const API_TIMEOUT_MS = 8 * 60_000;                       // longest real call so far ≈ 2 min; 16k-token ministry jobs need headroom
 
 const ROOT = __dirname;
@@ -651,24 +652,8 @@ function callAnthropic(model, systemPrompt, messages, maxTokens = 8192, tools = 
     };
 
     // One try. Never rejects: returns { status, body, headers } or { error } for apiRetry to judge.
-    const once = () => new Promise((done) => {
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', chunk => (data += chunk));
-        res.on('end', () => {
-          let parsed;
-          try { parsed = JSON.parse(data); }
-          catch { parsed = { error: { type: res.statusCode >= 500 ? 'api_error' : 'invalid_response',
-                                      message: `Bad API response (${res.statusCode}): ${data.slice(0, 200)}` } }; }
-          done({ status: res.statusCode, body: parsed, headers: res.headers });
-        });
-        res.on('error', error => done({ error }));
-      });
-      req.setTimeout(API_TIMEOUT_MS, () => req.destroy(Object.assign(new Error(`API call timed out after ${API_TIMEOUT_MS / 60_000} min`), { code: 'ETIMEDOUT' })));
-      req.on('error', error => done({ error }));
-      req.write(body);
-      req.end();
-    });
+    // The timeout label now says which timer fired (connect stall, our 8-min limit, or another).
+    const once = () => apiTimeout.requestOnce(https, options, body, { idleMs: API_TIMEOUT_MS });
     apiRetry.withRetries(once, { log: m => console.warn(`[WARDEN] ${m}`) }).then(resolve, reject);
   });
 }

@@ -60,3 +60,30 @@ test('isRetryable: an unknown local error is not retried', () => {
   assert.equal(isRetryable({ error: new Error('ANTHROPIC_API_KEY not set') }), false);
   assert.equal(isRetryable({ status: 200, body: { content: [] } }), false);
 });
+
+// ── 2026-11-15: the thrown error names every try ──────────────────────────
+const connectStall = () => ({ error: Object.assign(new Error('API connect timed out after 5 s (DNS or network: the server was never reached)'),
+                                                   { code: 'ETIMEDOUT', kind: 'connect-timeout' }) });
+
+test('Nov 14 replay: four connect stalls end in one error that says so, with the try count and time', async () => {
+  let t = 0;
+  const s = script(connectStall(), connectStall(), connectStall(), connectStall());
+  const opts = { ...s.opts, now: () => (t += 22_000) };          // fake clock
+  await assert.rejects(withRetries(s.once, opts), err => {
+    assert.match(err.message, /^API connect timed out after 5 s/);
+    assert.match(err.message, /\[4 tries over \d+ s: connect-timeout x4\]$/);
+    assert.doesNotMatch(err.message, /8 min/);
+    assert.deepEqual(err.attempts, ['connect-timeout', 'connect-timeout', 'connect-timeout', 'connect-timeout']);
+    return true;
+  });
+});
+
+test('mixed failures are listed in order, so a 529 followed by stalls is visible', async () => {
+  const s = script(overloaded, connectStall(), connectStall(), connectStall());
+  await assert.rejects(withRetries(s.once, s.opts), /HTTP 529 overloaded_error, connect-timeout x3\]$/);
+});
+
+test('a single non-retryable network error keeps its own message untouched', async () => {
+  const s = script({ error: new Error('ANTHROPIC_API_KEY not set') });
+  await assert.rejects(withRetries(s.once, s.opts), err => err.message === 'ANTHROPIC_API_KEY not set');
+});
