@@ -1,0 +1,57 @@
+{
+  "at": "2026-11-16T22:07:56Z",
+  "kind": "verdict",
+  "run": "t0b-20261116-20261116t220617z",
+  "verdict": "KILL",
+  "reasons": [
+    "L4: a DATE line named the wrong date"
+  ],
+  "stopped": null,
+  "spent_usd": 0.02469,
+  "commit": "85ce97fecda74c333e24a0984739f69812ea744c",
+  "charter_hash": "fc8f94db5d3db002141063e0a662dacf0b819379087db9e41bc352e8c83f88c7",
+  "also": {
+    "broke": [],
+    "untested": [],
+    "kill": [
+      "L4: a DATE line named the wrong date"
+    ]
+  },
+  "findings": {
+    "L1": [],
+    "L1b": [],
+    "L2": [],
+    "L3": [],
+    "L6": [],
+    "L4": [
+      {
+        "call": "turn 5",
+        "sim_at": "2031-03-04T13:00:00Z",
+        "said": "2031-04-04",
+        "want": "2031-03-04",
+        "kind": "clock drift (a wrong 2031 date)"
+      }
+    ],
+    "L5": []
+  },
+  "turns_ran": 21,
+  "expected_turns": 21,
+  "abstains": [],
+  "display_only": {
+    "year_and_real_date_hits": [
+      {
+        "call": "benchmark",
+        "matched": [
+          "2026",
+          "2026-11-16"
+        ],
+        "sentence": "The latest dated entry I can see is the 2026-11-16 page-tools amendment, but that only shows the rules were updated then, not what today is."
+      }
+    ],
+    "benchmark_reply": "I can't tell you today's date with confidence. The Imperium's instructions say the simulated date comes from a \"Norns line\" below, but that line isn't in my context, so I have no date to report. The latest dated entry I can see is the 2026-11-16 page-tools amendment, but that only shows the rules were updated then, not what today is.\n\nIf you give me the date, I'll use it. Otherwise the Norns line needs to be restored in the system prompt.",
+    "cut_replies": {
+      "count": 0,
+      "turns": []
+    }
+  }
+}

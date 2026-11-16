@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-16",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.058052200000000005,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 14,
+    "stock_mood": 24,
+    "crypto_drivers": [
+      {
+        "event": "Bitcoin slid toward a 4-month low near $62K with about $1.07B in spot ETF outflows last week and roughly $2B in leveraged positions liquidated over the weekend",
+        "effect": "fear",
+        "url": "https://crypto.news/when-will-the-crypto-market-recover/"
+      },
+      {
+        "event": "Crypto Fear & Greed readings fell to extreme fear (about 10 to 12) as BTC and ETH fell further and ETH ETFs logged about $400M in weekly outflows",
+        "effect": "fear",
+        "url": "https://www.newsbytesapp.com/news/business/bitcoin-and-ethereum-slip-amid-etf-outflows-and-liquidations/tldr"
+      },
+      {
+        "event": "Ethereum trading near $1,800, about 64% below its record high, with buyers facing a test near $1,700 support",
+        "effect": "fear",
+        "url": "https://kucoin.com/news/flash/ethereum-falls-64-from-record-high-as-1-700-becomes-critical-support"
+      },
+      {
+        "event": "Perps exchange Lighter suspended all withdrawals after an estimated $15.5M was drained from market maker accounts via leaked API keys",
+        "effect": "fear",
+        "url": "https://decrypt.co/383301/morning-minute-crypto-hits-extreme-fear-as-bitcoin-plunges"
+      },
+      {
+        "event": "US authorities announced court-authorized seizure or restraint of more than $1.2B in crypto stolen in the Binance hack",
+        "effect": "neutral",
+        "url": "https://news.bitcoin.com/regulation-and-legal/this-week-in-crypto-law-november-15-2026/"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "Nasdaq fell 2.49% and S&P 500 fell 1.92% on Nov 16, a third straight down session, as Nvidia slid after Jensen Huang's resignation as CEO",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/15/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "A new US rule tightening access to advanced AI chips in parts of Asia and Brazil pressured AI infrastructure stocks including Amazon",
+        "effect": "fear",
+        "url": "https://www.fool.com/coverage/stock-market-today/2026/11/16/stock-market-today-nov-16-amazon-falls-on-new-ai-chip-export-rule-and-leo-satellite-launch-failure/"
+      },
+      {
+        "event": "Hotter-than-expected October CPI raised the likelihood of a Federal Reserve rate hike at its December meeting",
+        "effect": "fear",
+        "url": "https://www.scrippsnews.com/politics/economy/us-inflation-rises-more-than-expected-raising-likelihood-of-fed-rate-hike"
+      },
+      {
+        "event": "Investors braced for a consequential week for AI trade, with Nvidia earnings and Anthropic's blockbuster IPO set to test appetite",
+        "effect": "neutral",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-16-dow-sp-500-nasdaq-nvidia-oil-091631084.html"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "When will the crypto market recover?",
+        "url": "https://crypto.news/when-will-the-crypto-market-recover/",
+        "market": "crypto"
+      },
+      {
+        "title": "Bitcoin and Ethereum slip amid ETF outflows and liquidations",
+        "url": "https://www.newsbytesapp.com/news/business/bitcoin-and-ethereum-slip-amid-etf-outflows-and-liquidations/tldr",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto News: Bitcoin, Ethereum And XRP Hit Make-Or-Break Levels After Brutal Sell-Off",
+        "url": "https://cryptonews.net/news/analytics/33752999/",
+        "market": "crypto"
+      },
+      {
+        "title": "Ethereum Falls 64% From Record High as $1,700 Becomes Critical Support",
+        "url": "https://kucoin.com/news/flash/ethereum-falls-64-from-record-high-as-1-700-becomes-critical-support",
+        "market": "crypto"
+      },
+      {
+        "title": "Morning Minute: Crypto Hits Extreme Fear as Bitcoin Plunges",
+        "url": "https://decrypt.co/383301/morning-minute-crypto-hits-extreme-fear-as-bitcoin-plunges",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Markets Today, November 15, 2026: Bitcoin Rebounds From $62,000 as Ethereum, Solana Slide",
+        "url": "https://eurasiabusinessnews.com/2026/11/16/crypto-markets-today-november-15-2026-bitcoin-rebounds-from-62000-as-ethereum-solana-slide/",
+        "market": "crypto"
+      },
+      {
+        "title": "This Week in Crypto Law (November 15, 2026)",
+        "url": "https://news.bitcoin.com/regulation-and-legal/this-week-in-crypto-law-november-15-2026/",
+        "market": "crypto"
+      },
+      {
+        "title": "Binance Heist and DeFi Exploits Put Crypto Security Under Pressure",
+        "url": "https://www.altcoinbuzz.io/binance-heist-and-defi-exploits-put-crypto-security-under-pressure",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market today: Dow and S&P 500 drop, Nasdaq sinks over 2% as Nvidia leads AI trade lower, Anthropic IPO looms",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-16-dow-sp-500-nasdaq-nvidia-oil-091631084.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock Market Today, Nov. 16: Amazon Falls on New AI Chip Export Rule and Leo Satellite Launch Failure",
+        "url": "https://www.fool.com/coverage/stock-market-today/2026/11/16/stock-market-today-nov-16-amazon-falls-on-new-ai-chip-export-rule-and-leo-satellite-launch-failure/",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market news for Nov. 16, 2026",
+        "url": "https://www.cnbc.com/2026/11/15/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "US inflation rises more than expected, raising likelihood of Fed rate hike",
+        "url": "https://www.scrippsnews.com/politics/economy/us-inflation-rises-more-than-expected-raising-likelihood-of-fed-rate-hike",
+        "market": "stocks"
+      },
+      {
+        "title": "Hot US inflation report seals Federal Reserve rate increase",
+        "url": "https://www.thenationalnews.com/business/economy/2026/11/10/federal-reserve-inflation-interest-rates-december/",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://cointelegraph.com/",
+    "https://www.coindesk.com/",
+    "https://www.investing.com/news/cryptocurrency-news",
+    "https://www.openpr.com/news/4691441/crypto-market-news-litecoin-falls-below-50-and-xrp-slides",
+    "https://crypto.news/when-will-the-crypto-market-recover/",
+    "https://www.newsnow.com/us/Business/Cryptocurrencies",
+    "https://cryptoslate.com/",
+    "https://decrypt.co/383301/morning-minute-crypto-hits-extreme-fear-as-bitcoin-plunges",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-ethereum-xrp-face-increasing-selling-pressure-etf-outflows-202611161030",
+    "https://kucoin.com/news/flash/ethereum-falls-64-from-record-high-as-1-700-becomes-critical-support",
+    "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-bitcoin-ethereum-solana-extend-weekly-losses-latest-crypto-scam-raises-alarm",
+    "https://crypto.news/",
+    "https://www.newsbytesapp.com/news/business/bitcoin-and-ethereum-slip-amid-etf-outflows-and-liquidations/tldr",
+    "https://cryptonews.net/news/analytics/33752999/",
+    "https://eurasiabusinessnews.com/2026/11/16/crypto-markets-today-november-15-2026-bitcoin-rebounds-from-62000-as-ethereum-solana-slide/",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://finance.yahoo.com/markets/live/stock-market-today-monday-november-16-dow-sp-500-nasdaq-nvidia-oil-091631084.html",
+    "https://www.cnbc.com/2026/11/15/stock-market-today-live-updates.html",
+    "https://www.google.com/finance/",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/16/stock-market-today-nov-16-amazon-falls-on-new-ai-chip-export-rule-and-leo-satellite-launch-failure/",
+    "https://www.cnbc.com/stocks/",
+    "https://seekingalpha.com/market-news",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://www.federalreserve.gov/releases/h15/",
+    "https://www.thenationalnews.com/business/economy/2026/11/10/federal-reserve-inflation-interest-rates-december/",
+    "https://www.scrippsnews.com/politics/economy/us-inflation-rises-more-than-expected-raising-likelihood-of-fed-rate-hike",
+    "https://bloomberg.com/news/articles/2026-11-14/world-economy-latest-us-inflation-report-supports-fed-rate-hike",
+    "https://tradingeconomics.com/united-states/interest-rate",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/30",
+    "https://www.pbs.org/newshour/author/christopher-rugaber-associated-press/page/27",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://news.bitcoin.com/regulation-and-legal/this-week-in-crypto-law-november-15-2026/",
+    "https://gizmodo.com/there-are-too-many-crypto-hacks-happening-its-impossible-to-keep-up-2000833986",
+    "https://www.altcoinbuzz.io/binance-heist-and-defi-exploits-put-crypto-security-under-pressure",
+    "https://crypto.news/artex-ai-fbi-warning-network-breaches/",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://ridingthewave.substack.com/p/riding-the-wave-news-summary-46"
+  ]
+}

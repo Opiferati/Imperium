@@ -1,0 +1,2 @@
+{"source":"kp","read_at":1794789000640,"read_day":"2026-11-16","sha256":"c557cd60ba0d1c4f165e5d94cabd7216e28da1f0e500eff8feaf14f14ba65e49","bytes":4324,"raw":"state/thesis_h/raw/2026-11-16/kp-20261116T003000640Z.json.gz","kp_days":["2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-14","2026-11-15"]}
+{"source":"flares","read_at":1794789002039,"read_day":"2026-11-16","sha256":"78fa791c3e18153c8e7ff7dbe15e802ce8179c6ec106a8c9e06b446421c2d569","bytes":30897,"raw":"state/thesis_h/raw/2026-11-16/flares-20261116T003002039Z.json.gz"}

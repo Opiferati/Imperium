@@ -1,0 +1,180 @@
+{
+  "shakedown": 1,
+  "plan": {
+    "mission": 1,
+    "t": "2026-11-15",
+    "W": [
+      "2026-10-30",
+      "2026-10-31",
+      "2026-11-01",
+      "2026-11-02",
+      "2026-11-03",
+      "2026-11-04",
+      "2026-11-05"
+    ],
+    "W0": "2026-10-30",
+    "W6": "2026-11-05",
+    "D": "2026-11-02",
+    "agent_order": [
+      "intel-2",
+      "intel-1",
+      "intel-3"
+    ],
+    "arm_order": [
+      "A",
+      "B",
+      "SQUIRE",
+      "TWIN",
+      "A2"
+    ],
+    "seed": 20261115
+  },
+  "key": {
+    "q1": 3,
+    "q2": 6.1,
+    "q3": "2026-11-05",
+    "q4": 5.666666666666667,
+    "q5": 2,
+    "q6": 0,
+    "q7": "M3.5",
+    "q8": 48,
+    "q9": 4.91
+  },
+  "dropped": [],
+  "grade": {
+    "right": 0,
+    "scored": 9,
+    "score": 0,
+    "per": {
+      "q1": "wrong",
+      "q2": "wrong",
+      "q3": "wrong",
+      "q4": "wrong",
+      "q5": "wrong",
+      "q6": "wrong",
+      "q7": "wrong",
+      "q8": "wrong",
+      "q9": "wrong"
+    }
+  },
+  "cost": 0.19311710000000004,
+  "seconds": 68,
+  "arm": {
+    "arm": "A",
+    "agents": [
+      {
+        "slot": "intel-2",
+        "text": "[ANSWER q1 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q3 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q4 | UNKNOWN | https://kp.gfz.de/en/]\n[ANSWER q6 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[ANSWER q7 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[ANSWER q9 | 4.91 | https://stockmarketwatch.com/bonds/10-year-treasury-yield]\n\n**Notes on the values**\n\n- **q1 and q3 (earthquakes):** I did not retrieve a USGS ComCat count for the window. A secondary news aggregator reports one M6.0+ quake for 5 November, a M6.1 near Fiji that the United States Geological Survey (USGS) said occurred on November 5. That is a single-day, secondary figure, so I cannot say it is the complete count or the largest event.\n- **q4 (Kp):** No GFZ Kp values for the window were retrieved. The GFZ pages I found only showed a daily plot for 2026-10-27 and general descriptions.\n- **q6 and q7 (flares):** No SWPC event reports for the window were read. Partial secondary evidence is consistent with few or no strong flares: solar activity during the past 24 hours has been at very low levels with no noteworthy solar flares to report in a 2 November update. The strongest flare I found, an M1.4 on 7 November, falls outside the window. Because the window is not covered, I left these as UNKNOWN.\n- **q9 (10-year par yield, 2 November):** The value 4.91 comes from a secondary mirror that says it reflects official U.S. Treasury data, and lists November 2, 2026 | 4.91% | -3 bp. I could not confirm it on Treasury's own table. A second secondary source gives a different close for that day (4.894 on investing.com), so treat 4.91 as unverified against the primary Treasury table.",
+        "inTok": 94953,
+        "outTok": 4254,
+        "searches": 5,
+        "cost": 0.061622300000000005,
+        "saw": 0,
+        "queries": [
+          "USGS magnitude 6.0+ earthquakes week November 2026",
+          "NOAA SWPC X-class solar flare November 2026",
+          "GFZ Potsdam Kp index November 2026",
+          "Treasury daily par yield curve rates November 2 2026",
+          "10-year Treasury yield November 2 2026"
+        ]
+      },
+      {
+        "slot": "intel-1",
+        "text": "[ANSWER q2 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q3 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q5 | UNKNOWN | https://kp.gfz.de/en/]\n[ANSWER q6 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[ANSWER q8 | UNKNOWN | https://www.sidc.be/SILSO/home]\n[ANSWER q9 | UNKNOWN | https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=2026]\n\nNone of the six values could be confirmed from a source that covers the required date or window. The source addresses above are the authoritative pages for each value, not pages I read the value from.\n\n- **q2 and q3 (earthquakes):** A USGS map snapshot listed 5.1 19 km NNW of Masumbwe, Tanzania 2026-11-05 09:22:32 (UTC), but that snapshot is a rolling past-day list and does not cover the seven-day window. I found no complete ComCat listing for 2026-10-30 to 2026-11-05, so I cannot name the largest event.\n- **q5 (Kp):** I found no GFZ daily Kp values for the window. The GFZ page I retrieved only links to a daily plot image.\n- **q6 (X-class flares):** The reports I found cover only parts of the window. One says no X-class flare had occurred as of 12:40 UTC Monday, which falls after the window closes, and another says the region had been reported by the time the region began rotating toward the Sun's western edge. Neither establishes the count for 2026-10-30 to 2026-11-05.\n- **q8 (sunspot number):** The SILSO page I retrieved shows only 11 November : 121 12 November : 107, not 2 November.\n- **q9 (10-year yield):** The Treasury table snippet has rows for other dates, and third-party pages give conflicting figures for nearby days, such as 4.90% … as of November 4, 2026 and 5.10% on November 12, 2026. None is for 2026-11-02.",
+        "inTok": 53180,
+        "outTok": 3351,
+        "searches": 5,
+        "cost": 0.0569935,
+        "saw": 0,
+        "queries": [
+          "USGS earthquake catalog largest magnitude October 30 to November 5 2026",
+          "GFZ Potsdam Kp index November 2026",
+          "NOAA SWPC X-class flare November 2026",
+          "SILSO international sunspot number November 2 2026",
+          "Treasury daily par yield curve rates November 2026"
+        ]
+      },
+      {
+        "slot": "intel-3",
+        "text": "[ANSWER q1 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q2 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[ANSWER q4 | UNKNOWN | https://kp.gfz.de/en/]\n[ANSWER q5 | UNKNOWN | https://kp.gfz.de/en/]\n[ANSWER q7 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[ANSWER q8 | UNKNOWN | https://www.sidc.be/SILSO/home]\n\nNotes on the UNKNOWNs. I could only search, not open the databases, so none of these values is confirmed from its primary source.\n\n- **q1 and q2:** Only partial earthquake counts surfaced. A news roundup reports a magnitude 6.1 earthquake was recorded in the South Pacific Ocean near Fiji, which the United States Geological Survey (USGS) said occurred on November 5. That is the only in-window event I found, and I did not check the other days, so I cannot give a count or a maximum.\n- **q4 and q5:** I found no observed Kp values for the window. A news report describes Kp 5 only between 18:00 and 21:00 UTC on November 7, which is outside the window. A blog post describes a G2 storm for 31 October to 2 November, but it is a secondary, low-reliability source, so I did not use it.\n- **q7:** A news update says a moderate M3 flare on Thursday, which would be 5 November. It gives no decimal, so I cannot produce the exact class, and I did not check whether any other flare in the window was stronger.\n- **q8:** The SILSO page I found shows only mid-November daily values, not 2 November. The 2 November figure I saw came from a non-SILSO region-count table, so I did not use it.",
+        "inTok": 93268,
+        "outTok": 4125,
+        "searches": 5,
+        "cost": 0.06138930000000001,
+        "saw": 0,
+        "queries": [
+          "USGS M6.0+ earthquakes week October 30 November 5 2026",
+          "GFZ Potsdam Kp index November 2026",
+          "NOAA SWPC solar flare X-ray events November 2026",
+          "SILSO international sunspot number November 2026",
+          "geomagnetic storm Kp 2 November 2026 aurora"
+        ]
+      }
+    ],
+    "synth": {
+      "text": "[FINAL q1 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[FINAL q2 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[FINAL q3 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]\n[FINAL q4 | UNKNOWN | https://kp.gfz.de/en/]\n[FINAL q5 | UNKNOWN | https://kp.gfz.de/en/]\n[FINAL q6 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[FINAL q7 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]\n[FINAL q8 | UNKNOWN | https://www.sidc.be/SILSO/home]\n[FINAL q9 | UNKNOWN | https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=2026]",
+      "inTok": 2696,
+      "outTok": 772,
+      "cost": 0.013112
+    },
+    "finals": {
+      "q1": {
+        "q": "q1",
+        "value": "UNKNOWN",
+        "source": "https://earthquake.usgs.gov/earthquakes/search/",
+        "raw": "[FINAL q1 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]"
+      },
+      "q2": {
+        "q": "q2",
+        "value": "UNKNOWN",
+        "source": "https://earthquake.usgs.gov/earthquakes/search/",
+        "raw": "[FINAL q2 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]"
+      },
+      "q3": {
+        "q": "q3",
+        "value": "UNKNOWN",
+        "source": "https://earthquake.usgs.gov/earthquakes/search/",
+        "raw": "[FINAL q3 | UNKNOWN | https://earthquake.usgs.gov/earthquakes/search/]"
+      },
+      "q4": {
+        "q": "q4",
+        "value": "UNKNOWN",
+        "source": "https://kp.gfz.de/en/",
+        "raw": "[FINAL q4 | UNKNOWN | https://kp.gfz.de/en/]"
+      },
+      "q5": {
+        "q": "q5",
+        "value": "UNKNOWN",
+        "source": "https://kp.gfz.de/en/",
+        "raw": "[FINAL q5 | UNKNOWN | https://kp.gfz.de/en/]"
+      },
+      "q6": {
+        "q": "q6",
+        "value": "UNKNOWN",
+        "source": "https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports",
+        "raw": "[FINAL q6 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]"
+      },
+      "q7": {
+        "q": "q7",
+        "value": "UNKNOWN",
+        "source": "https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports",
+        "raw": "[FINAL q7 | UNKNOWN | https://www.swpc.noaa.gov/products/solar-and-geophysical-event-reports]"
+      },
+      "q8": {
+        "q": "q8",
+        "value": "UNKNOWN",
+        "source": "https://www.sidc.be/SILSO/home",
+        "raw": "[FINAL q8 | UNKNOWN | https://www.sidc.be/SILSO/home]"
+      },
+      "q9": {
+        "q": "q9",
+        "value": "UNKNOWN",
+        "source": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=2026",
+        "raw": "[FINAL q9 | UNKNOWN | https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=2026]"
+      }
+    },
+    "board": null,
+    "cost": 0.19311710000000004,
+    "seconds": 68
+  }
+}
