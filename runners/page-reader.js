@@ -1,8 +1,9 @@
 'use strict';
 // ══════════════════════════════════════════════════════════════════════
 // PAGE READER — Legion's own way to open a web page. Built 2026-11-16 for
-// Trial IX Amendment 4. A shared helper: nothing in the live Legion uses it
-// yet (wiring it into a ministry needs Opie's yes).
+// Trial IX Amendment 4. A shared helper: the live research ministry uses it
+// as read_page for the six government data sites (research-tools.js, on
+// Opie's yes, 2026-11-16), and Trial IX's researchers use it too.
 //
 // What it will do: one GET of a public https address, read only, and hand
 // back the page as plain text, cut to a size cap.
