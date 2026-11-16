@@ -12,6 +12,10 @@
       "web_search": {
         "max_uses": 5
       },
+      "web_fetch": {
+        "max_uses": 3,
+        "max_content_tokens": 15000
+      },
       "max_tokens": 16000
     },
     "ministry-of-works": {

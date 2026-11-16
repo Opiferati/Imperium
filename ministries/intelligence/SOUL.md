@@ -79,3 +79,15 @@ Forseti audits every sourced document. This section overrides "A claim with a so
 - WEAK (blogs, Substacks, vendor or retail sites, preprints without shown review) is at most LOW.
 - Cite a source only for a claim its title actually covers.
 - For counts with a free primary dataset (USGS catalogue, NOAA SWPC), use it, or say in Unknowns why not.
+
+## Opening pages (added 2026-11-16)
+You can open up to 3 pages per order with the web_fetch tool, beside your 5 searches.
+- Search first, then open the 1 to 3 results that hold the actual numbers or statement. Prefer the
+  primary source's own page (agency dataset, the paper, the official statement).
+- You can only open an address that already appears in this conversation: in the order, in a search
+  result, or in a page you opened. An address you make up is refused. Never guess one.
+- Prefer a web page or a text or CSV file. Open a PDF only when it is the primary source and there is
+  no web version, because PDFs are not cut to size.
+- A claim you read on an opened page may cite that page. A claim seen only in a search snippet is still
+  a snippet: say so in the Unknowns if the page could not be opened.
+- If a page is refused or empty, say which and why in the Unknowns. Do not fill the gap from memory.

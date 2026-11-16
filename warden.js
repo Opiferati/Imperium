@@ -41,6 +41,11 @@ try {
   primaryData = require('./runners/primary-data.js');
 } catch (e) { console.warn('[WARDEN] primary-data.js not loaded:', e.message); }
 
+let researchTools = null; // search + page reading for ministry orders (2026-11-16)
+try {
+  researchTools = require('./runners/research-tools.js');
+} catch (e) { console.warn('[WARDEN] research-tools.js not loaded:', e.message); }
+
 let ecnalanif = null;
 let ecnalanifFlown = null;   // New York date of the last Ecnalanif scan (once per day)
 try {
@@ -1246,9 +1251,11 @@ async function tickInner() {
   console.log(`[WARDEN]    thread: ${thread.length} turn(s)`);
 
   try {
-    // Web search (server-side tool) for ministries that have it switched on
+    // Search and page reading (research-tools.js, 2026-11-16). Without the module, search only, as before.
     const ws = agentConf.web_search;
-    const tools = ws ? [{ type: 'web_search_20250305', name: 'web_search', max_uses: ws.max_uses ?? 5 }] : null;
+    const budget = researchTools ? researchTools.budgetFrom(agentConf) : null;
+    const tools = researchTools ? researchTools.toolsFor(budget)
+      : (ws ? [{ type: 'web_search_20250305', name: 'web_search', max_uses: ws.max_uses ?? 5 }] : null);
 
     // A search-heavy turn can come back as pause_turn — resume it, a few times at most
     const maxTok = agentConf.max_tokens ?? 8192;
@@ -1256,8 +1263,15 @@ async function tickInner() {
     if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
     const allContent = [...(result.content || [])];
     const usageSum   = { input_tokens: result.usage?.input_tokens ?? 0, output_tokens: result.usage?.output_tokens ?? 0,
-                         searches: result.usage?.server_tool_use?.web_search_requests ?? 0 };
+                         searches: result.usage?.server_tool_use?.web_search_requests ?? 0,
+                         fetches:  result.usage?.server_tool_use?.web_fetch_requests ?? 0 };
     for (let hop = 0; result.stop_reason === 'pause_turn' && hop < 3; hop++) {
+      // Stop between hops if this order would carry the day to the wall (the tick gate ran before it).
+      const soFar = estimateCost(model, usageSum.input_tokens, usageSum.output_tokens) + usageSum.searches * 0.01;
+      if (researchTools && researchTools.pastWall(stmtDailySpend.get().total, soFar, registry.budget.daily_limit_usd)) {
+        console.warn(`[WARDEN] ${msg.to_agent}: stopping hops, the order would reach the daily wall`); break;
+      }
+      // Same tools on every hop: a resume is the same turn, and the API holds max_uses across it.
       result = await callAnthropic(model, systemProm,
         [...thread, { role: 'assistant', content: allContent }], maxTok, tools);
       if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
@@ -1265,13 +1279,19 @@ async function tickInner() {
       usageSum.input_tokens  += result.usage?.input_tokens ?? 0;
       usageSum.output_tokens += result.usage?.output_tokens ?? 0;
       usageSum.searches      += result.usage?.server_tool_use?.web_search_requests ?? 0;
+      usageSum.fetches       += result.usage?.server_tool_use?.web_fetch_requests ?? 0;
     }
     // Cut off at the token ceiling? Ask once for a condensed, complete version (Edict VIII)
     // instead of sending a half-finished file to Forseti. The search results stay in hand.
     if (result.stop_reason === 'max_tokens' && MINISTRY_AGENTS.has(msg.to_agent)) {
       console.warn(`[WARDEN] ${msg.to_agent} hit max_tokens — asking once for a condensed version`);
-      const answered = new Set(allContent.filter(b => b.type === 'web_search_tool_result').map(b => b.tool_use_id));
+      // Keep a server call only with its result (search OR page); an orphaned call is a 400.
+      const answered = new Set(allContent.filter(b => b.type === 'web_search_tool_result' || b.type === 'web_fetch_tool_result').map(b => b.tool_use_id));
       const priorBlocks = allContent.filter(b => b.type !== 'server_tool_use' || answered.has(b.id));
+      // The condense ask is a new turn, so it gets only what is left of each tool.
+      const condenseTools = researchTools
+        ? researchTools.toolsFor(budget, researchTools.leftAfter(budget, { searches: usageSum.searches, fetches: usageSum.fetches }))
+        : tools;
       const condense = `[FROM: warden]\nYour reply was cut off at the length limit before it finished, so it cannot be used. ` +
         `Reply again with the COMPLETE deliverable, condensed to fit: keep the order's length limit, keep every required section ` +
         `and the full source list, and cut detail first. Use the search results you already have. If the material genuinely needs ` +
@@ -1279,11 +1299,12 @@ async function tickInner() {
         `outside any file: [PETITION: up to N words — one-line reason]`;
       try {
         const c = await callAnthropic(model, systemProm,
-          [...thread, { role: 'assistant', content: priorBlocks }, { role: 'user', content: condense }], maxTok, tools);
+          [...thread, { role: 'assistant', content: priorBlocks }, { role: 'user', content: condense }], maxTok, condenseTools);
         if (c.error) throw new Error(c.error.message || JSON.stringify(c.error));
         usageSum.input_tokens  += c.usage?.input_tokens ?? 0;
         usageSum.output_tokens += c.usage?.output_tokens ?? 0;
         usageSum.searches      += c.usage?.server_tool_use?.web_search_requests ?? 0;
+        usageSum.fetches       += c.usage?.server_tool_use?.web_fetch_requests ?? 0;
         allContent.length = 0; allContent.push(...(c.content || []));
         result = c;
         console.log(`[WARDEN]    condensed reply: ${result.stop_reason}`);
@@ -1302,6 +1323,9 @@ async function tickInner() {
     for (const b of result.content || []) {
       for (const c of b.citations || []) if (c.url && !cited.has(c.url)) cited.set(c.url, c.title || c.url);
     }
+    // Pages actually opened (page citations carry no address; the result block does)
+    const pages = researchTools ? researchTools.openedPages(result.content) : { opened: new Map(), failed: [] };
+    for (const [u, t] of pages.opened) if (!cited.has(u)) cited.set(u, t);
     if (result.stop_reason === 'max_tokens') {
       responseText += '\n\n[WARDEN] Reply hit the token limit and was cut off.';
       console.warn(`[WARDEN] ${msg.to_agent} hit max_tokens — output truncated`);
@@ -1309,7 +1333,9 @@ async function tickInner() {
     const inputTok     = result.usage?.input_tokens  ?? 0;
     const outputTok    = result.usage?.output_tokens ?? 0;
     const costUsd      = estimateCost(model, inputTok, outputTok) + webSearches * 0.01;  // $10 per 1,000 searches
-    if (webSearches > 0) console.log(`[WARDEN]    web search: ${webSearches} search(es), ${cited.size} source(s) cited`);
+    // Page opens have no fee of their own, only tokens (platform docs), so the cost line is unchanged.
+    if (webSearches > 0 || usageSum.fetches > 0) console.log(`[WARDEN]    web: ${webSearches} search(es), ` +
+      `${pages.opened.size} page(s) opened${pages.failed.length ? `, ${pages.failed.length} refused (${pages.failed.join(', ')})` : ''}, ${cited.size} source(s)`);
 
     // Only the runner may mint [VERIFIED]/[FAILED]. An agent writing the tag
     // itself is self-report (Edict I) — defang it before the runner adds real ones.
@@ -1487,7 +1513,7 @@ async function tickInner() {
           wordLimitFrom: formatContent(msg.content),
           files:     verifiedFiles,
           truncated: result.stop_reason === 'max_tokens',
-          requireSources: webSearches > 0,
+          requireSources: webSearches > 0 || usageSum.fetches > 0,
           canSpend:  () => stmtDailySpend.get().total < limit,
           callModel: async (sys, msgs) => {
             const r = await callAnthropic(criticModel, sys, msgs, 8192); // was 2048: thinking ate the verdict (2026-11-13)
