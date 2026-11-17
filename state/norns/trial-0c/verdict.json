@@ -1,0 +1,133 @@
+{
+  "at": "2026-11-17T01:33:03Z",
+  "kind": "verdict",
+  "trial": "trial-0c",
+  "run_id": "t0c-20261117-20261117t013122z",
+  "verdict": "PASS",
+  "reasons": [],
+  "stopped": null,
+  "spent_usd": 0.025895,
+  "commit": "ecd919e0435b0ab7559f45ef732698957c795aba",
+  "charter_hash": "63fa36f7b3891545d11f5f2d66f562c848b45cfc8f5618afaebbed1708394f42",
+  "choice_1": "A",
+  "also": {
+    "broke": [],
+    "untested": [],
+    "kill": []
+  },
+  "findings": {
+    "L1": [],
+    "L1b": [],
+    "L2": [],
+    "L3": [],
+    "L6": [],
+    "L5": [],
+    "L7": [],
+    "board": [],
+    "refused_writes": [],
+    "stamp_self_check": {
+      "ok": true,
+      "checks": [
+        {
+          "kind": "prompts",
+          "record": "benchmark prompt",
+          "how": "sim_at shifted one hour",
+          "caught": true
+        },
+        {
+          "kind": "prompts",
+          "record": "benchmark prompt",
+          "how": "created_at missing",
+          "caught": true
+        },
+        {
+          "kind": "prompts",
+          "record": "benchmark prompt",
+          "how": "sim_at missing",
+          "caught": true
+        },
+        {
+          "kind": "replies",
+          "record": "benchmark reply record",
+          "how": "sim_at shifted one hour",
+          "caught": true
+        },
+        {
+          "kind": "replies",
+          "record": "benchmark reply record",
+          "how": "created_at missing",
+          "caught": true
+        },
+        {
+          "kind": "replies",
+          "record": "benchmark reply record",
+          "how": "sim_at missing",
+          "caught": true
+        },
+        {
+          "kind": "boardNotes",
+          "record": "board note 1",
+          "how": "sim_at shifted one hour",
+          "caught": true
+        },
+        {
+          "kind": "boardNotes",
+          "record": "board note 1",
+          "how": "created_at missing",
+          "caught": true
+        },
+        {
+          "kind": "boardNotes",
+          "record": "board note 1",
+          "how": "sim_at missing",
+          "caught": true
+        }
+      ]
+    }
+  },
+  "turns_completed": 21,
+  "expected_turns": 21,
+  "failed_calls": 0,
+  "records": {
+    "prompts": 22,
+    "replies": 22,
+    "failures": 0,
+    "board_notes": 29,
+    "turns_not_completed": [],
+    "malformed_or_missing": [],
+    "excluded": [
+      "the Benchmark (turn 0): display only, never a turn, never in the slip rate"
+    ]
+  },
+  "display_only": {
+    "date_line": {
+      "readable": 21,
+      "expected": 21,
+      "slips": 0,
+      "rate_pct": 0,
+      "range95_pct": [
+        0,
+        16.1
+      ],
+      "slip_list": [],
+      "later_lines_listed_not_counted": [],
+      "no_readable_date_line": [],
+      "note": "Display only. Measures the model, not the harness. Never part of the verdict."
+    },
+    "year_and_real_date_hits": [
+      {
+        "call": "benchmark",
+        "matched": [
+          "2026",
+          "2026-11-16"
+        ],
+        "sentence": "The most recent date I can see is 2026-11-16, in the most recent edict and standing order, but that is only the latest date in my instructions, not confirmation of today's date."
+      }
+    ],
+    "benchmark_reply": "I can't tell you today's date with confidence. My instructions say the simulation time is set by a \"Norns line\" below, but that line isn't in my context. The most recent date I can see is 2026-11-16, in the most recent edict and standing order, but that is only the latest date in my instructions, not confirmation of today's date.\n\nIf you give me the date, or the Norns line gets loaded, I'll use that.",
+    "cut_replies": {
+      "count": 0,
+      "turns": []
+    }
+  }
+}
