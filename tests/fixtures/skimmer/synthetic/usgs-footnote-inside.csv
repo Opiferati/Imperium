@@ -1,0 +1,5 @@
+time,latitude,longitude,depth,mag,magType,place,type
+2026-03-01T01:02:03.000Z,35.1,-117.2,8.1,2.3,ml,"10 km N of Ridgecrest, CA",earthquake
+* Note: magnitudes below were revised on 2026-03-05
+2026-03-02T05:00:00.000Z,19.4,-155.3,2.0,4.0,md,"Hawaii",earthquake
+2026-03-03T06:00:00.000Z,38.0,142.0,30.0,6.1,mww,"Japan",earthquake

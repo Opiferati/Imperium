@@ -1,0 +1,8 @@
+time,latitude,longitude,depth,mag,magType,place,type
+2026-03-01T01:02:03.000Z,35.1,-117.2,8.1,2.3,ml,"10 km N of Ridgecrest, CA",earthquake
+2026-03-01T04:00:00.000Z,61.2,-150.1,40.0,3.1,ml,"Anchorage
+Alaska (two-line place)",earthquake
+2026-03-02T05:00:00.000Z,19.4,-155.3,2.0,4.0,md,"He said ""big one"", Hawaii",earthquake
+2026-03-02T05:00:00.000Z,19.4,-155.3,2.0,4.0,md,"He said ""big one"", Hawaii",earthquake
+2026-03-03T06:00:00.000Z,38.0,142.0,30.0,6.1,mww,"off the coast of Honshu, Japan",earthquake
+2026-03-04T07:00:00.000Z,40.0,-120.0,5.0,1.9,ml,"somewhere, NV",quarry blast

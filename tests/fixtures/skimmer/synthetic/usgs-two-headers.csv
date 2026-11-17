@@ -1,0 +1,3 @@
+Earthquake export, generated 2026-03-05
+time,latitude,longitude,depth,mag,magType,place,type
+2026-03-01T01:02:03.000Z,35.1,-117.2,8.1,2.3,ml,"CA",earthquake

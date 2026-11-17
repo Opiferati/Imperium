@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "dated": "2026-11-17",
+  "signed": "",
+  "status": "DRAFT: awaiting Opie's initials",
+  "entries": [
+    {
+      "id": "g001",
+      "term": "earthquake",
+      "type": "synonym",
+      "targets": [
+        "quake",
+        "seismic event"
+      ]
+    },
+    {
+      "id": "g002",
+      "term": "sunspot number",
+      "type": "alias",
+      "targets": [
+        "Wolf number",
+        "international sunspot number"
+      ]
+    },
+    {
+      "id": "g003",
+      "term": "Mw",
+      "type": "abbreviation",
+      "expands_to": "moment magnitude",
+      "unambiguous": true
+    },
+    {
+      "id": "g004",
+      "term": "Kp",
+      "type": "related",
+      "targets": [
+        "geomagnetic storm",
+        "G-scale"
+      ],
+      "why": "Kp measures disturbance; a storm is a level of it"
+    },
+    {
+      "id": "g005",
+      "term": "sunspot",
+      "type": "related",
+      "targets": [
+        "active region"
+      ],
+      "why": "an active region can hold several sunspots"
+    },
+    {
+      "id": "g006",
+      "term": "moment magnitude",
+      "type": "related",
+      "targets": [
+        "magnitude"
+      ],
+      "why": "Mw is one kind of magnitude"
+    },
+    {
+      "id": "g007",
+      "term": "earthquake",
+      "type": "related",
+      "targets": [
+        "tremor"
+      ],
+      "why": "a tremor can be volcanic"
+    },
+    {
+      "id": "g008",
+      "term": "M",
+      "type": "ambiguous",
+      "meanings": [
+        "magnitude",
+        "month",
+        "mega",
+        "M-class flare"
+      ]
+    },
+    {
+      "id": "g009",
+      "term": "SSN",
+      "type": "ambiguous",
+      "meanings": [
+        "sunspot number",
+        "Social Security number"
+      ]
+    }
+  ]
+}
