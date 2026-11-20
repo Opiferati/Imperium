@@ -1,0 +1,186 @@
+{
+  "date": "2026-11-20",
+  "rubric": "skald-rubric-v1 (2026-11-01)",
+  "model": "claude-haiku-5-5",
+  "searches": 5,
+  "cost": 0.057899200000000005,
+  "quality": "pass",
+  "thin_why": "",
+  "translated": "",
+  "reading": {
+    "crypto_mood": 14,
+    "stock_mood": 20,
+    "crypto_drivers": [
+      {
+        "event": "Bitcoin fell below $60,000 and Ethereum dropped under $1,700 in a sell-off with heavy liquidations, extending a run of weekly losses",
+        "effect": "fear",
+        "url": "https://www.cryptotimes.io/2026/11/20/bitcoin-nears-59k-ethereum-hits-1638-as-crypto-sell-off-deepens/"
+      },
+      {
+        "event": "Roughly $1 billion in crypto liquidations as BTC, ETH and XRP fell, with coverage calling the move capitulation",
+        "effect": "fear",
+        "url": "https://coinpedia.org/news/why-is-crypto-crashing-today-btc-eth-and-xrp-fall-amid-1-billion-liquidations/"
+      },
+      {
+        "event": "Spot bitcoin and Ethereum ETFs recorded heavy net outflows and institutional withdrawals, with US monetary policy concerns cited as weighing on prices",
+        "effect": "fear",
+        "url": "https://finwire.io/news/crypto-news/crypto-market-crash-today-why-are-ethereum-zec-and-altcoins-down"
+      },
+      {
+        "event": "Tech stock selloff in the US and Asia spilling into crypto, with weak institutional demand cited as a further drag",
+        "effect": "fear",
+        "url": "https://coingape.com/markets/top-4-reasons-why-btc-eth-and-xrp-price-are-crashing-today/"
+      },
+      {
+        "event": "Hack week (reported 3 days ago): about $20 million drained from four crypto platforms, including Lighter, Kava Lend and Initia, with some exchanges halting transfers",
+        "effect": "fear",
+        "url": "https://cryptoticker.substack.com/p/hackers-drain-20-million-in-a-week"
+      }
+    ],
+    "stock_drivers": [
+      {
+        "event": "S&P 500 and Dow closed in correction on Friday as the Nasdaq erased its 2026 gains; the Dow had its worst week since March 2020",
+        "effect": "fear",
+        "url": "https://www.cnbc.com/2026/11/19/stock-market-today-live-updates.html"
+      },
+      {
+        "event": "AI trade unwinding as Nvidia and semiconductor stocks plunged, with Wall Street's fear gauge reaching its highest level of 2026",
+        "effect": "fear",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-19-dow-sp-500-nasdaq-anthropic-nvidia-141644188.html"
+      },
+      {
+        "event": "Anthropic's record stock market debut drew profit-taking from the AI rally, and the rest of Wall Street sold off on the same day",
+        "effect": "fear",
+        "url": "https://www.benzinga.com/markets/equities/26/11/63446162/stock-market-today-anthropic-ipo-debut-sp-500-sixth-loss-november-19"
+      },
+      {
+        "event": "Fed minutes showed nearly all officials expect a quarter-point rate hike in December, with some floating a larger half-point move",
+        "effect": "fear",
+        "url": "https://abcnews.com/US/wireStory/fed-minutes-higher-interest-rates-needed-december-inflation-138258781"
+      },
+      {
+        "event": "Inflation running hotter than expected, with the Fed seen as firmly committed to additional tightening",
+        "effect": "fear",
+        "url": "https://www.usnews.com/news/economy/articles/2026-11-18/fed-poised-to-raise-rates-further-to-stem-inflation"
+      }
+    ],
+    "headlines": [
+      {
+        "title": "Bitcoin Nears $59K, Ethereum Hits $1,638 as Crypto Sell-Off Deepens",
+        "url": "https://www.cryptotimes.io/2026/11/20/bitcoin-nears-59k-ethereum-hits-1638-as-crypto-sell-off-deepens/",
+        "market": "crypto"
+      },
+      {
+        "title": "Why is Crypto Crashing Today: BTC, ETH and XRP Fall Amid $1 Billion Liquidations",
+        "url": "https://coinpedia.org/news/why-is-crypto-crashing-today-btc-eth-and-xrp-fall-amid-1-billion-liquidations/",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto market crash today: Why are Ethereum, ZEC and altcoins down?",
+        "url": "https://finwire.io/news/crypto-news/crypto-market-crash-today-why-are-ethereum-zec-and-altcoins-down",
+        "market": "crypto"
+      },
+      {
+        "title": "Top 4 Reasons Why BTC, ETH and XRP Price Are Crashing Today",
+        "url": "https://coingape.com/markets/top-4-reasons-why-btc-eth-and-xrp-price-are-crashing-today/",
+        "market": "crypto"
+      },
+      {
+        "title": "Hackers Drain $20 Million in a Week While Bitcoin Crashes 14%",
+        "url": "https://cryptoticker.substack.com/p/hackers-drain-20-million-in-a-week",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Today: Bitcoin risks breaking below $61K as Ethereum corrects while XRP consolidates",
+        "url": "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-risks-breaking-below-61k-as-ethereum-corrects-while-xrp-consolidates-202611200953",
+        "market": "crypto"
+      },
+      {
+        "title": "Crypto Prices Today: BTC Drops to USD 61,527, XRP Gains While Stablecoins Hold Their Pegs",
+        "url": "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-btc-drops-to-usd-61527-xrp-gains-while-stablecoins-hold-their-pegs",
+        "market": "crypto"
+      },
+      {
+        "title": "Stock market news for Nov. 20, 2026",
+        "url": "https://www.cnbc.com/2026/11/19/stock-market-today-live-updates.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market today: Dow and S&P 500 enter correction, Nasdaq sinks 5% to erase 2026 gains as AI trade melts down",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-19-dow-sp-500-nasdaq-anthropic-nvidia-141644188.html",
+        "market": "stocks"
+      },
+      {
+        "title": "S&P 500 Slides, Anthropic Jumps 27%: Stock Market Today",
+        "url": "https://www.benzinga.com/markets/equities/26/11/63446162/stock-market-today-anthropic-ipo-debut-sp-500-sixth-loss-november-19",
+        "market": "stocks"
+      },
+      {
+        "title": "Stock market today: Dow sinks 1,100 points, S&P 500 and Nasdaq tank 2% as Anthropic IPO grabs spotlight",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-november-19-dow-sp-500-nasdaq-anthropic-ipo-live-141306032.html",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed minutes: Higher interest rates needed in December as inflation worries mount",
+        "url": "https://abcnews.com/US/wireStory/fed-minutes-higher-interest-rates-needed-december-inflation-138258781",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed Poised to Raise Rates Further to Stem Inflation",
+        "url": "https://www.usnews.com/news/economy/articles/2026-11-18/fed-poised-to-raise-rates-further-to-stem-inflation",
+        "market": "stocks"
+      },
+      {
+        "title": "Fed readies rate hikes over AI inflation after voters reject data centers in the midterms",
+        "url": "https://fortune.com/2026/11/19/fed-minutes-ai-inflation-data-centers-midterms-2027-rate-hike/",
+        "market": "stocks"
+      }
+    ]
+  },
+  "search_results": [
+    "https://www.fxstreet.com/cryptocurrencies/news",
+    "https://www.coindesk.com/latest-crypto-news",
+    "https://cryptoslate.com/",
+    "https://cointelegraph.com/",
+    "https://www.coindesk.com/",
+    "https://cryptonews.net/news/analytics/33784323",
+    "https://www.forbes.com/digital-assets/news/",
+    "https://techbullion.com/crypto-news-today-bitcoin-falls-below-60k-for-first-time-since-july-as-pepeto-tops-11-3m/",
+    "https://pl.tradingview.com/news/cryptonews%3A706267085094b%3A0-live-crypto-news-today-latest-updates-for-august-26-2025-940m-in-crypto-liquidated-as-bitcoin-drops-below-110k-amid-macro-pressures",
+    "https://www.fxstreet.com/cryptocurrencies/news/crypto-today-bitcoin-risks-breaking-below-61k-as-ethereum-corrects-while-xrp-consolidates-202611200953",
+    "https://www.analyticsinsight.net/price-analysis/crypto-prices-today-btc-drops-to-usd-61527-xrp-gains-while-stablecoins-hold-their-pegs",
+    "https://coingape.com/markets/top-4-reasons-why-btc-eth-and-xrp-price-are-crashing-today/",
+    "https://www.coingabbar.com/en/why-crypto-market-down-today-btc-eth-xrp-pi-coin-asian-markets",
+    "https://www.cryptotimes.io/2026/11/20/bitcoin-nears-59k-ethereum-hits-1638-as-crypto-sell-off-deepens/",
+    "https://coinpedia.org/news/why-is-crypto-crashing-today-btc-eth-and-xrp-fall-amid-1-billion-liquidations/",
+    "https://finwire.io/news/crypto-news/crypto-market-crash-today-why-are-ethereum-zec-and-altcoins-down",
+    "https://cryptoslate.substack.com/p/markets-update-bitcoin-runs-into",
+    "https://www.cnbc.com/2026/11/19/stock-market-today-live-updates.html",
+    "https://finance.yahoo.com/markets/live/stock-market-today-friday-november-19-dow-sp-500-nasdaq-anthropic-nvidia-141644188.html",
+    "https://finance.yahoo.com/markets/live/stock-market-today-thursday-november-19-dow-sp-500-nasdaq-anthropic-ipo-live-141306032.html",
+    "https://www.google.com/finance/",
+    "https://www.benzinga.com/markets/equities/26/11/63446162/stock-market-today-anthropic-ipo-debut-sp-500-sixth-loss-november-19",
+    "https://www.cnbc.com/",
+    "https://jobs.climate.columbia.edu/world-wire/jobs.climate.columbia.edu/top-stock-market-news-today-1764806116",
+    "https://ckan.tradingeconomics.com/stock-market-today-yahoo",
+    "https://tagteam.harvard.edu/hub_feeds/4600/feed_items/13706195",
+    "https://www.usnews.com/news/economy/articles/2026-11-18/fed-poised-to-raise-rates-further-to-stem-inflation",
+    "https://fortune.com/2026/11/19/fed-minutes-ai-inflation-data-centers-midterms-2027-rate-hike/",
+    "https://abcnews.com/US/wireStory/fed-minutes-higher-interest-rates-needed-december-inflation-138258781",
+    "https://ca.finance.yahoo.com/news/fed-minutes-higher-interest-rates-191215222.html",
+    "https://bloomberg.com/news/articles/2026-11-18/fed-minutes-show-almost-all-officials-expect-more-rate-hikes",
+    "https://www.wsbradio.com/news/business/fed-minutes-higher/RNNPN7CXHY5PTGK7HVZMVNUFCE/",
+    "https://www.pbs.org/newshour/tag/inflation/page/42",
+    "https://www.pbs.org/newshour/tag/federal-reserve/page/26",
+    "https://www.pbs.org/newshour/tag/inflation/page/24",
+    "https://finance.yahoo.com/markets/crypto/articles/binance-hack-exposes-crypto-risk-124746606.html",
+    "https://www.cnbc.com/2026/10/31/binance-hack-crypto-wallet-safety.html",
+    "https://www.digitaltoday.co.kr/en/view/126480/crypto-exchange-hacks-put-security-in-spotlight-as-regulators-push-bank-level-standards",
+    "https://www.npr.org/2026/10/31/nx-s1-6024426/binance-crypto-heist-cyber-criminals-north-korea",
+    "https://gizmodo.com/there-are-too-many-crypto-hacks-happening-its-impossible-to-keep-up-2000833986",
+    "https://news.bitcoin.com/regulation-and-legal/this-week-in-crypto-law-november-15-2026/",
+    "https://cryptoticker.substack.com/p/hackers-drain-20-million-in-a-week",
+    "https://securityinweb3.substack.com/p/security-in-web3-issue-8-25-july",
+    "https://aroundtheblockchain.substack.com/p/edition-no-14"
+  ]
+}
