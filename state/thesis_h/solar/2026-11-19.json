@@ -1,0 +1,70 @@
+{
+ "thesis": "THESIS_H",
+ "day": "2026-11-19",
+ "call": "QUIET",
+ "reasons": [],
+ "frozen_at": "2026-11-20T00:30:09.638Z",
+ "call_time": "2026-11-20T00:30:00.000Z",
+ "kp": {
+  "read_at": "2026-11-20T00:30:09.644Z",
+  "sha256": "f95b325b3c23a984d2c71fbae4953bfa7e7f9160bb414e851ef38f5065a0f947",
+  "raw": "state/thesis_h/raw/2026-11-20/kp-20261120T003009644Z.json.gz",
+  "values": [
+   {
+    "time_tag": "2026-11-19T00:00:00",
+    "kp": 5
+   },
+   {
+    "time_tag": "2026-11-19T03:00:00",
+    "kp": 2.67
+   },
+   {
+    "time_tag": "2026-11-19T06:00:00",
+    "kp": 1.67
+   },
+   {
+    "time_tag": "2026-11-19T09:00:00",
+    "kp": 1.33
+   },
+   {
+    "time_tag": "2026-11-19T12:00:00",
+    "kp": 2
+   },
+   {
+    "time_tag": "2026-11-19T15:00:00",
+    "kp": 2.67
+   },
+   {
+    "time_tag": "2026-11-19T18:00:00",
+    "kp": 3
+   },
+   {
+    "time_tag": "2026-11-19T21:00:00",
+    "kp": 1.33
+   }
+  ],
+  "count": 8,
+  "max": 5,
+  "late": false
+ },
+ "flares": {
+  "read_at": "2026-11-20T00:30:10.823Z",
+  "sha256": "bf3d1c6f10a12370a32e1731243df4de3d101f475376efd2241792236bd0880c",
+  "raw": "state/thesis_h/raw/2026-11-20/flares-20261120T003010823Z.json.gz",
+  "x": [],
+  "unclassified": [],
+  "peaked_this_day": 13,
+  "late": false
+ },
+ "trigger": {
+  "kp": false,
+  "flare": false
+ },
+ "late": false,
+ "commit": "c037ead272da3b57ce86feb98134bcefb8cb4e0c",
+ "charter_hash": "75197537f877afef56a5c806c16cfdb6586b259492a048b5dab1d36be3ca14e8",
+ "code": {
+  "runners/thesis-h.js": "d1b69d8bb10e7c7a35d7303af54c8da7ca2d7cc7a393ab62a1f027cb818b2e31",
+  "runners/thesis-h-verdict.js": "d0263d454c117b6edd45fb3572e9b1bd3694d657b1171d258ae1c193d2b3948c"
+ }
+}
